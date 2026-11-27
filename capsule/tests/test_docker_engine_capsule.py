@@ -198,7 +198,8 @@ class BrewfileSkipRule(unittest.TestCase):
         (self.fake / "docker").chmod(0o755)
         env = {"CAPSULE_DOCKER_ENGINE": engine, "AGENT_OPS_STATE_DIR": str(self.tmp / "state"),
                "AGENT_OPS_DOCKER_BIN": str(self.fake), "AGENT_OPS_NO_SEND": "1",
-               "PATH": (f"{self.fake}:" if docker_ok else "") + "/usr/bin:/bin",
+               # no system dirs: CI's Linux runner has a real docker in /usr/bin
+               "PATH": str(self.fake if docker_ok else self.tmp),
                "HOME": str(self.tmp)}
         plan = _Plan()
         with mock.patch.dict(os.environ, env, clear=True), \

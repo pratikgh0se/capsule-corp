@@ -9,17 +9,23 @@ T="$(mktemp -d)"; trap 'rm -rf "$T"' EXIT
 
 fails=0
 check() { if eval "$2"; then echo "PASS $1"; else echo "FAIL $1"; fails=$((fails+1)); fi; }
+# The owner job plists (launchd/templates/*.obsidian-*.plist) are private-only: the public copy drops them. The
+# private tree is told apart by release/private-denylist.txt, which the export never ships. A check on the plist
+# runs in full in the private tree and skips, with a printed reason, in the public copy.
+plcheck() {
+  if [ -f "$REPO/release/private-denylist.txt" ]; then check "$@"; else echo "SKIP $1: the owner job plist is private-only (not in the public copy)"; fi
+}
 PLIST="$(ls "$REPO"/launchd/templates/*.obsidian-remove-card.plist 2>/dev/null | head -1)"; LABEL="$(basename "$PLIST" .plist)"   # the overlay template names its own prefix
 
 # --- the wiring is present -------------------------------------------------
 check "the card template exists"            '[ -s "$REPO/maintenance/templates/remove-card.md" ]'
-check "the plist runs run.sh remove-card"   'grep -q "run.sh" "$PLIST" && grep -q "<string>remove-card</string>" "$PLIST"'
-check "the plist fires on 4 calendar dicts" '[ "$(grep -c "<key>Day</key><integer>1</integer>" "$PLIST")" = 4 ]'
+plcheck "the plist runs run.sh remove-card"   'grep -q "run.sh" "$PLIST" && grep -q "<string>remove-card</string>" "$PLIST"'
+plcheck "the plist fires on 4 calendar dicts" '[ "$(grep -c "<key>Day</key><integer>1</integer>" "$PLIST")" = 4 ]'
 for m in 1 4 7 10; do
-  check "the plist has month $m at 09:00"   'grep -q "<key>Month</key><integer>'"$m"'</integer><key>Day</key><integer>1</integer><key>Hour</key><integer>9</integer>" "$PLIST"'
+  plcheck "the plist has month $m at 09:00"   'grep -q "<key>Month</key><integer>'"$m"'</integer><key>Day</key><integer>1</integer><key>Hour</key><integer>9</integer>" "$PLIST"'
 done
 check "the plist is classified custodial (bin/lib_jobs.sh)" 'grep -q "obsidian-remove-card" "$REPO/bin/lib_jobs.sh"'
-check "the plist is loaded (not in launchd/unloaded)"  '! grep -qx "$LABEL" "$REPO/launchd/unloaded"'
+plcheck "the plist is loaded (not in launchd/unloaded)"  '! grep -qx "$LABEL" "$REPO/launchd/unloaded"'
 check "status.sh CADENCE lists remove-card at 93 days" 'grep -qF "\"remove-card\": 93*86400" "$REPO/maintenance/status.sh"'
 check "run.sh excludes remove-card from the PROMPT_FILE chain" 'grep -qF "[ \"\$JOB\" != \"remove-card\" ]" "$REPO/maintenance/run.sh"'
 

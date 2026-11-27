@@ -11,22 +11,28 @@ T="$(mktemp -d)"; trap 'rm -rf "$T"' EXIT
 unset AGENT_OPS_NO_SEND
 fails=0
 check() { if eval "$2"; then echo "PASS $1"; else echo "FAIL $1"; fails=$((fails+1)); fi; }
+# The owner job plists (launchd/templates/*.obsidian-*.plist) are private-only: the public copy drops them. The
+# private tree is told apart by release/private-denylist.txt, which the export never ships. A check on the plist
+# runs in full in the private tree and skips, with a printed reason, in the public copy.
+plcheck() {
+  if [ -f "$REPO/release/private-denylist.txt" ]; then check "$@"; else echo "SKIP $1: the owner job plist is private-only (not in the public copy)"; fi
+}
 PLIST="$(ls "$REPO"/launchd/templates/*.obsidian-blocked-tonight.plist 2>/dev/null | head -1)"; LABEL="$(basename "$PLIST" .plist)"   # the overlay template names its own prefix
 
 # --- the wiring is present -------------------------------------------------
 check "report.sh has a --blocked-tonight mode" 'grep -q -- "--blocked-tonight) MODE=blocked-tonight" "$REPO/maintenance/report.sh"'
 check "run.sh knows the blocked-tonight job" 'grep -q "JOB\" = \"blocked-tonight\"" "$REPO/maintenance/run.sh"'
-check "the plist exists" '[ -f "$PLIST" ]'
-check "the plist fires at 20:15, before the 20:30 quiet hours" \
+plcheck "the plist exists" '[ -f "$PLIST" ]'
+plcheck "the plist fires at 20:15, before the 20:30 quiet hours" \
   'python3 -c "import plistlib,sys; sys.exit(plistlib.load(open(sys.argv[1],\"rb\"))[\"StartCalendarInterval\"] != {\"Hour\": 20, \"Minute\": 15})" "$PLIST"'
-check "the plist runs run.sh blocked-tonight" 'grep -q "run.sh" "$PLIST" && grep -q "<string>blocked-tonight</string>" "$PLIST"'
+plcheck "the plist runs run.sh blocked-tonight" 'grep -q "run.sh" "$PLIST" && grep -q "<string>blocked-tonight</string>" "$PLIST"'
 check "run.sh excludes blocked-tonight from the PROMPT_FILE chain" \
   'grep -qE "\\[ \"\\\$JOB\" != \"close\" \\] && \\[ \"\\\$JOB\" != \"blocked-tonight\" \\]" "$REPO/maintenance/run.sh"'
 check "the job prints no model line" \
   'grep -qE "blocked-tonight\|sprint-sync\|retrieval-eval" "$REPO/maintenance/run.sh"'
 check "the plist is classified custodial (bin/lib_jobs.sh)" 'grep -q "}.obsidian-blocked-tonight" "$REPO/bin/lib_jobs.sh"'
 check "status.sh CADENCE lists blocked-tonight" 'grep -qF "\"blocked-tonight\": 86400" "$REPO/maintenance/status.sh"'
-check "the plist is switched on: not listed in launchd/unloaded (D65, 2026-10-28)" '! grep -qx "$LABEL" "$REPO/launchd/unloaded"'
+plcheck "the plist is switched on: not listed in launchd/unloaded (D65, 2026-10-28)" '! grep -qx "$LABEL" "$REPO/launchd/unloaded"'
 
 # --- run.sh blocked-tonight (dry), the way the plist invokes it --------------------
 mkdir -p "$T/run-sh-vault" "$T/run-sh-home"

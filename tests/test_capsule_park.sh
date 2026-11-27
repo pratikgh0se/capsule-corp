@@ -12,6 +12,11 @@ export CAPSULE_LAUNCHD_UNLOADED="$T/no-unloaded-file"
 # the obsidian-*/ollama-serve labels carry the overlay prefix lib_jobs reads off the templates
 OP="$(bash -c 'REPO="$1"; . "$1/bin/lib_jobs.sh"; printf %s "$_OP"' _ "$REPO")"
 fails=0; check() { if eval "$2"; then echo "PASS $1"; else echo "FAIL $1"; fails=$((fails+1)); fi; }
+# park boots out the 9 notes-vault labels plus one tick label per served board that has a template (D269). The served
+# boards come from maintenance/repos.json, which is the maintainer's own registry: the public copy has none, so there
+# the tick count is 0 and the stamp holds 9 labels, not 11. The expected count is derived the way lib_jobs.sh derives it.
+NTICK="$(bash -c 'REPO="$1"; . "$1/bin/lib_jobs.sh"; printf %s "${#_TICKS[@]}"' _ "$REPO")"
+NLAB=$((9 + NTICK))
 
 mkdir -p "$T/bin" "$T/state"
 cat >"$T/bin/launchctl" <<'EOF'
@@ -53,7 +58,7 @@ for l in obsidian-health obsidian-report obsidian-security ollama-serve; do
 done
 check "park touches no gateway label (the gateway class is retired, D229)" '! grep -q "ai.example.gateway" "$LC_LOG"'
 check "park writes a 0600 stamp naming the labels it booted out" \
-  '[ "$(perm "$T/state/park.json")" = "600" ] && [ "$(python3 -c "import json;print(len(json.load(open(\"$T/state/park.json\"))[\"labels\"]))")" = "11" ]'
+  '[ "$(perm "$T/state/park.json")" = "600" ] && [ "$(python3 -c "import json;print(len(json.load(open(\"$T/state/park.json\"))[\"labels\"]))")" = "$NLAB" ]'
 check "park holds the absence tier at 3 and prints the off-machine checklist" \
   '[ "$(python3 -c "import json;print(json.load(open(\"$T/state/absence.json\"))[\"held\"])")" = "3" ] && grep -qi "external disk" <<<"$out" && grep -qi "push every repo" <<<"$out"'
 check "the push checklist item is prose, not a runnable command" \
@@ -62,14 +67,14 @@ check "park says what it did NOT do" 'grep -qiF "this script does not push" <<<"
 
 : >"$LC_LOG"; out2="$(bash "$REPO/bin/capsule-park.sh" park --quiet-phone 2>&1)"; rc2=$?
 check "--quiet-phone is gone: rejected with usage, nothing booted out, stamp untouched" \
-  '[ $rc2 -eq 2 ] && grep -q "^usage:" <<<"$out2" && ! grep -q "quiet-phone" <<<"$out2" && [ ! -s "$LC_LOG" ] && [ "$(python3 -c "import json;print(len(json.load(open(\"$T/state/park.json\"))[\"labels\"]))")" = "11" ]'
+  '[ $rc2 -eq 2 ] && grep -q "^usage:" <<<"$out2" && ! grep -q "quiet-phone" <<<"$out2" && [ ! -s "$LC_LOG" ] && [ "$(python3 -c "import json;print(len(json.load(open(\"$T/state/park.json\"))[\"labels\"]))")" = "$NLAB" ]'
 
 out3="$(bash "$REPO/bin/capsule-park.sh" status 2>&1)"
 check "status reports the park" '[ $? -eq 0 ] && grep -q "parked since" <<<"$out3"'
 
 : >"$LC_LOG"; : >"$CS_LOG"; out4="$(bash "$REPO/bin/capsule-park.sh" unpark 2>&1)"; rc=$?
 check "unpark bootstraps exactly what park booted out and clears the stamp" \
-  '[ $rc -eq 0 ] && [ "$(grep -c bootstrap "$LC_LOG")" = "11" ] && [ ! -e "$T/state/park.json" ]'
+  '[ $rc -eq 0 ] && [ "$(grep -c bootstrap "$LC_LOG")" = "$NLAB" ] && [ ! -e "$T/state/park.json" ]'
 check "unpark clears the held tier and says it is done" \
   '[ ! -e "$T/state/absence.json" ] && grep -qF "capsule unpark: done." <<<"$out4" && ! grep -qF "deploy.sh" <<<"$out4"'
 check "unpark checks every Potara identity still reads (M222)" 'grep -qF "capsule-secret check --identity-all" <<<"$out4"'

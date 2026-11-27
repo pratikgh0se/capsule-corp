@@ -40,25 +40,36 @@ done
 fails=0
 check() { if eval "$2"; then echo "PASS $1"; else echo "FAIL $1"; fails=$((fails+1)); fi; }
 
+# The notes-vault prompts (nightly.md, weekly.md, sprint-plan.md, security.md, ...) are private-only: the
+# public copy drops them (D254, the notes vault is optional). A check that reads or runs one of them skips,
+# with a printed reason, when the prompt is absent. With the prompt present it runs exactly as before.
+# the private tree (marked by its denylist) always runs these checks, so a lost prompt still fails there
+have_prompt() { [ -f "$REPO/release/private-denylist.txt" ] && return 0
+  local _p; for _p in "$@"; do [ -f "$REPO/maintenance/$_p.md" ] || return 1; done; }
+pcheck() {  # pcheck <prompt> <name> <command>
+  local _need="$1"; shift
+  if have_prompt "$_need"; then check "$@"; else echo "SKIP $1: maintenance/$_need.md is private-only (not in the public copy)"; fi
+}
+
 out="$(RUN_SH_DRY_RUN=1 bash "$REPO/maintenance/run.sh" nightly 2>&1)"
 rc=$?
-check "dry run exits 0" '[ $rc -eq 0 ]'
-check "dry run prints the marker" 'grep -q "dry run: nothing executed, nothing committed" <<<"$out"'
-check "dry run argv line requests json output" 'grep -q "argv:.*--output-format json" <<<"$out"'
+pcheck nightly "dry run exits 0" '[ $rc -eq 0 ]'
+pcheck nightly "dry run prints the marker" 'grep -q "dry run: nothing executed, nothing committed" <<<"$out"'
+pcheck nightly "dry run argv line requests json output" 'grep -q "argv:.*--output-format json" <<<"$out"'
 # 2026-09-09: nightly owns the semantic reindex now, and a full rebuild after a
 # chunker change takes 10-12 min - the old shared 900s cap could kill it
 # mid-rebuild, which leaves a half-written index and no error anyone reads.
-check "nightly runs under a 30-minute cap" 'grep -q "cap=1800s" <<<"$out"'
+pcheck nightly "nightly runs under a 30-minute cap" 'grep -q "cap=1800s" <<<"$out"'
 # R11: the nightly trims labelled capsule-layer images; the dry run only names the step (it must
 # never reach docker), and the switch defaults to dry-run (OPS_IMAGE_GC_APPLY unset reads 0).
-check "nightly dry run names the image GC with its switch off" 'grep -q "would run image_gc.py (OPS_IMAGE_GC_APPLY=0)" <<<"$out"'
+pcheck nightly "nightly dry run names the image GC with its switch off" 'grep -q "would run image_gc.py (OPS_IMAGE_GC_APPLY=0)" <<<"$out"'
 out_gc="$(OPS_IMAGE_GC_APPLY=1 RUN_SH_DRY_RUN=1 EVENTS_SPOOL="$T/gc-events.jsonl" bash "$REPO/maintenance/run.sh" nightly 2>&1)"
-check "nightly dry run shows the image GC switch when set" 'grep -q "would run image_gc.py (OPS_IMAGE_GC_APPLY=1)" <<<"$out_gc"'
+pcheck nightly "nightly dry run shows the image GC switch when set" 'grep -q "would run image_gc.py (OPS_IMAGE_GC_APPLY=1)" <<<"$out_gc"'
 check "the nightly image GC runs under a 300s cap and never fails the job" 'grep -q "JOB_CAP_SECONDS=300" "$REPO/maintenance/run.sh" && grep -q "image_gc.py exit .* (ignored)" "$REPO/maintenance/run.sh"'
 check "only the nightly job runs the image GC" '[ "$(RUN_SH_DRY_RUN=1 EVENTS_SPOOL="$T/gc2.jsonl" bash "$REPO/maintenance/run.sh" quality-nightly 2>&1 | grep -c image_gc)" = 0 ]'
-check "spool has two job rows" '[ "$(grep -c "\"kind\": \"job\"" "$EVENTS_SPOOL" 2>/dev/null)" = 2 ]'
-check "spool has a job start row" 'grep -q "\"phase\": \"start\"" "$EVENTS_SPOOL"'
-check "spool has a job end row" 'grep -q "\"phase\": \"end\"" "$EVENTS_SPOOL"'
+pcheck nightly "spool has two job rows" '[ "$(grep -c "\"kind\": \"job\"" "$EVENTS_SPOOL" 2>/dev/null)" = 2 ]'
+pcheck nightly "spool has a job start row" 'grep -q "\"phase\": \"start\"" "$EVENTS_SPOOL"'
+pcheck nightly "spool has a job end row" 'grep -q "\"phase\": \"end\"" "$EVENTS_SPOOL"'
 
 # The rest of the cap matrix, on a throwaway spool so the row counts above
 # stay about the one nightly run they are asserting.
@@ -67,8 +78,8 @@ cap_of() {  # <job> [JOB_CAP_SECONDS override] -> the "cap=<n>s" the dry run pri
   env EVENTS_SPOOL="$T_CAP/events.jsonl" RUN_SH_DRY_RUN=1 ${2:+JOB_CAP_SECONDS="$2"} \
     bash "$REPO/maintenance/run.sh" "$1" 2>&1 | grep -o "cap=[0-9]*s" | head -1
 }
-check "the nightly cap is overridable" '[ "$(cap_of nightly 42)" = "cap=42s" ]'
-check "a job with no arm of its own keeps the 15-minute default" '[ "$(cap_of weekly)" = "cap=900s" ]'
+pcheck nightly "the nightly cap is overridable" '[ "$(cap_of nightly 42)" = "cap=42s" ]'
+pcheck weekly "a job with no arm of its own keeps the 15-minute default" '[ "$(cap_of weekly)" = "cap=900s" ]'
 
 out="$(RUN_SH_DRY_RUN=1 bash "$REPO/maintenance/run.sh" quality-nightly 2>&1)"
 check "quality-nightly dry run exits 0" '[ $? -eq 0 ]'
@@ -85,8 +96,8 @@ rm -rf "$T_CAP"
 # 2026-09-09 (row 124): the reindex used to say only that a build ran. Phase 6
 # prints --stats after --build so the job's own output carries the coverage
 # number the Phase 5 log line is supposed to report.
-check "nightly phase 6 prints the index stats" 'grep -q -- "--stats" "$REPO/maintenance/nightly.md"'
-check "nightly phase 6 still builds the index first" \
+pcheck nightly "nightly phase 6 prints the index stats" 'grep -q -- "--stats" "$REPO/maintenance/nightly.md"'
+pcheck nightly "nightly phase 6 still builds the index first" \
   '[ "$(grep -n -- "--build" "$REPO/maintenance/nightly.md" | head -1 | cut -d: -f1)" -lt "$(grep -n -- "--stats" "$REPO/maintenance/nightly.md" | head -1 | cut -d: -f1)" ]'
 
 # --- session_id_from_json / result_from_json: the --output-format json extractors
@@ -457,10 +468,10 @@ check "a missing upstream remote is refused with a clear message, nothing added"
 # (run.sh:353) and compute the ALLOWED prefix the same way run.sh does
 # (run.sh:372), independent of the eligible-count precheck that gates
 # whether run.sh actually reaches the sprint-plan case arm.
-SPRINT_PROMPT="$(cat "$REPO/maintenance/sprint-plan.md")"
+SPRINT_PROMPT="$(cat "$REPO/maintenance/sprint-plan.md" 2>/dev/null)"
 SPRINT_PROMPT="${SPRINT_PROMPT//__HOME__/$HOME}"
 SPRINT_PROMPT="${SPRINT_PROMPT//__CONFIG__/$HOME/.config/capsule-corp}"
-check "sprint-plan prompt has no bare ~/ path" '! grep -q "~/" <<<"$SPRINT_PROMPT"'
+pcheck sprint-plan "sprint-plan prompt has no bare ~/ path" '! grep -q "~/" <<<"$SPRINT_PROMPT"'
 # The prompt file always hardcodes __HOME__/<config dir>/maintenance
 # (like architect.md/nightly.md do) rather than parameterizing on
 # RUN_SH_MAINT_DIR (a test-only override, run.sh:39) - so the un-overridden
@@ -471,9 +482,9 @@ check "sprint-plan prompt has no bare ~/ path" '! grep -q "~/" <<<"$SPRINT_PROMP
 # check or it stops matching the prompts' hardcoded prefix.
 PROD_PY="python3"
 ALLOWED_PREFIX="$PROD_PY $HOME/.config/capsule-corp/maintenance/board_bridge.py"
-check "sprint-plan eligible command matches the ALLOWED prefix" \
+pcheck sprint-plan "sprint-plan eligible command matches the ALLOWED prefix" \
   'grep -qF "$ALLOWED_PREFIX eligible" <<<"$SPRINT_PROMPT"'
-check "sprint-plan link-spec command matches the ALLOWED prefix" \
+pcheck sprint-plan "sprint-plan link-spec command matches the ALLOWED prefix" \
   'grep -qF "$ALLOWED_PREFIX link-spec" <<<"$SPRINT_PROMPT"'
 
 
@@ -538,7 +549,7 @@ age_abs_approval 72   # tier 2 (DRAIN)
 abs_out="$(HOME="$ABS_HOME" CAPSULE_OPS_PY=python3 RUN_SH_DRY_RUN=1 \
   OPS_ABSENCE_PROTOCOL=1 MERGE_GATE_STATE="$ABS_GATE" AGENT_OPS_STATE_DIR="$ABS_STATE" \
   bash "$REPO/maintenance/run.sh" sprint-plan 2>&1)"
-check "tier 2 with the flag on skips sprint-plan before any session starts" \
+pcheck sprint-plan "tier 2 with the flag on skips sprint-plan before any session starts" \
   'grep -q "sprint-plan skipped: absence drain: tier 2" <<<"$abs_out"'
 
 abs_out="$(HOME="$ABS_HOME" CAPSULE_OPS_PY=python3 RUN_SH_DRY_RUN=1 \
@@ -591,7 +602,7 @@ check "agent-review guard allowlist is its note folder only" \
   'grep -qF "GUARD_ALLOW=\"Reviews/**\"" "$REPO/maintenance/run.sh"'
 check "no GUARD_ALLOW line names the generated board file any more" \
   '! grep "GUARD_ALLOW=" "$REPO/maintenance/run.sh" | grep -qF "Boards/Engineering.md"'
-check "the security prompt takes its board list from run.sh" \
+pcheck security "the security prompt takes its board list from run.sh" \
   'grep -qF "__BOARDS__" "$REPO/maintenance/security.md" && grep -qF "__BOARDS__" "$REPO/maintenance/run.sh"'
 
 # --- C1 (final review): neither review job may hold Edit on Boards/Intake.md.
@@ -613,6 +624,7 @@ check "both ALLOWED lines carry the verb (two occurrences)" \
 # prompt files hardcode the production path regardless of what CI sets.
 INTAKE_PREFIX="$PROD_PY $HOME/.config/capsule-corp/maintenance/intake.py add-finding"
 for f in security agent-review; do
+  have_prompt "$f" || { echo "SKIP $f add-finding prompt checks: maintenance/$f.md is private-only (not in the public copy)"; continue; }
   PROMPT="$(cat "$REPO/maintenance/$f.md")"
   PROMPT="${PROMPT//__HOME__/$HOME}"
   PROMPT="${PROMPT//__CONFIG__/$HOME/.config/capsule-corp}"
@@ -631,7 +643,7 @@ check "an empty board list fails the security job instead of falling back" \
 MF="$T/maint-boards-fail"; cp -R "$REPO/maintenance" "$MF"
 printf 'import sys\nprint("boards-boom-line", file=sys.stderr)\nsys.exit(1)\n' > "$MF/board_bridge.py"
 out="$(HOME="$T" EVENTS_SPOOL="$T/boards-fail.jsonl" RUN_SH_MAINT_DIR="$MF" RUN_SH_DRY_RUN=1 bash "$REPO/maintenance/run.sh" security 2>&1)"; rc=$?
-check "an empty board list keeps the last stderr line in the event text" \
+pcheck security "an empty board list keeps the last stderr line in the event text" \
   '[ $rc -eq 1 ] && grep -qF "boards-boom-line" "$T/boards-fail.jsonl"'
 
 # --- C1: the write guard must actually DENY an Edit of Boards/Intake.md under
@@ -712,11 +724,11 @@ for no in "Architecture/x.md" "Decisions/x.md"; do
 done
 check "weekly GUARD_ALLOW does not open the docs mirror" \
   '! grep -qF "Architecture/" <<<"$wa"'
-check "weekly.md says the other folders are reported, never edited" \
+pcheck weekly "weekly.md says the other folders are reported, never edited" \
   'grep -qF "reported, never edited" "$REPO/maintenance/weekly.md"'
 # Final review C3: without --scan, resume_pointers.py prints its usage and
 # exits 2, so the Sunday sweep would report "none" every week and look green.
-check "weekly.md runs resume_pointers.py with --scan" \
+pcheck weekly "weekly.md runs resume_pointers.py with --scan" \
   'grep -qF "resume_pointers.py --scan" "$REPO/maintenance/weekly.md"'
 check "weekly ALLOWED carries the resume_pointers.py Bash verb" \
   'weekly_allowed="$(sed -n "/^    weekly)\$/,/;;\$/p" "$REPO/maintenance/run.sh" | sed -n "s/^ *ALLOWED=\"\(.*\)\"$/\1/p")"; \
@@ -770,7 +782,7 @@ check "inbox ALLOWED names neither git mv nor git rm" \
 check "inbox ALLOWED keeps git add" \
   'inbox_allowed="$(sed -n "/^    inbox)\$/,/;;\$/p" "$REPO/maintenance/run.sh" | sed -n "s/^ *ALLOWED=\"\(.*\)\"$/\1/p")"; \
    grep -qF "Bash(git add *)" <<<"$inbox_allowed"'
-check "inbox.md no longer names any git command" \
+pcheck inbox "inbox.md no longer names any git command" \
   '! grep -qiE "git (mv|rm|add|commit|status|diff|log)\b" "$REPO/maintenance/inbox.md"'
 
 MARKER_SRC="$(sed -n '/MARKER="\$VAULT\/Inbox\/.processed"/,/^  fi$/p' "$REPO/maintenance/run.sh")"
@@ -844,27 +856,27 @@ check "close dry run never says no prompt file" '! grep -q "no prompt file" <<<"
 CH="$EH/capsule"; mkdir -p "$CH/boards/fake" && : > "$CH/boards/fake/kanban.db"
 printf 'OPS_SATURDAY_ZERO=1\n' > "$EH/.config/capsule-corp/ops.env"
 out="$(HOME="$EH" RUN_SH_MAINT_DIR="$REPO/maintenance" RUN_SH_WEEKDAY_OVERRIDE=6 RUN_SH_DRY_RUN=1 bash "$REPO/maintenance/run.sh" security 2>&1)"; rc=$?
-check "flag on + Saturday skips security" \
+pcheck security "flag on + Saturday skips security" \
   '[ $rc -eq 0 ] && grep -qF "=== security skipped: Saturday zero (OPS_SATURDAY_ZERO=1) ===" <<<"$out"'
 out="$(HOME="$EH" RUN_SH_MAINT_DIR="$REPO/maintenance" RUN_SH_WEEKDAY_OVERRIDE=6 RUN_SH_DRY_RUN=1 bash "$REPO/maintenance/run.sh" architect 2>&1)"; rc=$?
-check "flag on + Saturday skips architect" \
+pcheck architect "flag on + Saturday skips architect" \
   '[ $rc -eq 0 ] && grep -qF "=== architect skipped: Saturday zero (OPS_SATURDAY_ZERO=1) ===" <<<"$out"'
 printf 'OPS_SATURDAY_ZERO=0\n' > "$EH/.config/capsule-corp/ops.env"
 # the architect job walks host.json maintenance.scan_repos (no project name in run.sh)
 mkdir -p "$T/ch-scan" && printf '{"maintenance": {"scan_repos": ["sample-app", "other-app"]}}' > "$T/ch-scan/host.json"
 out="$(HOME="$EH" CAPSULE_HOME="$T/ch-scan" RUN_SH_CAPSULE_CORP_DIR="$REPO" RUN_SH_MAINT_DIR="$REPO/maintenance" RUN_SH_WEEKDAY_OVERRIDE=3 RUN_SH_DRY_RUN=1 bash "$REPO/maintenance/run.sh" architect 2>&1)"
-check "architect walks the scan_repos from host.json" 'grep -q "architect: changed: sample-app(->none) other-app(->none)" <<<"$out"'
+pcheck architect "architect walks the scan_repos from host.json" 'grep -q "architect: changed: sample-app(->none) other-app(->none)" <<<"$out"'
 out="$(HOME="$EH" CAPSULE_HOME="$T/ch-scan-none" RUN_SH_CAPSULE_CORP_DIR="$REPO" RUN_SH_MAINT_DIR="$REPO/maintenance" RUN_SH_WEEKDAY_OVERRIDE=3 RUN_SH_DRY_RUN=1 bash "$REPO/maintenance/run.sh" architect 2>&1)"
-check "architect with no scan_repos configured says so and skips" 'grep -q "architect skipped: no scan_repos configured; skipping" <<<"$out" && ! grep -q "all repos unchanged" <<<"$out"'
+pcheck architect "architect with no scan_repos configured says so and skips" 'grep -q "architect skipped: no scan_repos configured; skipping" <<<"$out" && ! grep -q "all repos unchanged" <<<"$out"'
 mkdir -p "$T/ch-bad" && printf '{"maintenance": {"scan_repos": "x y"}}' > "$T/ch-bad/host.json"
 out="$(HOME="$EH" CAPSULE_HOME="$T/ch-bad" RUN_SH_CAPSULE_CORP_DIR="$REPO" RUN_SH_MAINT_DIR="$REPO/maintenance" RUN_SH_WEEKDAY_OVERRIDE=3 RUN_SH_DRY_RUN=1 bash "$REPO/maintenance/run.sh" architect 2>&1)"
-check "a bad scan_repos value says so on stderr and the job still ends cleanly" 'grep -q "maintenance.scan_repos not readable" <<<"$out" && grep -q "no scan_repos configured; skipping" <<<"$out"'
+pcheck architect "a bad scan_repos value says so on stderr and the job still ends cleanly" 'grep -q "maintenance.scan_repos not readable" <<<"$out" && grep -q "no scan_repos configured; skipping" <<<"$out"'
 out="$(HOME="$EH" CAPSULE_HOME="$CH" RUN_SH_MAINT_DIR="$REPO/maintenance" RUN_SH_WEEKDAY_OVERRIDE=6 RUN_SH_DRY_RUN=1 bash "$REPO/maintenance/run.sh" security 2>&1)"; rc=$?
-check "flag off does not skip security even on a Saturday" \
+pcheck security "flag off does not skip security even on a Saturday" \
   '[ $rc -eq 0 ] && grep -q "dry run: nothing executed, nothing committed" <<<"$out" && ! grep -q "Saturday zero" <<<"$out"'
 printf 'OPS_SATURDAY_ZERO=1\n' > "$EH/.config/capsule-corp/ops.env"
 out="$(HOME="$EH" CAPSULE_HOME="$CH" RUN_SH_MAINT_DIR="$REPO/maintenance" RUN_SH_WEEKDAY_OVERRIDE=3 RUN_SH_DRY_RUN=1 bash "$REPO/maintenance/run.sh" security 2>&1)"; rc=$?
-check "flag on does not skip security on a non-Saturday (weekday 3)" \
+pcheck security "flag on does not skip security on a non-Saturday (weekday 3)" \
   '[ $rc -eq 0 ] && grep -q "dry run: nothing executed, nothing committed" <<<"$out" && ! grep -q "Saturday zero" <<<"$out"'
 out="$(HOME="$EH" RUN_SH_MAINT_DIR="$REPO/maintenance" RUN_SH_WEEKDAY_OVERRIDE=6 RUN_SH_DRY_RUN=1 bash "$REPO/maintenance/run.sh" heal 2>&1)"; rc=$?
 check "flag on + Saturday does not touch a third job (heal)" \
@@ -1036,6 +1048,7 @@ printf '{}\n' > "$VH/chome/host.json"
 env_out="$(vrun RUN_SH_PRINT_ENV=1 bash "$REPO/maintenance/run.sh" sprint-sync 2>&1)"
 check "vault: neither set exports nothing" 'grep -qx "OBSIDIAN_VAULT_PATH=" <<<"$env_out"'
 for job in nightly agent-review; do
+  have_prompt "$job" || { echo "SKIP vault: neither set skips $job: maintenance/$job.md is private-only (not in the public copy)"; continue; }
   out_nv="$(vrun RUN_SH_DRY_RUN=1 EVENTS_SPOOL="$VH/ev-$job.jsonl" bash "$REPO/maintenance/run.sh" $job 2>&1)"; rc=$?
   check "vault: neither set skips $job with rc 0" '[ $rc -eq 0 ] && grep -q "$job skipped: no notes vault configured" <<<"$out_nv"'
 done
@@ -1060,6 +1073,7 @@ printf '{}\n' > "$VS/chome/host.json"
 env_out="$(srun RUN_SH_PRINT_ENV=1 bash "$REPO/maintenance/run.sh" sprint-sync 2>&1)"
 check "skill root: neither set exports nothing" 'grep -qx "OBSIDIAN_SKILL_ROOT=" <<<"$env_out"'
 for job in nightly inbox architect; do
+  have_prompt "$job" || { echo "SKIP skill root: neither set skips $job: maintenance/$job.md is private-only (not in the public copy)"; continue; }
   out_ns="$(srun RUN_SH_DRY_RUN=1 EVENTS_SPOOL="$VS/ev-$job.jsonl" bash "$REPO/maintenance/run.sh" $job 2>&1)"; rc=$?
   check "skill root: neither set skips $job with rc 0" '[ $rc -eq 0 ] && grep -q "$job skipped: no notes-vault skill checkout configured" <<<"$out_ns"'
 done

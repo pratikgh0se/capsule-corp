@@ -11,14 +11,20 @@ T="$(mktemp -d)"; trap 'rm -rf "$T"' EXIT
 unset AGENT_OPS_NO_SEND
 fails=0
 check() { if eval "$2"; then echo "PASS $1"; else echo "FAIL $1"; fails=$((fails+1)); fi; }
+# The owner job plists (launchd/templates/*.obsidian-*.plist) are private-only: the public copy drops them. The
+# private tree is told apart by release/private-denylist.txt, which the export never ships. A check on the plist
+# runs in full in the private tree and skips, with a printed reason, in the public copy.
+plcheck() {
+  if [ -f "$REPO/release/private-denylist.txt" ]; then check "$@"; else echo "SKIP $1: the owner job plist is private-only (not in the public copy)"; fi
+}
 
 # --- the wiring is present -------------------------------------------------
 check "report.sh has a --close mode" 'grep -q -- "--close) MODE=close" "$REPO/maintenance/report.sh"'
 check "run.sh knows the close job" 'grep -q "JOB\" = \"close\"" "$REPO/maintenance/run.sh"'
 PLIST="$(ls "$REPO"/launchd/templates/*.obsidian-close.plist 2>/dev/null | head -1)"; LABEL="$(basename "$PLIST" .plist)"   # the overlay template names its own prefix
-check "the close plist exists" '[ -f "$PLIST" ]'
-check "the close plist fires at 18:00" 'grep -q "<integer>18</integer>" "$PLIST" && grep -q "<integer>0</integer>" "$PLIST"'
-check "the close plist runs run.sh close" 'grep -q "run.sh" "$PLIST" && grep -q "<string>close</string>" "$PLIST"'
+plcheck "the close plist exists" '[ -f "$PLIST" ]'
+plcheck "the close plist fires at 18:00" 'grep -q "<integer>18</integer>" "$PLIST" && grep -q "<integer>0</integer>" "$PLIST"'
+plcheck "the close plist runs run.sh close" 'grep -q "run.sh" "$PLIST" && grep -q "<string>close</string>" "$PLIST"'
 # Content match, not a line-number window: run.sh's PROMPT_FILE exclusion
 # chain must list "close" beside every other script job (T6-C1: this used
 # to be checked by grepping a hard-coded line window, which cannot tell

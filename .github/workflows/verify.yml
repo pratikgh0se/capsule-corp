@@ -46,6 +46,11 @@ jobs:
           echo 1 > docker/BUILD_MIN_FREE_BYTES   # the throwaway runner has under 40 GB free
           for layer in base python; do docker/build-base.sh "$layer"; done
           git checkout -- docker/BUILD_MIN_FREE_BYTES   # the tests read the real floor
+      # Capsule pins DOCKER_CONTEXT to its engine's context (maintenance/docker_engine.py: orbstack
+      # by default, a macOS app); on this Linux runner a context of that name points at the
+      # runner's own daemon, so docker calls made through Capsule (lookout_ship.psql) resolve.
+      - name: docker context for the default engine
+        run: docker context create orbstack --docker host=unix:///var/run/docker.sock
       - run: |
           export AGENT_OPS_NO_LAUNCHCTL=1 AGENT_OPS_NO_DOCKER=1 RUN_DOCKER_TESTS=1   # opt-in: the runner has docker
           export CAPSULE_OPS_PY=python3   # no agent venv on the runner; events.py only needs stdlib

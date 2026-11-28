@@ -32,6 +32,20 @@ jobs:
       - run: |
           python3 -m unittest discover maintenance/tests
       - run: python3 -m unittest discover -s capsule/tests -t .   # Capsule harness core
+      # test_docker_image below probes capsule-python:local, so build the base and python stacks
+      # the way image.yml does (the web stack is optional: its checks skip when it is absent).
+      # build-base.sh chains stacks by digest, which needs the containerd image store.
+      - name: build the worker image
+        run: |
+          f=/etc/docker/daemon.json; c=$(sudo cat "$f" 2>/dev/null || true); [ -n "$c" ] || c='{}'
+          printf '%s' "$c" | jq '.features["containerd-snapshotter"]=true' | sudo tee "$f" >/dev/null
+          sudo systemctl restart docker
+          docker info -f '{{ .DriverStatus }}' | grep -q io.containerd
+          export CAPSULE_HOME="$RUNNER_TEMP/capsule-home"
+          mkdir -p "$CAPSULE_HOME"
+          echo 1 > docker/BUILD_MIN_FREE_BYTES   # the throwaway runner has under 40 GB free
+          for layer in base python; do docker/build-base.sh "$layer"; done
+          git checkout -- docker/BUILD_MIN_FREE_BYTES   # the tests read the real floor
       - run: |
           export AGENT_OPS_NO_LAUNCHCTL=1 AGENT_OPS_NO_DOCKER=1 RUN_DOCKER_TESTS=1   # opt-in: the runner has docker
           export CAPSULE_OPS_PY=python3   # no agent venv on the runner; events.py only needs stdlib

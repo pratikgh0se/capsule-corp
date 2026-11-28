@@ -84,7 +84,8 @@ UNATTENDED_DEFAULTS = {"continues_per_day": 30, "decide_after_s": 3600, "decide_
 # null for "no model" mode. Seconds unless a name says otherwise.
 PATROL_DEFAULTS = {
     "agent_cmd": ["claude", "-p", "--append-system-prompt-file", "{role_file}",
-                  "--model", "{model}", "--tools", "Read,Grep,Glob", "--max-budget-usd", "1",
+                  "--model", "{model}", "--restricted", "--tools", "Read,Grep,Glob",
+                  "--max-budget-usd", "1",
                   "Read the packet file {packet_file}; answer with one patrol.v1 JSON document."],
     "model": "sonnet", "strong_model": "opus", "calls_per_day": 8, "strong_per_day": 2,
     "min_age_s": 1800, "timeout_s": 600}

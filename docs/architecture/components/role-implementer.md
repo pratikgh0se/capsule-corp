@@ -36,6 +36,8 @@ Route default Sonnet with 80 turns (`capsule/config.example.json`); with `redesi
 ## Failure modes and what happens
 `max_turns`, or a wall-clock timeout when the run has a session id: checkpoint chain (cap `caps.checkpoint_chain`); every implementer call gets the cap minus up to 300 s so the checkpoint call has time. Timeout without a session id, or crash: lease released, failure counted (`caps.failure_limit`), `crash` or `hang` incident. Invalid side document twice: `invalid_document` block.
 
+Reads: the file tools read only the clone and `add_dirs` (the request folder, and the prior-run folder when earlier runs exist). See [read-guard](read-guard.md).
+
 ## Tests that pin it
 `capsule/tests/test_contracts.py`, `test_intent.py`, `test_implementer_guard_line.py`, `test_check_gate.py`, `test_report_notes.py`, `test_shown_sets.py`, `test_workspace.py`, `test_tick.py`; `contracts/intent/implementer.jsonl`.
 

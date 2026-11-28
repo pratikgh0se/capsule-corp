@@ -171,7 +171,7 @@ flowchart TB
   `core.fsmonitor=false`, no credential helper and no `ext` transport (`workspace.HARDENING`).
 - **Secrets stay out of agents.** The secret-read guard (a maintainer-only hook, not in the public edition) refuses (block mode, default since D215) tool calls that read
   secret files; the implementer container has no secrets and no network
-  ([secret-read-guard](components/secret-read-guard.md)).
+  ([secret-read-guard](components/secret-read-guard.md)). That guard covers the owner's sessions only. Card workers read only their clone and `add_dirs`, enforced by `--restricted`, the permission default and `capsule/read_guard.py` ([read-guard](components/read-guard.md)).
 - **Compose live guard.** Mutating compose commands on the live stack are refused unless the
   environment file is the real one ([compose-live-guard](components/compose-live-guard.md)).
 

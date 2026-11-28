@@ -55,6 +55,7 @@ jobs:
           export AGENT_OPS_NO_LAUNCHCTL=1 AGENT_OPS_NO_DOCKER=1 RUN_DOCKER_TESTS=1   # opt-in: the runner has docker
           export CAPSULE_OPS_PY=python3   # no agent venv on the runner; events.py only needs stdlib
           bash tests/test_run_sh.sh
+          bash tests/test_run_sh_nightly_public.sh
           bash tests/test_cleanup.sh
           bash tests/test_docker_image.sh   # RUN_DOCKER_TESTS=1: builds and probes the worker image
           bash tests/test_migration_pg.sh   # RUN_DOCKER_TESTS=1: real postgres

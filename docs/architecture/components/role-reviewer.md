@@ -21,6 +21,8 @@ Route default Opus, 40 turns, `vault_read: decisions`. A `pass` with non-empty `
 ## Failure modes and what happens
 No valid document after the retry: `review_infra` hold (`accept` re-runs the round; the card is not charged). A pass contradicting an intent example: contradiction routed to the guide for a ruling.
 
+Reads: the file tools read only the clone and the request folder. See [read-guard](read-guard.md).
+
 ## Tests that pin it
 `capsule/tests/test_review_findings.py`, `test_review_scope.py`, `test_intent.py`, `test_contracts.py`, `test_tick.py`; `contracts/intent/reviewer.jsonl`, `review_gate.jsonl`.
 

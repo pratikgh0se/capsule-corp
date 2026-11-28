@@ -795,6 +795,6 @@ class StrongRunner:
             }
         }
         mcp_path.write_text(json.dumps(cfg))
-        return {"tools": "Read,Edit,Write,Glob,Grep", "allowed": "Read,Glob,Grep,mcp__capsule__exec",
+        return {"tools": "Read,Edit,Write,Glob,Grep", "allowed": "mcp__capsule__exec",
                 "permission_mode": "acceptEdits", "add_dirs": [str(spool / "requests")],
                 "mcp_config": str(mcp_path)}

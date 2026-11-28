@@ -135,7 +135,7 @@ class LightRunner:
                      "--sandbox-profile", str(sb), "--spool", str(spool), *server_args],
             "env": {"PYTHONPATH": str(paths.REPO)}}}}))
         return {"tools": "Read,Edit,Write,Glob,Grep",
-                "allowed": "Read,Glob,Grep,mcp__capsule__exec", "permission_mode": "acceptEdits",
+                "allowed": "mcp__capsule__exec", "permission_mode": "acceptEdits",
                 "add_dirs": [str(spool / "requests")], "mcp_config": str(mcp_path),
                 "tier": self.tier}   # the host wall cannot nest around this tier (host_wall.plan)
 

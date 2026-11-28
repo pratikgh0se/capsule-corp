@@ -8,6 +8,20 @@ Self-hosted AI software factory for one developer on macOS: Claude Code agents b
 
 > **Read this first.** This is a pre-alpha preview. It is an early preview, `v0.2.0-alpha.1`, not a finished product. No app built by the factory has been accepted by its owner yet. A restructure into smaller, modular parts is planned, so the layout, commands and interfaces will change. Read [docs/KNOWN-ISSUES.md](docs/KNOWN-ISSUES.md) before you install. The system targets macOS and was built by one person for their own machine, so some paths, names and defaults are still personal. The repository is released under the [MIT licence](LICENSE). See [Status and limits](#status-and-limits).
 
+## Why I built this
+
+I am the only engineer who wants to build a lot of things, but I have other things I want to do. So I want to take the decisions and hand off everything that AI can do by itself, and only pay attention when my attention is needed.
+
+My problem was that I wanted to work on about 10 things at once. I would look at one chat, switch to another, and forget that something was still running. My attention span was what blocked the AI agents. Capsule is one chief of staff who tells me what is done, what is blocked and what needs me.
+
+I want it light enough to run on one laptop, and still able to scale.
+
+I also learned that passing tests is not the same as good work. The factory built a timer app that passed 1,301 tests. I judged it "extremely bad, and not at all what I expected." Tests that compare still frames cannot show motion or a hang. Capsule already had blind tests (the tester never sees the code), and they did not catch this. So Capsule now also has an owner look at the first slice, and proof-of-work gates for UI timing and motion. Those gates are new, and [docs/PROOF.md](docs/PROOF.md) says what is proved and what is not.
+
+The maintainer
+
+Sources: this section is edited from the maintainer's own chat messages of 2026-10-28, 2026-11-14, 2026-11-26 and 2026-11-28. The words in quotation marks are exact. The 1,301-test count is the maintainer's account; no public file records it.
+
 ## Install
 
 Clone this repository, then run:
@@ -133,6 +147,7 @@ Secrets never live in git. Callers use one thin wrapper, `bin/capsule-secret` (`
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Set up, run the tests and the public lint, commit style |
 | [CHANGELOG.md](CHANGELOG.md) | What changed |
 | [docs/KNOWN-ISSUES.md](docs/KNOWN-ISSUES.md) | Open problems, with workarounds |
+| [docs/PROOF.md](docs/PROOF.md) | What has been proved, how, and what has not |
 | [docs/RELEASE.md](docs/RELEASE.md) | Supply-chain and release deferrals |
 | `contracts/` | The contract each role works under |
 

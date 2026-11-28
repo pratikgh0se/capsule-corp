@@ -70,7 +70,7 @@ Related decisions and specs; Status (current, partial or planned).
 **Host services and operations**
 
 - [deploy-and-drift](components/deploy-and-drift.md): bootstrap.sh (maintainer only, not in the public edition), deploy.sh (maintainer only, not in the public edition), drift check, tick control, hoi-poi, park.
-- [compose-live-guard](components/compose-live-guard.md), [secret-read-guard](components/secret-read-guard.md), [secrets](components/secrets.md).
+- [compose-live-guard](components/compose-live-guard.md), [secret-read-guard](components/secret-read-guard.md), [secrets](components/secrets.md), [read-guard](components/read-guard.md) (the allow-list for worker reads).
 - [maintenance-jobs](components/maintenance-jobs.md): launchd jobs and `maintenance/` scripts.
 - [tick-board-plist](components/tick-board-plist.md), [slack-listen-job](components/slack-listen-job.md), [docker-idle-job](components/docker-idle-job.md): the per-board tick template and two install-only jobs.
 - [observability-compose-stack](components/observability-compose-stack.md): the eight-service compose stack.

@@ -51,11 +51,12 @@ Status terms:
 - Workaround: none needed. Ignore the dashboards for now.
 - Status: A fix is planned.
 
-## 8. The implementer can read files outside its clone
+## 8. Worker read limits
 
-- What you see: the implementer's AI session can read any file your macOS user can read. It cannot edit outside its clone, and its shell commands run in a no-network container.
-- Workaround: run Capsule under a separate macOS user account that holds no personal files or secrets.
-- Status: A fix is planned. A read guard for the public edition is planned.
+- What you see: a worker session can read only its clone and the folders Capsule adds for that run. Three checks apply: Claude Code's `--restricted` mode, its permission default, and Capsule's read guard (`capsule/read_guard.py`). A worker cannot edit outside its clone, and its shell commands run in a no-network container or a sandbox.
+- Not covered: a hard link that already exists inside the clone and points at a file outside it. Workers cannot make such a link. The checks also depend on Claude Code keeping its behaviour (checked with Claude Code 2.1.326).
+- Workaround: keep Claude Code current. For full separation, run Capsule under a separate macOS user account that holds no personal files or secrets. This is defence in depth.
+- Status: Partly fixed. See [read-guard](architecture/components/read-guard.md).
 
 ## Report a problem
 

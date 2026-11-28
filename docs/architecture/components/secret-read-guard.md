@@ -9,6 +9,8 @@ agent tool call that would read a secret file.
 - Mode file `<state>/secret-read-guard.mode`; log `<state>/secret-read-guard.log` (`<state>` is `$AGENT_OPS_STATE_DIR` or `~/.local/state/capsule-corp/maint`).
 - `contracts/intent/secret_read_guard.jsonl`; this page.
 
+This guard covers the owner's own sessions. Card workers never load it, because `--restricted` ignores user settings (`capsule/models/claude.py`). Workers have their own allow-list guard: [read-guard](read-guard.md).
+
 ## Inputs and outputs
 In: the tool call JSON on stdin. Out: exit 0 (allow) or exit 2 with a one-line reason (block mode); a log line per hit.
 

@@ -92,10 +92,16 @@ def _complete(conn, task_id, sha, result, now):
             event(conn, task_id, "completed", p, now=now)   # not twice
 
 
+NO_DEPLOY = ("deploy.sh is not in this checkout (the public edition does not ship it): "
+             "set lander.deploy_check in the board config to your own check")
+
+
 def _deploy(cfg, release):
     """(drift, output tail) of the configured `deploy --check`, run in the trusted release checkout,
     never in a clone of a landed sha (that ran the candidate's own deploy.sh, row 632 b)."""
     cmd = (cfg.get("lander") or {}).get("deploy_check", lander.DEPLOY)
+    if cmd == lander.DEPLOY and not (Path(release) / "deploy.sh").is_file():   # a public clone
+        return True, NO_DEPLOY
     rc, tail = lander._sh(cmd, release, 300, os.environ.copy())
     return rc != 0, tail
 

@@ -153,6 +153,8 @@ The tick job writes its log to `$CAPSULE_HOME/logs/tick-<board>.log` and its eve
 
 Landing is a dry run by default; it pushes only when the board config sets `lander.mode` to `land`.
 
+When you set `lander.mode` to `land`, also set `lander.deploy_check` to your own check. The public edition has no deploy.sh script; if you have no deploy step, use `"deploy_check": "true"`. Without the key, the first landing is pushed and the lander then holds and asks you to set it.
+
 ## 9. Local UIs
 
 **Maintainer only.** First testers follow `./install.sh` and skip this section; the dashboards are

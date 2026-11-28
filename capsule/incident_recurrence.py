@@ -1,4 +1,5 @@
 """Korin's closure-gate test runners: run a recurrence test on main, and prove it new (row 456)."""
+import ast
 import os
 import re
 import subprocess
@@ -170,6 +171,19 @@ def _defining_path(checkout, rev, path, cls):
     return path
 
 
+def _defines(text, cls, method, unparsable=False):
+    """True when `text` defines class `cls` holding `def method` (the parser, so a `def` line that
+    wraps over two lines still counts). A module that does not parse gives `unparsable`: False for
+    "is it there now", True for "was it there at the base" (fail closed)."""
+    try:
+        tree = ast.parse(text or "")
+    except (SyntaxError, ValueError):
+        return unparsable
+    return any(isinstance(c, ast.ClassDef) and c.name == cls and any(
+        isinstance(f, (ast.FunctionDef, ast.AsyncFunctionDef)) and f.name == method
+        for f in c.body) for c in ast.walk(tree))
+
+
 def recurrence_test_is_new(test_id, checkout, open_sha, *, blind_tests=None, timeout=TEST_TIMEOUT,
                            rev="main"):
     """(ok, detail): the test (its class AND method in its module file) was NOT on main at the
@@ -195,12 +209,10 @@ def recurrence_test_is_new(test_id, checkout, open_sha, *, blind_tests=None, tim
     if shell:
         return _shell_is_new(test_id, shell, checkout, open_sha, rev)
 
-    def has(rev, where):
-        text = _file_at(checkout, rev, where)
-        return bool(text and re.search(rf"^\s*class {re.escape(cls)}\b", text, re.M)
-                    and re.search(rf"^\s*def {re.escape(method)}\(", text, re.M))
+    def has(rev, where, unparsable=False):
+        return _defines(_file_at(checkout, rev, where), cls, method, unparsable)
     at_open = {named, path, _defining_path(checkout, open_sha, named, cls)}
-    if any(has(open_sha, w) for w in at_open):
+    if any(has(open_sha, w, True) for w in at_open):
         return False, (f"recurrence test {test_id} was already on main at {open_sha[:12]}"
                        " (incident open): not new")
     if not has(rev, path):

@@ -36,13 +36,13 @@ In: done cards whose latest `completed` event is under 24 hours old, carries a c
 - A lander crash is counted; after `CRASH_LIMIT = 3` it stops retrying that card. A detached worker alive over `WORKER_TTL = 3 h` is treated as stuck.
 - Keeper watchdog: pages (outbox row) when the keeper log is silent for over `SILENT_AFTER = 3600` s while work waits; bin/keeper-pause declares a deliberate pause (capped at 12 h). It only pages.
 
-- Public clones: the lander's deploy check runs `./deploy.sh --check` by default (`DEPLOY` in `capsule/lander.py`; the board config key `lander.deploy_check` replaces it). deploy.sh is maintainer only, so a public clone does not have it. A non-zero exit counts as drift (`capsule/landing.py`, `_deploy`), so a public board should set `lander.deploy_check` to its own check.
+- Public clones: the lander's deploy check runs `./deploy.sh --check` by default (`DEPLOY` in `capsule/lander.py`; the board config key `lander.deploy_check` replaces it). deploy.sh is maintainer only, so a public clone does not have it. When the default check is in force and deploy.sh is not in the release checkout, `_deploy` (`capsule/landing.py`) runs no command: it returns drift with the `NO_DEPLOY` message, which names `lander.deploy_check`. The first landing is pushed, then `lander.hold` is set until the board sets its own check. Any other non-zero exit counts as drift too.
 
 ## Failure modes and what happens
 Fetch failure: waits. Push rejected as non-fast-forward: outcome `push_rejected`, retried. Hook or branch-protection rejection: `push_failed`. Suites red before push: card goes back through the failure path (`lander.record`). Docker down: held `lander_wait_docker`.
 
 ## Tests that pin it
-`capsule/tests/test_lander.py`, `test_lander_env.py`, `test_lander_guard.py`, `test_lander_hold_alarm.py`, `test_landing.py`, `test_landing_step.py`, `test_landing_red.py`, `test_ci_watch.py`, `test_keeper_watch.py`, `test_boundary.py`, `test_ruff_gate.py`, `test_shell_portability.py`; `tests/test_lander.sh`, `tests/test_keeper_watch.sh`; `contracts/intent/lander.jsonl`, `lander_revert.jsonl`, `land_reliability.jsonl`, `keeper_watch.jsonl`.
+`capsule/tests/test_lander.py`, `test_lander_env.py`, `test_lander_guard.py`, `test_lander_hold_alarm.py`, `test_landing.py`, `test_landing_step.py`, `test_landing_red.py`, `test_deploy_missing.py`, `test_ci_watch.py`, `test_keeper_watch.py`, `test_boundary.py`, `test_ruff_gate.py`, `test_shell_portability.py`; `tests/test_lander.sh`, `tests/test_keeper_watch.sh`; `contracts/intent/lander.jsonl`, `lander_revert.jsonl`, `land_reliability.jsonl`, `keeper_watch.jsonl`.
 
 ## Stall supervisor hooks
 `landing.step` writes guard `lander.last` `{word, since, at}`: the pass's word and how long it stayed the

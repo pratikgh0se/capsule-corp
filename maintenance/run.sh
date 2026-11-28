@@ -267,12 +267,32 @@ trap on_exit EXIT
 # An interrupted run (Ctrl-C, launchd stop) must not be stamped as a success.
 trap 'JOB_EXIT=130; echo "=== $JOB interrupted ==="; exit 130' INT TERM
 
+# image-gc (R11): the nightly also trims labelled capsule-layer images (image_gc.py header has the
+# keep rules). It removes nothing unless OPS_IMAGE_GC_APPLY=1 (ops.env, default off: it prints
+# what it would remove plus `docker system df`), and never fails the job. image_gc.py runs docker
+# through events.docker_run, which puts the engine's CLI on PATH (a launchd PATH lacks it).
+# It needs no vault, so the nightly runs it before the vault skips too; GC_DONE keeps it to one run.
+image_gc_step() {
+  [ "$JOB" = "nightly" ] && [ -z "${GC_DONE:-}" ] || return 0
+  GC_DONE=1
+  if [ "$DRY" = "1" ]; then
+    echo "=== dry run: would run image_gc.py (OPS_IMAGE_GC_APPLY=${OPS_IMAGE_GC_APPLY:-0}) ==="
+  else
+    OPS_IMAGE_GC_APPLY="${OPS_IMAGE_GC_APPLY:-0}" JOB_CAP_SECONDS=300 \
+      with_cap "$OPS_PY" "$MAINT_DIR/image_gc.py" || echo "=== image_gc.py exit $? (ignored) ==="
+  fi
+}
+
 skip_job() { JOB_SKIP="$1"; JOB_EXIT=0; echo "=== $JOB skipped: $1 ==="; echo "=== $JOB done $(date) ==="; exit 0; }
 
 # No alert_failure() here on purpose (removed 2026-09-06): every job writes a
 # kind=job event with its exit code and Grafana's job-failed rule owns that alert.
 
-if [ "$JOB" != "ops-preview" ] && [ "$JOB" != "sprint-sync" ] && [ "$JOB" != "retrieval-eval" ] && [ "$JOB" != "heal" ] && [ "$JOB" != "obs-probe" ] && [ "$JOB" != "obs-inventory" ] && [ "$JOB" != "cleanup" ] && [ "$JOB" != "close" ] && [ "$JOB" != "blocked-tonight" ] && [ "$JOB" != "order-book-lint" ] && [ "$JOB" != "morning" ] && [ "$JOB" != "health-check" ] && [ "$JOB" != "backup" ] && [ "$JOB" != "restore-verify" ] && [ "$JOB" != "fork-sync" ] && [ "$JOB" != "quality-nightly" ] && [ "$JOB" != "quality-full" ] && [ "$JOB" != "deps-sync" ] && [ "$JOB" != "disk-relief" ] && [ "$JOB" != "remove-card" ] && [ ! -f "$PROMPT_FILE" ]; then
+# Public copy (no private marker above MAINT_DIR): the nightly prompt is not shipped, so only its model
+# step is skipped (below). In the private tree a lost prompt stays exit 1, which alerts.
+PUBLIC_NIGHTLY=0
+[ "$JOB" = "nightly" ] && [ -d "$MAINT_DIR" ] && [ ! -f "$(cd -P "$MAINT_DIR/.." 2>/dev/null && pwd -P)/release/private-denylist.txt" ] && PUBLIC_NIGHTLY=1
+if [ "$JOB" != "ops-preview" ] && [ "$JOB" != "sprint-sync" ] && [ "$JOB" != "retrieval-eval" ] && [ "$JOB" != "heal" ] && [ "$JOB" != "obs-probe" ] && [ "$JOB" != "obs-inventory" ] && [ "$JOB" != "cleanup" ] && [ "$JOB" != "close" ] && [ "$JOB" != "blocked-tonight" ] && [ "$JOB" != "order-book-lint" ] && [ "$JOB" != "morning" ] && [ "$JOB" != "health-check" ] && [ "$JOB" != "backup" ] && [ "$JOB" != "restore-verify" ] && [ "$JOB" != "fork-sync" ] && [ "$JOB" != "quality-nightly" ] && [ "$JOB" != "quality-full" ] && [ "$JOB" != "deps-sync" ] && [ "$JOB" != "disk-relief" ] && [ "$JOB" != "remove-card" ] && [ "$PUBLIC_NIGHTLY" != "1" ] && [ ! -f "$PROMPT_FILE" ]; then
   echo "run.sh: no prompt file at $PROMPT_FILE" >&2
   JOB_EXIT=1; exit 1
 fi
@@ -301,13 +321,13 @@ esac
     # (from $HOME). Every other job, every Claude session included, skips; none may write to git in $HOME.
     case "$JOB" in
       ops-preview|quality-full|disk-relief|remove-card|blocked-tonight|sprint-sync|heal|obs-probe|cleanup|backup|restore-verify|fork-sync|quality-nightly|deps-sync) cd "$HOME" ;;
-      *) skip_job "no notes vault configured (OBSIDIAN_VAULT_PATH or host.json vault.path)" ;;
+      *) image_gc_step; skip_job "no notes vault configured (OBSIDIAN_VAULT_PATH or host.json vault.path)" ;;
     esac
   fi
   # The jobs that run the vault skill itself need its checkout; with none configured they skip.
   case "$JOB" in
     nightly|inbox|architect|retrieval-eval)
-      [ -n "$OSB_DIR" ] || skip_job "no notes-vault skill checkout configured (OBSIDIAN_SKILL_ROOT or host.json vault.skill_root)" ;;
+      [ -n "$OSB_DIR" ] || { image_gc_step; skip_job "no notes-vault skill checkout configured (OBSIDIAN_SKILL_ROOT or host.json vault.skill_root)"; } ;;
   esac
 
   # Vault commit identity: no personal default in the repo. CAPSULE_GIT_NAME and
@@ -738,18 +758,7 @@ PY
       ;;
   esac
 
-  # image-gc (R11): the nightly also trims labelled capsule-layer images (image_gc.py header has the
-  # keep rules). It removes nothing unless OPS_IMAGE_GC_APPLY=1 (ops.env, default off: it prints
-  # what it would remove plus `docker system df`), and never fails the job. image_gc.py runs docker
-  # through events.docker_run, which puts the engine's CLI on PATH (a launchd PATH lacks it).
-  if [ "$JOB" = "nightly" ]; then
-    if [ "$DRY" = "1" ]; then
-      echo "=== dry run: would run image_gc.py (OPS_IMAGE_GC_APPLY=${OPS_IMAGE_GC_APPLY:-0}) ==="
-    else
-      OPS_IMAGE_GC_APPLY="${OPS_IMAGE_GC_APPLY:-0}" JOB_CAP_SECONDS=300 \
-        with_cap "$OPS_PY" "$MAINT_DIR/image_gc.py" || echo "=== image_gc.py exit $? (ignored) ==="
-    fi
-  fi
+  image_gc_step
   # MEM-13 V5: nightly vault eval; vault-eval no-ops unless redesign.vault_context is report or live.
   [ "$JOB" = "nightly" ] && [ "$DRY" != "1" ] && vault_eval_nightly
 
@@ -764,6 +773,10 @@ PY
         | grep '^public would change' || echo "public dry run refused or failed"
     fi
   fi
+
+  # The nightly prompt is private-only (not in the public export): without it only the model step is
+  # skipped. The image GC, vault eval and public-ci steps above already ran. skip_job logs one line.
+  [ ! -f "$PROMPT_FILE" ] && skip_job "no prompt file at $PROMPT_FILE (model step skipped; the non-prompt steps ran)"
 
   PROMPT_TEXT="$(cat "$PROMPT_FILE")"
   PROMPT_TEXT="${PROMPT_TEXT//__HOME__/$HOME}"

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Docker idle reaper (decisions D195, D204): the selected Docker engine (Docker Desktop or
+"""Docker idle reaper (decision D195): the selected Docker engine (Docker Desktop or
 OrbStack, see docker_engine.py) runs only while something needs it, and is quit once it has been
 idle for a while. launchd runs it with --apply every 5 minutes. No flag or --dry-run prints
 what it would do and changes nothing (not even the idle clock).

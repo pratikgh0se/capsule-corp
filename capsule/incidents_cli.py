@@ -24,8 +24,8 @@ def _cfg(home, board=None):
 def _close(conn, args, cfg, home):
     ks = incidents.settings(cfg)
     try:
-        incidents.close(conn, args.incident_id, by="cli", home=home, quiet=args.quiet,
-                        **incidents.gate_args(ks))
+        incidents.close(conn, args.incident_id, by=args.author, home=home,
+                        quiet=args.quiet, **incidents.gate_args(ks))
     except incidents.CloseRefused as exc:
         print(f"capsule incidents close: refused, {args.incident_id} is missing:", file=sys.stderr)
         for line in exc.missing:
@@ -97,7 +97,7 @@ def _landed(conn, args, cfg, board, home):
     full = incident_landed._full_sha(checkout, args.sha)
     proven = incident_landed.preflight(conn, args.incident_id, args.test,   # no write lock held
                                        checkout=checkout, full=full, board=board,
-                                       home=home, **gate)
+                                       home=home, renamed_from=args.renamed_from, **gate)
     with db.txn(conn):      # a refused landed rolls the retest back (inner ones are savepoints)
         if args.test:
             inc = incidents.get(conn, args.incident_id)
@@ -108,7 +108,7 @@ def _landed(conn, args, cfg, board, home):
                     ks["blind_tests"])
         card = incident_landed.landed(conn, args.incident_id, args.sha, author=args.author,
                                       board=board, checkout=checkout, home=home,
-                                      proven=proven, **gate)
+                                      proven=proven, renamed_from=args.renamed_from, **gate)
     print(f"{args.incident_id}: fix card {card} landed outside the factory")
     if args.row:
         row = incident_landed.append_decision_row(conn, args.incident_id, ks["vault"],

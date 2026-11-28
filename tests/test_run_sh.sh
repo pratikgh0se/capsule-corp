@@ -1088,8 +1088,8 @@ PO="$T/pathorder"; mkdir -p "$PO/stub" "$PO/chome" "$PO/home"
 printf '#!/bin/sh\nexit 3\n' >"$PO/stub/python3"; chmod +x "$PO/stub/python3"
 printf '{"config_dir": "%s/cfg"}\n' "$PO" >"$PO/chome/host.json"
 out_po="$(env -u CAPSULE_JOBS_DIR -u RUN_SH_MAINT_DIR -u AGENT_OPS_HOME PATH="$PO/stub:$PATH" HOME="$PO/home" CAPSULE_HOME="$PO/chome" \
-  bash "$REPO/maintenance/run.sh" nightly 2>&1)"
+  bash "$REPO/maintenance/run.sh" inbox 2>&1)"
 check "PATH order: a broken python3 first on the caller's PATH still resolves host.json config_dir" \
-  'grep -qF "no prompt file at $PO/cfg/maintenance/nightly.md" <<<"$out_po"'
+  'grep -qF "no prompt file at $PO/cfg/maintenance/inbox.md" <<<"$out_po"'
 
 echo; if [ $fails -eq 0 ]; then echo "test_run_sh: all passed"; else echo "test_run_sh: $fails failed"; exit 1; fi

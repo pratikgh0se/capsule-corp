@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## [v0.2.0-alpha.1] - unreleased (pre-alpha preview, first public release)
+## [v0.2.0-alpha.1] - 2026-11-28 (pre-alpha preview, first public release, GitHub pre-release)
 
 Capsule Corp is a lightweight software factory for a solo maintainer: agents work cards on a board, and nothing lands on `main` until independent checks pass. This is an early preview, marked as a GitHub pre-release. It works on the maintainer's own machine and has not been tried on a fresh one. No app built by the factory has been accepted by its owner yet. A restructure into smaller, modular parts is planned, so the layout, commands and interfaces will change.
 

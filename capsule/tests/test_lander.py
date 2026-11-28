@@ -1,6 +1,3 @@
-# mutation-check: targets-predate-range 4d253485 -- a test-only mock fix; the long-title
-#   behaviour already held on base ::
-#   FullReplay.test_a_very_long_title_keeps_the_whole_suffix_and_the_lander_still_matches_it
 """C07a (t_2216591d): the landing checks as a dry-run step. Real git over a bare fixture remote,
 real shell commands for the suites and gates; nothing is mocked. Oracle 1 is the verdict and its
 per-check rows; oracle 2 reads the repo's refs and the remote's `main` with plain git, before and
@@ -730,8 +727,9 @@ class IntentExamples(World):
         examples = [e for e in every if "verdict" in e["expect"]]
         self.assertEqual(len(examples), 8)
         # C07b outcome (test_landing), C07d step (test_landing_step), G3 mutex (test_lander_guard),
-        # W205 replay (test_landing), day-branch rows (2)
-        self.assertEqual(len(every) - len(examples), 20)
+        # W205 replay (test_landing), day-branch rows (2),
+        # missing deploy.sh rows (3, test_deploy_missing)
+        self.assertEqual(len(every) - len(examples), 23)
         seen = set()
         for ex in examples:
             seen.add(ex["id"])

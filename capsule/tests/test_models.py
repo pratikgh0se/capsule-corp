@@ -1,6 +1,11 @@
-# mutation-check: targets-predate-range b957739c9 -- names out of tests, no behaviour pinned ::
-#   ClaudeEnv.test_capsule_worker_env_marker_is_set
-import json, os, shutil, tempfile, time, unittest
+import json
+import os
+import shlex
+import shutil
+import sys
+import tempfile
+import time
+import unittest
 from pathlib import Path
 from capsule import golden, paths
 from capsule.runners import docker, host
@@ -100,6 +105,49 @@ class Argv(unittest.TestCase):
         self.assertEqual(argv[argv.index("--effort") + 1], "high")
         self.assertNotIn("--effort", claude.build_argv(ROUTE, bundle, "/w", limits))
 
+    def settings(self, workspace, limits):
+        limits = dict(limits, schema={"type": "object"})
+        argv = claude.build_argv(ROUTE, {"system": "S", "prompt": "p"}, workspace, limits)
+        return json.loads(argv[argv.index("--settings") + 1]), argv
+
+    def test_read_guard_hook_is_wired_from_the_install_with_the_session_roots(self):
+        for dirs in ((), ("/s/requests", "/s/prior")):
+            cfg, argv = self.settings("/w", {"tools": "Read", "add_dirs": list(dirs)})
+            hooks = cfg["hooks"]["PreToolUse"]
+            self.assertEqual((list(cfg), len(hooks)), (["hooks"], 1))
+            self.assertEqual(hooks[0]["matcher"], "Read|Glob|Grep")
+            self.assertEqual(len(hooks[0]["hooks"]), 1)
+            self.assertEqual(shlex.split(hooks[0]["hooks"][0]["command"]),
+                             [sys.executable, "-I", str(claude.READ_GUARD), "/w", *dirs])
+            self.assertIn("--restricted", argv)
+        self.assertTrue(claude.READ_GUARD.is_absolute())
+        self.assertEqual(claude.READ_GUARD.parent, Path(claude.__file__).resolve().parents[1])
+
+    def test_read_guard_roots_survive_spaces_and_quotes(self):
+        odd = "/s/it's here/requests"
+        cfg, _ = self.settings("/w x", {"add_dirs": [odd]})
+        cmd = cfg["hooks"]["PreToolUse"][0]["hooks"][0]["command"]
+        self.assertEqual(shlex.split(cmd)[3:], ["/w x", odd])
+
+    def test_missing_guard_script_starts_no_session(self):
+        orig = claude.READ_GUARD
+        claude.READ_GUARD = Path(tempfile.gettempdir()) / "no-such-read-guard.py"
+        self.addCleanup(setattr, claude, "READ_GUARD", orig)
+        with self.assertRaises(RuntimeError):
+            claude.build_argv(ROUTE, {"system": "S", "prompt": "p"}, "/w", {"schema": {}})
+
+    def test_relative_root_or_empty_interpreter_starts_no_session(self):
+        for ws, dirs in (("w", []), ("/w", ["requests"]), ("", [])):
+            with self.assertRaises(RuntimeError, msg=(ws, dirs)):
+                self.settings(ws, {"add_dirs": dirs})
+        orig = sys.executable
+        self.addCleanup(setattr, sys, "executable", orig)
+        sys.executable = ""
+        with self.assertRaises(RuntimeError):
+            self.settings("/w", {})
+
+
+
 class RunnerLimitsToArgv(unittest.TestCase):
     """Final review C2/I2: the seam StrongRunner/HostRunner.limits -> build_argv. `dontAsk`
     plus `--restricted` denies every tool that is not pre-approved, so a writer needs
@@ -139,6 +187,28 @@ class RunnerLimitsToArgv(unittest.TestCase):
             # the only write any review role is pre-approved for is its own requests/ dir
             self.assertEqual(self.val(argv, "--allowedTools"), f"Edit(/{requests}/**)", role)
             self.assertEqual(self.val(argv, "--add-dir"), str(requests), role)
+
+
+    def test_no_tier_pre_approves_a_bare_read_tool(self):
+        """Read tools run on the CLI's confinement plus the guard hook, never a bare allow rule."""
+        roles = ("reviewer", "korin", "validator", "guide")
+        for name, lim in (("strong", docker.StrongRunner().limits("capsule-abc", self.sp)),
+                          *((r, host.HostRunner().limits(r, self.sp)) for r in roles)):
+            self.assertFalse({"Read", "Glob", "Grep"} & set(lim["allowed"].split(",")), name)
+            known = {"Read", "Glob", "Grep", "Edit", "Write"}
+            self.assertLessEqual(set(lim["tools"].split(",")) - {""}, known, name)
+            self.assertIn("--settings", self.argv(lim), name)
+
+    def test_light_and_mac_tiers_get_the_strong_tier_shape(self):
+        from capsule.runners import mac
+        for tier, r in (("light", host.LightRunner()), ("mac", mac.MacRunner())):
+            r._runs["capsule-abc"] = (str(self.sp), "(version 1)")
+            lim = r.limits("capsule-abc", self.sp)
+            self.assertEqual(lim["allowed"], "mcp__capsule__exec", tier)
+            argv = self.argv(lim)
+            cfg = json.loads(self.val(argv, "--settings"))
+            cmd = shlex.split(cfg["hooks"]["PreToolUse"][0]["hooks"][0]["command"])
+            self.assertEqual(cmd[3:], ["/w", str(self.sp / "requests")], tier)
 
 
 class ExampleConfig(unittest.TestCase):

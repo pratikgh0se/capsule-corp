@@ -21,6 +21,8 @@ Sees acceptance text and the interface snapshot only; may not read outside `/wor
 ## Failure modes and what happens
 A tester run that fails or times out is retried; `MAX_TRIES = 2` runs per card hash (`capsule/blind/dispatch.py`). A runner failure in the red check is retried on a later pass and the third triages the card (`capsule/blind/red.py`). A tester round that does not land is bounced to the tester with outcomes only; the second bounce triages the card.
 
+Reads: the file tools read only the blind clone (no `add_dirs`). See [read-guard](read-guard.md).
+
 ## Tests that pin it
 `capsule/tests/test_blind_run.py`, `test_blind_gate.py`, `test_blind_harness.py`, `test_blind_red.py`, `test_blind_dispatch.py`, `test_blind_text.py`, `test_blind_reconcile.py`, `test_contracts.py`, `test_intent.py`, `test_schema_contracts.py`.
 

@@ -1,3 +1,7 @@
+# mutation-check: targets-predate-range 2548512946 -- a test-only adaptation: the read guard
+#   added in this range refuses a relative workspace, so the argv check now passes an
+#   absolute one; the no-fallback behaviour it tests predates the range ::
+#   ModelUnavailable.test_unavailable_model_fails_loudly_and_never_falls_back
 """EVAL-04: `python3 -m capsule golden run <role>` against the stub adapter (never a real model).
 Test names carry the intent row ids (contracts/intent/golden_cli.jsonl); the fixture set is the
 shipped `fixtures/golden/validator`, whose two cases each expect {"verdict": "pass"}."""
@@ -204,10 +208,10 @@ class ModelUnavailable(GoldenCliCase):
         # second oracle: the argv the real adapter would build carries no --fallback-model,
         # while the same route with the config's fallback does (the control)
         _, bundle, _, limits = self.seen[0]["calls"][0]
-        argv = claude.build_argv(self.seen[0]["route"], bundle, "ws", limits)
+        argv = claude.build_argv(self.seen[0]["route"], bundle, "/ws", limits)
         self.assertNotIn("--fallback-model", argv)
         with_fb = _route("model-one", fallback="claude-haiku-4-5")
-        control = claude.build_argv(with_fb, bundle, "ws", limits)
+        control = claude.build_argv(with_fb, bundle, "/ws", limits)
         self.assertIn("--fallback-model", control)
 
 

@@ -202,7 +202,7 @@ def _incident_ids(ip, name):
     if name not in ("list", "open", "close-history", "app-event"):
         ip.add_argument("incident_id")
     incident_args.add(ip, name)
-    if name in ("retest", "landed", "duplicate"):
+    if name in ("retest", "landed", "duplicate", "close"):
         _author_arg(ip)
     if name == "retest":
         ip.add_argument("new_test_id")
@@ -313,7 +313,7 @@ def _build_parser():
 
 def _cmd_incidents(args, parser):
     from capsule import human, incidents_cli
-    if args.inc_cmd in ("retest", "landed"):    # they move what the gate reads: refuse first
+    if args.inc_cmd in ("retest", "landed", "close"):    # they move the gate's inputs: refuse first
         try:
             args.author = human.cli_author(args.author)
         except ValueError as exc:

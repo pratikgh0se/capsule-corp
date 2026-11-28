@@ -6,10 +6,13 @@ here in pure Python (no shell, no `date -j`) so it is portable and testable.
 import json
 import os
 import re
+import shlex
 import subprocess
+import sys
 import time as _time
 import uuid
 from datetime import datetime, timedelta
+from pathlib import Path
 
 from capsule import workspace as _workspace
 from capsule.runners import host_wall
@@ -36,6 +39,23 @@ USAGE_FIELDS = {"in": "input_tokens", "out": "output_tokens",
                 "cache_write": "cache_creation_input_tokens"}
 
 
+# The read guard (a PreToolUse hook) lives in the Capsule install, never in a worker's clone.
+READ_GUARD = Path(__file__).resolve().parents[1] / "read_guard.py"
+
+
+def _guard_settings(workspace, limits):
+    """The `--settings` JSON: a hook that denies Read/Glob/Grep outside the workspace and the
+    `--add-dir` folders (the same list the CLI gets). Inline, so no file a worker could edit."""
+    if not READ_GUARD.is_file():
+        raise RuntimeError("read guard script is missing: no session starts")
+    roots = [str(workspace), *(limits.get("add_dirs") or ())]
+    if not sys.executable or not all(os.path.isabs(r) for r in roots):
+        raise RuntimeError("read guard needs an interpreter and absolute roots: no session starts")
+    cmd = shlex.join([sys.executable, "-I", str(READ_GUARD), *roots])
+    hook = {"type": "command", "command": cmd, "timeout": 10}
+    return json.dumps({"hooks": {"PreToolUse": [{"matcher": "Read|Glob|Grep", "hooks": [hook]}]}})
+
+
 def _cli_schema(schema):
     return {k: v for k, v in schema.items() if k not in ("$schema", "$id")}
 
@@ -52,6 +72,7 @@ def build_argv(route, bundle, workspace, limits):
         # which accepts edits in cwd and --add-dir only
         "--permission-mode", limits.get("permission_mode", "dontAsk"),
         "--restricted",
+        "--settings", _guard_settings(workspace, limits),
         "--strict-mcp-config",
         "--max-turns", str(route["turn_budget"]),
         "--append-system-prompt", bundle["system"],

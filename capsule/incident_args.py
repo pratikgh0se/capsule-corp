@@ -13,6 +13,9 @@ def add(ip, name):
         ip.add_argument("sha", nargs="?", default=None, help="the main commit that holds the fix")
         ip.add_argument("--sha", dest="sha_flag", default=None, help="same, as a flag")
         ip.add_argument("--test", default=None, help="also set this recurrence test (retest)")
+        ip.add_argument("--renamed-from", default=None, metavar="OLD_TEST_ID",
+                        help="the recurrence test was renamed after the fix: its old id, which the"
+                             " fix commit holds")
         ip.add_argument("--row", choices=["auto"], default=None, help="also add the draft row")
     if name == "close":
         ip.add_argument("--quiet", action="store_true", help="queue no 'incident closed' notice")

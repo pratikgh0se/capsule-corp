@@ -45,7 +45,7 @@ def _base(conn, inc, checkout, write=True):
     return incident_repo.base_for(dict(inc, main_sha=base), checkout)
 
 
-def _proofs(conn, inc, full, checkout, cheap=False):
+def _proofs(conn, inc, full, checkout, cheap=False, renamed_from=None):
     """The sha, base and recurrence-test proofs; an empty `main_sha` is set to the last main commit
     before the incident opened. `cheap`: read-only, and no novelty proof (the preflight)."""
     base = _base(conn, inc, checkout, write=not cheap)
@@ -59,11 +59,25 @@ def _proofs(conn, inc, full, checkout, cheap=False):
                          f" `capsule incidents retest {inc['id']} <test id>"
                          " --reason <why>` first")
     blind = incident_blind_run.BLIND_RE.match(test_id)
+    if renamed_from and (blind or renamed_from == test_id
+                         or not incident_recurrence.TEST_ID_RE.fullmatch(renamed_from)):
+        raise ValueError(f"--renamed-from {renamed_from!r} must be another unittest or shell id"
+                         f" than {test_id} (a blind id cannot be renamed)")
+    if renamed_from and inc.get("closure") == "watch":
+        raise ValueError("--renamed-from: a watch closure skips the novelty proof, so there is"
+                         " no old id to read")
+    if renamed_from and incident_recurrence.recurrence_test_is_new(renamed_from, checkout, base)[0]:
+        raise ValueError(f"--renamed-from {renamed_from}: that test is still on main, so it was"
+                         f" not renamed; name it with `--test {renamed_from}` instead")
     if not (cheap or blind or inc.get("closure") == "watch"):
-        ok, detail = incident_recurrence.recurrence_test_is_new(test_id, checkout, base, rev=full)
+        # a rename: the old id is the one the fix commit holds; the new id's own proof (new on
+        # main since the base, and green there) is the gate's `recurrence_gaps`
+        ok, detail = incident_recurrence.recurrence_test_is_new(renamed_from or test_id, checkout,
+                                                                base, rev=full)
         if not ok:
             raise ValueError(f"commit {full[:12]} does not hold the fix: {detail}. Land the"
-                             f" recurrence test {test_id} in the fix, or name the right test"
+                             f" recurrence test {renamed_from or test_id} in the fix, or name the"
+                             f" right test"
                              f" with `capsule incidents retest {inc['id']} <test id>"
                              " --reason <why>`")
 
@@ -115,6 +129,7 @@ def _incident(conn, incident_id, board, home):
 
 
 def preflight(conn, incident_id, test, *, checkout, full, board=None, home=None, blind_tests=None,
+              renamed_from=None,
               timeout=incident_recurrence.TEST_TIMEOUT,
               run_test=incident_recurrence.run_recurrence_test,
               check_new=incident_recurrence.recurrence_test_is_new):
@@ -128,7 +143,7 @@ def preflight(conn, incident_id, test, *, checkout, full, board=None, home=None,
         if other:
             other.close()
     inc = dict(inc, recurrence_test=test or inc["recurrence_test"])
-    _proofs(conn, inc, full, checkout, cheap=True)
+    _proofs(conn, inc, full, checkout, cheap=True, renamed_from=renamed_from)
     pair = (inc["recurrence_test"], _base(conn, inc, checkout, write=False))
     gaps = incidents.recurrence_gaps(dict(inc, recurrence_test=pair[0], main_sha=pair[1]), checkout,
                                      run_test, timeout, check_new, blind_tests)
@@ -138,7 +153,7 @@ def preflight(conn, incident_id, test, *, checkout, full, board=None, home=None,
 
 
 def landed(conn, incident_id, sha, *, author, board, checkout, home=None, now=None,
-           proven=None, **gate):
+           proven=None, renamed_from=None, **gate):
     """Record that the incident's fix is on main at `sha`. Refuses unless the sha is on main, the
     incident has a recurrence test, and that test is new in the sha (a `watch` closure skips this
     check, as the close gate does; a blind id skips it here because nobody reads that test, and the
@@ -149,29 +164,37 @@ def landed(conn, incident_id, sha, *, author, board, checkout, home=None, now=No
     before the incident evidence. An empty `main_sha` is set to the last main commit before the
     incident opened. Before any write, and before the write lock, it runs the close gate's
     recurrence-test proof (`preflight`, unless the caller passes its `proven` pair); a failure
-    raises ValueError with the gate's text and changes nothing. If the test or base changed since
+    raises ValueError with the gate's text and changes nothing. `renamed_from` (an old test id):
+    the incident's test was renamed after the fix, so the novelty proof reads the old id at `sha`
+    and the evidence line names the rename. If the test or base changed since
     the proof, nothing is written. Returns the fix card value."""
     now = int(now if now is not None else time.time())
     full = _full_sha(checkout, sha)
     proven = proven or preflight(conn, incident_id, None, checkout=checkout, full=full,
-                                 board=board, home=home, **gate)
+                                 board=board, home=home, renamed_from=renamed_from, **gate)
     other = None
     try:
         with db.txn(conn):
             inc, card, other = _incident(conn, incident_id, board, home)
             cconn = other or conn
             action = _action(cconn, card, inc["fix_card"].split(":")[0] if other else None)
-            _proofs(conn, inc, full, checkout)
+            _proofs(conn, inc, full, checkout, renamed_from=renamed_from)
             now_inc = incidents.get(conn, incident_id)
             if (now_inc["recurrence_test"], _base(conn, now_inc, checkout, write=False)) != proven:
                 raise ValueError(f"incident {incident_id}: the recurrence test or base changed"
                                  " during the proof; nothing written, run landed again")
             # a card already done has no write; the evidence line still records the fix sha
+            evidence = inc.get("evidence") or ""
+            lines = []
             if (_write(cconn, card, action, full, author, now) if action != "none"
-                    else full not in incident_repo.LANDED_RE.findall(inc.get("evidence") or "")):
-                incidents.attach(conn, incident_id, [f"fix landed outside the factory: card"
-                                                     f" {inc['fix_card']} done at {full}"
-                                                     f" by {author}"])
+                    else full not in incident_repo.LANDED_RE.findall(evidence)):
+                lines.append(f"fix landed outside the factory: card {inc['fix_card']}"
+                             f" done at {full} by {author}")
+            rename = f"recurrence test renamed after the fix: {renamed_from} -> {proven[0]}"
+            if renamed_from and rename not in evidence:     # on every run that names it
+                lines.append(rename)
+            if lines:
+                incidents.attach(conn, incident_id, lines)
     finally:
         if other:
             other.close()

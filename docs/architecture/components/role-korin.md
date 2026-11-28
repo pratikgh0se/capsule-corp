@@ -22,6 +22,8 @@ A document applies only if it passes the schema, names this incident, gives a `t
 ## Failure modes and what happens
 See the incidents page.
 
+Reads: the file tools read only the main checkout, the request folder, the incident note folder and the evidence folders. See [read-guard](read-guard.md).
+
 ## Tests that pin it
 `capsule/tests/test_korin.py`, `test_incidents.py`, `test_incident_recurrence.py`, `test_loophole_korin.py`; `contracts/intent/korin.jsonl`.
 

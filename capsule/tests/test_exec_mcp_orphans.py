@@ -12,8 +12,10 @@ import stat
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from capsule import paths
 from capsule.runners import exec_mcp
@@ -62,11 +64,25 @@ class Texts(unittest.TestCase):
         return str(path)
 
     def test_partial_output_survives_a_client_side_expiry_with_the_tip(self):
-        docker = self.fake("echo partial-line\nexec sleep 60\n")
+        ready = Path(tempfile.mkdtemp()) / "ready"
+        docker = self.fake(f"echo partial-line\n: > {ready}\nexec sleep 60\n")
+
+        class Gated(subprocess.Popen):
+            """The client's expiry fires only once the fake has written (a clock race otherwise:
+            under load the shell can start after a 1 s timeout)."""
+            def wait(self, timeout=None):
+                if timeout is not None and "exec" in self.args:
+                    deadline = time.monotonic() + 30
+                    while (not ready.exists() and self.poll() is None
+                           and time.monotonic() < deadline):
+                        time.sleep(0.01)
+                    timeout = 0
+                return super().wait(timeout)
         old = exec_mcp._CLIENT_TIMEOUT_SLACK
         exec_mcp._CLIENT_TIMEOUT_SLACK = -4      # the client gives up after 1s
         try:
-            done = exec_mcp._run_exec(cfg_for(docker), "x", 5)
+            with mock.patch.object(exec_mcp.subprocess, "Popen", Gated):
+                done = exec_mcp._run_exec(cfg_for(docker), "x", 5)
         finally:
             exec_mcp._CLIENT_TIMEOUT_SLACK = old
         self.assertEqual(done["exit_code"], -1)

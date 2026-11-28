@@ -40,6 +40,14 @@ class Closing(WallCase):
         rows = self.conn.execute("SELECT * FROM incidents WHERE role='host_wall'")
         return [dict(r) for r in rows]
 
+    @staticmethod
+    def same_day(span):
+        """A `now` whose next `span` seconds stay in one UTC day: an incident dedupes within a
+        day (`incidents._day_start`), so ticks that crossed midnight would open a second one."""
+        now = int(time.time())
+        end = incidents._day_start(now + span)
+        return now if incidents._day_start(now) == end else end
+
     def test_an_implementer_run_is_released_the_board_pauses_and_it_retries_on_its_own(self):
         now = int(time.time())
         self.script["implementer"] = [[wall_result(now)], [IMPL_DONE]]
@@ -129,7 +137,7 @@ class Closing(WallCase):
         self.assertEqual(seen.call_args.kwargs, {"checks": True})
 
     def test_a_wall_failure_keeps_one_incident_key_whatever_its_message_holds(self):
-        now = int(time.time())
+        now = self.same_day(700)
         whys = ["host wall unavailable: /usr/bin/sandbox-exec: FileNotFoundError: gone",
                 "host wall unavailable: /tmp/spool/2/hostwall.sb: sandbox-exec refused the profile",
                 "host wall unavailable: the profile at /tmp/spool/3/hostwall.sb was refused"]
@@ -147,7 +155,7 @@ class Closing(WallCase):
         self.assertEqual(incident_inputs.scrub(evidence), {})       # its key is kept for Korin
 
     def test_the_same_failure_twice_is_one_incident_and_no_failure_count(self):
-        now = int(time.time())
+        now = self.same_day(700)
         self.script["implementer"] = [[wall_result(now)], [wall_result(now + 400)], [IMPL_DONE]]
         self.tick.once(now)
         self.tick.once(now + 301)

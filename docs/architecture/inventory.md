@@ -223,6 +223,7 @@ stdlib-only base of the answer path; PROTECTED |
 | `capsule/probe_detail.py` | [worker-runner-and-images](components/worker-runner-and-images.md) | what a failed container start leaves for the reader |
 | `capsule/protected_scope.py` | [gate-protected-paths](components/gate-protected-paths.md) |  |
 | `capsule/publish.py` | [product-board-landing](components/product-board-landing.md) |  |
+| `capsule/read_guard.py` | [read-guard](components/read-guard.md) | PreToolUse allow-list for worker reads |
 | `capsule/replay.py` | [dispatch-and-caps](components/dispatch-and-caps.md) | replay harness for dispatch switches |
 | `capsule/reviewer_rerun.py` | [role-reviewer](components/role-reviewer.md) |  |
 | `capsule/rhythm.py` | [product-board-landing](components/product-board-landing.md) |  |

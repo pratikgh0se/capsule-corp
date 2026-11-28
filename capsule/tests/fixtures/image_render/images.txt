@@ -1,0 +1,4 @@
+# fixture IMAGES.lock for test_image_render: fake digests, never real images
+capsule-base@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+capsule-python@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+capsule-web@sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc

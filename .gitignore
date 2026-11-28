@@ -1,0 +1,45 @@
+# row 470 fix round 1, I4: capsule unblocked keeps its own branch-queue/ownership markers
+# under $CAPSULE_HOME (never in-tree - a committed marker would inherit through a merge and
+# apply to every later branch), but a stray .capsule/ some other tool drops here must never
+# land in git either.
+.capsule/
+
+# secrets and live state never enter git
+.env
+.env.*
+*.env
+!env.example
+auth.json
+*.db
+*.db-shm
+*.db-wal
+*.lock
+# bootstrap.lock is tracked config sourced by bootstrap.sh, not a runtime lock (t_431a0517)
+!/bootstrap.lock
+# docker/IMAGES.lock is the tracked image digest pin file (S10a), not a runtime lock
+!/docker/IMAGES.lock
+*.pid
+*.sock
+
+# maintenance runtime (the tree is symlinked from <jobs config dir>/maintenance)
+maintenance/logs/
+maintenance/state/
+maintenance/state.stray-events.jsonl
+maintenance/.semantic-setup-done
+maintenance/__pycache__/
+maintenance/**/__pycache__/
+maintenance/hooks/__pycache__/
+maintenance/tests/__pycache__/
+
+# rendered from observability/grafana/provisioning/alerting/policies.yaml.template
+# by deploy.sh (compose bind-mounts this dir read-only, so the rendered file
+# must live in the checkout, not under AGENT_OPS_HOME)
+observability/grafana/provisioning/alerting/policies.yaml
+# rendered by deploy.sh from contact-points-slack.yaml.template
+observability/grafana/provisioning/alerting/contact-points-slack.yaml
+
+# python / editor noise
+__pycache__/
+*.pyc
+.DS_Store
+scratchpad

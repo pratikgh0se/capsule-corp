@@ -1,0 +1,4 @@
+{"id": "env-var-interpreter-is-honoured", "given": {"document": {"check": "ui_check", "case": "env-var-set-to-usable-interpreter"}}, "expect": {"pass": "env-var-is-honoured"}, "source": "recorded run rq_2c9581db"}
+{"id": "unusable-env-var-never-falls-back-silently", "given": {"document": {"check": "ui_check", "case": "env-var-set-to-unusable-interpreter"}}, "expect": {"pass": "unusable-env-var-picks-nothing"}, "source": "recorded run rq_2c9581db"}
+{"id": "no-old-install-path-in-code", "given": {"document": {"check": "ui_check", "case": "tests-and-maintenance-tree"}}, "expect": {"pass": "no-old-install-path-in-tests-or-maintenance"}, "source": "recorded run rq_2c9581db"}
+{"id": "no-env-var-uses-default-capsule-playwright-path", "given": {"document": {"check": "ui_check", "case": "env-var-unset-default-path-usable"}}, "expect": {"pass": "host-default-venv-used-when-env-var-unset"}, "source": "recorded run rq_2c9581db"}

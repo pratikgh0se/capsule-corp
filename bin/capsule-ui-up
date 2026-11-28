@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# capsule-ui-up [--dry-run] - one command for the local UIs: starts the observability
+# compose stack (Grafana and the Caddy front door) through maintenance/lib_compose.sh,
+# waits until the front door answers for Grafana, then prints the cc.<name>.localhost
+# URLs. DOCKER_BIN and CURL_BIN name the binaries (tests inject fakes). --dry-run prints
+# the commands compose_up_all would run (recorded through stand-in binaries) and runs nothing.
+# Note: sourcing lib_compose.sh runs `capsule-secret backend` (a local read-only call, no
+# docker) to pick the profile; that cannot be skipped without changing the lib. No secret is
+# ever printed; lib_compose keeps them off argv.
+set -u
+case "${1:-}" in
+  "") DRY=0 ;;
+  --dry-run) DRY=1 ;;
+  *) echo "usage: capsule-ui-up [--dry-run]" >&2; exit 2 ;;
+esac
+REPO="$(cd -P "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
+export COMPOSE_FILE="$REPO/observability/docker-compose.yml"
+. "$REPO/maintenance/lib_compose.sh"
+HEALTH_URL="${UI_HEALTH_URL:-http://127.0.0.1/api/health}"
+urls() {
+  echo "http://cc.grafana.localhost"
+  case ",${COMPOSE_PROFILES:-}," in *,secrets,*) echo "http://cc.secrets.localhost" ;; esac
+}
+if [ "$DRY" -eq 1 ]; then
+  D="$(mktemp -d)" || exit 1; trap 'rm -rf "$D"' EXIT
+  printf '#!/bin/sh\necho "%s $*" >>"%s/cmds"\n' "$DOCKER_BIN" "$D" >"$D/docker"
+  printf '#!/bin/sh\necho "%s $*" >>"%s/cmds"\n' "$CAPSULE_SECRET_BIN" "$D" >"$D/secret"
+  printf '#!/bin/sh\nexit 0\n' >"$D/curl"
+  chmod +x "$D/docker" "$D/secret" "$D/curl"
+  REAL_DOCKER="$DOCKER_BIN"
+  DOCKER_BIN="$D/docker" CAPSULE_SECRET_BIN="$D/secret" CURL_BIN="$D/curl" compose_up_all >"$D/out" 2>&1 \
+    || { cat "$D/out"; exit 1; }
+  sed "s|$D/docker|$REAL_DOCKER|g; s|^|would run: |" "$D/cmds"
+  echo "would wait for: $CURL_BIN -fsS -H 'Host: cc.grafana.localhost' $HEALTH_URL (up to ${COMPOSE_WAIT_S}s)"
+  urls
+  exit 0
+fi
+[ -f "$OBS_ENV" ] || { echo "capsule-ui-up: $OBS_ENV is missing; copy observability/env.template there and fill it in" >&2; exit 1; }
+compose_up_all || { echo "capsule-ui-up: the stack did not start (see the line above); nothing to open" >&2; exit 1; }
+step=$COMPOSE_WAIT_STEP_S
+[ "$step" -gt 0 ] 2>/dev/null || step=1
+waited=0
+until "$CURL_BIN" -fsS -m 2 -H 'Host: cc.grafana.localhost' "$HEALTH_URL" >/dev/null 2>&1; do
+  if [ "$waited" -ge "$COMPOSE_WAIT_S" ]; then
+    echo "capsule-ui-up: the front door did not answer for Grafana within ${COMPOSE_WAIT_S}s" >&2; exit 1
+  fi
+  sleep "$COMPOSE_WAIT_STEP_S"; waited=$((waited + step))
+done
+echo "local UIs are up:"
+urls

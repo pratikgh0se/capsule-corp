@@ -1,0 +1,6 @@
+{"schema": "blind_result.v1", "run_id": "0123456789abcdef0123456789abcdef", "task_id": "t_0000aaaa",
+ "claim_lock": "host:0123456789abcdef0123456789abcdef", "blind_commit": "abc1234", "base_sha": "def5678",
+ "head_sha": "0123abc", "red": "pass", "counts": {"pass": 1, "fail": 0, "error": 0, "skipped": 0},
+ "tests": [{"id": "test_help_lists_verbs", "result": "pass", "source": "row 601",
+            "given": "the tool is run with --help", "expect": "the usage text lists every verb",
+            "observed": {"cmd": "tool --help", "exit": 0, "stdout_tail": "usage: tool", "stderr_tail": ""}}]}

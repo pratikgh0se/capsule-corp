@@ -1,0 +1,3 @@
+{"id": "over-the-ceiling-is-not-landed", "given": {"document": {"check": "diff_ceiling", "diff_lines_park": 400, "card_diff": "450 added plus removed lines outside tests"}}, "expect": {"landed": false, "reported_once_per_head": true}, "source": "owner"}
+{"id": "tests-and-lockfiles-do-not-count", "given": {"document": {"check": "diff_ceiling", "diff_lines_park": 400, "card_diff": "300 lines of code plus 500 lines under capsule/tests/ and a package-lock.json"}}, "expect": {"size": 300, "landed": "judged as before"}, "source": "owner"}
+{"id": "git-cannot-say-judges-as-before", "given": {"document": {"check": "diff_ceiling", "card_diff": "merge base with origin target cannot be found"}}, "expect": {"size": null, "landed": "judged as before"}, "source": "owner"}

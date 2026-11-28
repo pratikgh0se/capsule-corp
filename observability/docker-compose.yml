@@ -1,0 +1,130 @@
+name: capsule-corp
+services:
+  postgres:
+    image: postgres:16.16-alpine3.24
+    container_name: capsule-corp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ops
+      POSTGRES_USER: ops
+      POSTGRES_PASSWORD: ${OPS_PG_PASSWORD}
+    ports: ["127.0.0.1:5432:5432"]
+    volumes:
+      - ${DATA_DIR}/postgres:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ops -d ops"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+  loki:
+    image: grafana/loki:3.7.9
+    container_name: capsule-corp-loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/loki.yaml
+    ports: ["127.0.0.1:3100:3100"]
+    volumes:
+      - ./loki/loki.yaml:/etc/loki/loki.yaml:ro
+      - ${DATA_DIR}/loki:/loki
+  fluent-bit:
+    image: fluent/fluent-bit:5.1.5
+    container_name: capsule-corp-fluent-bit
+    restart: unless-stopped
+    depends_on: [loki]
+    volumes:
+      - ./fluent-bit/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
+      - ./fluent-bit/parsers.conf:/fluent-bit/etc/parsers.conf:ro
+      - ./fluent-bit/labels.lua:/fluent-bit/etc/labels.lua:ro
+      - ./fluent-bit/scrub.lua:/fluent-bit/etc/scrub.lua:ro
+      - ${MAINT_LOGS}:/vault-logs:ro
+      # The Lookout (spec 5.13): narrow read-only mounts, never the whole $CAPSULE_HOME
+      # (its config.json holds the Slack block). C-1: the merge is the recreate (heal
+      # runs `docker compose up -d` every 300s against main); the `:?` guard stops
+      # compose on a blank CAPSULE_HOME instead of mounting host root paths - run
+      # `deploy.sh --apply` first, which backfills CAPSULE_HOME into observability.env.
+      - ${CAPSULE_HOME:?CAPSULE_HOME missing in observability.env}/logs:/capsule/logs:ro
+      - ${CAPSULE_HOME:?CAPSULE_HOME missing in observability.env}/boards:/capsule/boards:ro
+      - ${DATA_DIR}/fluent-bit:/fluent-bit/state
+  grafana:
+    image: grafana/grafana:13.2.4
+    container_name: capsule-corp-grafana
+    restart: unless-stopped
+    depends_on: [postgres, loki]
+    environment:
+      # Without this the container is UTC and a panel that formats a local timestamp
+      # labels a 14:00 run as 07h.
+      TZ: Asia/Bangkok
+      GF_SECURITY_ADMIN_PASSWORD: ${OPS_GRAFANA_PASSWORD}
+      OPS_PG_PASSWORD: ${OPS_PG_PASSWORD}
+      # rows 398, 425: read by contact-points-slack.yaml; they come from Infisical
+      # (empty when missing, and Grafana then refuses the Slack receiver).
+      SLACK_WEBHOOK_ALERTS: ${SLACK_WEBHOOK_ALERTS:-}
+      SLACK_WEBHOOK_ACTIVITY: ${SLACK_WEBHOOK_ACTIVITY:-}
+    ports: ["127.0.0.1:3000:3000"]
+    volumes:
+      - ./grafana/grafana.ini:/etc/grafana/grafana.ini:ro
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - ${DATA_DIR}/grafana:/var/lib/grafana
+  front-door:
+    # W333: cc.<name>.localhost -> UI, routes in caddy/Caddyfile. Host port 80 on loopback only.
+    image: caddy:2.11.7-alpine
+    container_name: capsule-corp-front-door
+    restart: unless-stopped
+    depends_on: [grafana]
+    ports: ["127.0.0.1:80:80"]
+    environment:
+      # Route file for cc.secrets.localhost; lib_compose.sh points it at secrets.caddy only
+      # when the infisical backend (compose profile "secrets") is active.
+      CC_CADDY_SECRETS: ${CC_CADDY_SECRETS:-/etc/caddy/routes/none.caddy}
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy/routes:/etc/caddy/routes:ro
+  infisical:
+    profiles: ["secrets"]   # P06: only with the infisical secrets backend (COMPOSE_PROFILES=secrets)
+    image: infisical/infisical@sha256:02082bf13163697869cbb4fc3fc630a87ff78bfb627492282d9bd5aae97858ef   # v0.165.6 resolved 2026-09-07 (image built 2026-09-04); bump deliberately
+    container_name: capsule-corp-infisical
+    restart: unless-stopped
+    depends_on:
+      infisical-db:
+        condition: service_healthy
+      infisical-redis:
+        condition: service_started
+    env_file: ["${INFISICAL_ENV}"]
+    environment:
+      NODE_ENV: production
+      # W333: SITE_URL is the WebAuthn origin and RP ID (passkeys) and the link base; it must
+      # match the address in the browser. Overrides env_file.
+      SITE_URL: http://cc.secrets.localhost
+    ports: ["127.0.0.1:8085:8080"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api/status"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+  infisical-db:
+    profiles: ["secrets"]   # P06: only with the infisical secrets backend (COMPOSE_PROFILES=secrets)
+    image: postgres:16.16-alpine3.24
+    container_name: capsule-corp-infisical-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: infisical
+      POSTGRES_USER: infisical
+      POSTGRES_PASSWORD: ${INFISICAL_PG_PASSWORD}
+    volumes:
+      - ${DATA_DIR}/infisical-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U infisical -d infisical"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+  infisical-redis:
+    profiles: ["secrets"]   # P06: only with the infisical secrets backend (COMPOSE_PROFILES=secrets)
+    # Valkey (BSD-3-Clause) replaces Redis (RSALv2/SSPLv1), D312 and D240 (licence row R11); speaks the Redis protocol.
+    # Service and container names keep `redis` so every reference stays valid. 9.1.3 resolved 2026-11-15.
+    image: valkey/valkey@sha256:bf09d58e96d6b4524a15396b65b242bbe18beebbcc15a04d8ee75ddac62fae0b   # v9.1.3 (alpine3.24 variant, digest resolved 2026-11-15); bump deliberately
+    container_name: capsule-corp-infisical-redis
+    restart: unless-stopped
+    volumes:
+      # Valkey cannot read Redis 7.4 data, so it starts empty in its own folder; the old infisical-redis folder is kept as the rollback (D312).
+      - ${DATA_DIR}/infisical-valkey:/data

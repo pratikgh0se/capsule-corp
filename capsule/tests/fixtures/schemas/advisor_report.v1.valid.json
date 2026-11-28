@@ -1,0 +1,11 @@
+{"schema": "advisor_report.v1", "run_id": "0123456789abcdef0123456789abcdef", "task_id": "t_0000aaaa",
+ "claim_lock": "host:0123456789abcdef0123456789abcdef",
+ "summary": "Reviewer contradicted intent most often this week; one override is ready to expire.",
+ "contradiction_ranking": [{"contract": "reviewer", "count": 3}, {"contract": "implementer", "count": 1}],
+ "override_review": [{"override": "row-540-late-findings", "verdict": "keep",
+                      "note": "Still needed for ordinary late findings."}],
+ "proposals": [{"kind": "prune", "target": "contracts/reviewer.md",
+                "change": "Drop the duplicate checklist line about wrapping long test lines.",
+                "removes": "The duplicate wrap-lines checklist item in the reviewer contract.",
+                "evidence": "Two contradictions this week cited the same line.",
+                "card_title": "Prune duplicate reviewer checklist line"}]}

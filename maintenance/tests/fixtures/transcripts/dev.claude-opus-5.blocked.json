@@ -1,0 +1,34 @@
+{
+  "v": 1,
+  "role": "dev",
+  "model": "claude-opus-5",
+  "path": "blocked",
+  "source": "fake-e2e",
+  "note": "round-3 escalation still cannot resolve the blocker; the model change alone did not manufacture a capability that does not exist.",
+  "card": {
+    "id": "t_1o2p3q4r",
+    "title": "Wire the retry wrapper into merge_gate.py (round 3)",
+    "body": "<!-- sprint-meta risk=R2 spec=2026-09-10-roles-and-souls spec_sha256=deadbeef area=maintenance slug=t_1o2p3q4r -->"
+  },
+  "calls": [
+    {
+      "tool": "kanban_show",
+      "args": {
+        "task_id": "t_1o2p3q4r"
+      }
+    },
+    {
+      "tool": "kanban_comment",
+      "args": {
+        "text": "assumptions: this is the round-3 escalation for the same blocker Sonnet 5 hit twice"
+      }
+    },
+    {
+      "tool": "kanban_block",
+      "args": {
+        "kind": "capability",
+        "reason": "BLOCKER: merge_gate.py's sh= callable has no timeout parameter to wrap, confirmed again under Opus 5\nTRIED: the same two approaches Sonnet 5 tried, plus reading kanban_tools.py's real signature for a precedent\nNEED: confirmation the timeout parameter is safe to add to the sh= signature"
+      }
+    }
+  ]
+}

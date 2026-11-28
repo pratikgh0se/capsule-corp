@@ -1,0 +1,3 @@
+{"id": "only-own-dir", "given": {"document": {"check": "blind_tester_lint", "branch_touches": ["cards/t_a/test_x.py", "cards/t_b/test_y.py"], "card": "t_a"}}, "expect": {"lint": "refused", "reason": "outside cards/t_a"}, "source": "row 601"}
+{"id": "example-row-required", "given": {"document": {"check": "blind_tester_lint", "test_id": "test_a", "examples_row": "absent"}}, "expect": {"lint": "refused", "reason": "test_a"}, "source": "row 601"}
+{"id": "no-foreign-import", "given": {"document": {"check": "blind_tester_lint", "test_imports": "capsule.tick"}}, "expect": {"lint": "refused", "reason": "capsule.tick"}, "source": "row 601"}

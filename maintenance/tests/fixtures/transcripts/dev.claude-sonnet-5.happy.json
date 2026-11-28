@@ -1,0 +1,37 @@
+{
+  "v": 1,
+  "role": "dev",
+  "model": "claude-sonnet-5",
+  "path": "happy",
+  "source": "fake-e2e",
+  "note": "dev finishes the happy path and hands off with kanban_request_review (mirrors fakes.FakeLegacyCli.dev_finishes).",
+  "card": {
+    "id": "t_8ec12e92",
+    "title": "Add bounded retry to board_bridge's gh call",
+    "body": "<!-- sprint-meta risk=R2 spec=2026-09-10-roles-and-souls spec_sha256=deadbeef area=maintenance slug=t_8ec12e92 -->"
+  },
+  "calls": [
+    {
+      "tool": "kanban_show",
+      "args": {
+        "task_id": "t_8ec12e92"
+      }
+    },
+    {
+      "tool": "kanban_comment",
+      "args": {
+        "text": "assumptions: retrying only on the gh timeout path, no other callers touched"
+      }
+    },
+    {
+      "tool": "kanban_request_review",
+      "args": {
+        "reviewer": "reviewer",
+        "summary": "ready for review",
+        "metadata": {
+          "round": 1
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+"""Order totals."""
+
+TAX_RATE = 0.2
+
+
+def total(prices, tax_rate=TAX_RATE):
+    """Sum of prices with tax added, rounded to cents."""
+    return round(sum(prices) * (1 + tax_rate), 2)

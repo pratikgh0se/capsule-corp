@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/schemas/rows/outbox_row.v1.json",
+  "title": "One row of the outbox table (row 569; written by capsule/outbox.py add/notify, read by flush and the file/slack senders)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "channel", "body", "created_at", "attempts", "status"],
+  "properties": {
+    "id": {"type": "integer", "minimum": 1},
+    "channel": {"enum": ["file", "slack"]},
+    "thread_key": {"maxLength": 200},
+    "body": {"type": "string", "minLength": 1, "maxLength": 20000},
+    "created_at": {"type": "integer", "minimum": 0},
+    "attempts": {"type": "integer", "minimum": 0},
+    "delivered_at": {"minimum": 0},
+    "last_error": {"maxLength": 500},
+    "status": {"enum": ["pending", "delivered", "dead"]}
+  }
+}

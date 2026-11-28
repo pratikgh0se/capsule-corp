@@ -1,0 +1,34 @@
+{
+  "v": 1,
+  "role": "dev",
+  "model": "claude-opus-5",
+  "path": "gate-failed",
+  "source": "fake-e2e",
+  "note": "round-3 escalation reaches the same root cause as round 1 and blocks the same way - the model axis does not change what is out of scope.",
+  "card": {
+    "id": "t_9w0x1y2z",
+    "title": "Fix the flaky CI job blocking merge (round 3)",
+    "body": "<!-- sprint-meta risk=R2 spec=2026-09-10-roles-and-souls spec_sha256=deadbeef area=maintenance slug=t_9w0x1y2z -->"
+  },
+  "calls": [
+    {
+      "tool": "kanban_show",
+      "args": {
+        "task_id": "t_9w0x1y2z"
+      }
+    },
+    {
+      "tool": "kanban_comment",
+      "args": {
+        "text": "gate: not merged - pytest job still failing after the round-3 fix; same fixture bug"
+      }
+    },
+    {
+      "tool": "kanban_block",
+      "args": {
+        "kind": "dependency",
+        "reason": "BLOCKER: the CI failure is confirmed to originate in a fixture outside this task's diff, same finding as round 1\nNEED: a decision on whether to widen this task's scope to fix the shared fixture or hand the fixture bug to a new card"
+      }
+    }
+  ]
+}

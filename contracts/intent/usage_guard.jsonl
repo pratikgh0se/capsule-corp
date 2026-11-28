@@ -1,0 +1,4 @@
+{"id": "no-signal-pass-keeps-prior-snapshot", "given": {"document": {"script": "usage_guard", "pass": "run", "utilization": null, "prior_snapshot": "fresh"}}, "expect": {"snapshot_written": false, "prior_snapshot_unchanged": true}, "source": "row 454"}
+{"id": "unwritable-snapshot-does-not-raise", "given": {"document": {"script": "usage_guard", "pass": "run", "utilization": 0.99, "snapshot_path_writable": false}}, "expect": {"snapshot_written": false, "run_exit": 0}, "source": "row 454"}
+{"id": "stale-snapshot-reads-as-no-signal", "given": {"document": {"script": "read_usage_window", "snapshot_age_s": 1000, "max_age_s": 900}}, "expect": {"reading": "none"}, "source": "row 454"}
+{"id": "hot-window-never-pauses", "given": {"document": {"script": "usage_guard", "pass": "run", "utilization": 1.0}}, "expect": {"subprocess_spawned": false, "guard_file_written": false, "paused": false}, "source": "owner"}

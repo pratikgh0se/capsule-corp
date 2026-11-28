@@ -1,0 +1,3 @@
+{"id": "no-send-alone-resolves-the-temp-home", "given": {"document": {"check": "capsule_home", "env": {"AGENT_OPS_NO_SEND": "1"}}}, "expect": {"home": "$TMPDIR/capsule-home-no-send", "pause_reaches_home_default": false}, "source": "row 609"}
+{"id": "explicit-capsule-home-beats-no-send", "given": {"document": {"check": "capsule_home", "env": {"AGENT_OPS_NO_SEND": "1", "CAPSULE_HOME": "$SCRATCH/explicit"}}}, "expect": {"home": "$SCRATCH/explicit"}, "source": "row 609"}
+{"id": "no-marker-no-override-keeps-the-live-default", "given": {"document": {"check": "capsule_home", "env": {}}}, "expect": {"home": "$HOME/.local/share/capsule"}, "source": "row 609"}

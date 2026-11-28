@@ -1,0 +1,5 @@
+[image]
+stacks = ["python"]
+apt = ["libpq-dev", "g++"]
+lockfiles = ["requirements.txt"]
+smoke = ["python -c 'import six'"]

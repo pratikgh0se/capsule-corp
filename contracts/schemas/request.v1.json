@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/schemas/request.v1.json",
+  "title": "Spool request (rows 370, 416, 420)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "run_id", "task_id", "claim_lock", "verb"],
+  "properties": {
+    "schema": {"const": "request.v1"},
+    "run_id": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+    "task_id": {"type": "string", "pattern": "^t_[0-9a-f]{8}$"},
+    "claim_lock": {"type": "string", "minLength": 1, "maxLength": 200},
+    "verb": {"enum": ["comment", "block", "request", "artefact", "unblock", "reassign", "raise-tier", "untrack"]},
+    "text": {"type": "string", "minLength": 1, "maxLength": 4000},
+    "kind": {"enum": ["dependency", "needs_input", "capability", "transient"]},
+    "needs": {"type": "string", "pattern": "^(research|decision|access|role:[a-z][a-z-]{0,40})$"},
+    "path": {"type": "string", "minLength": 1, "maxLength": 300},
+    "target_task": {"type": "string", "pattern": "^t_[0-9a-f]{8}$"},
+    "assignee": {"type": "string", "minLength": 1, "maxLength": 64},
+    "tier": {"enum": ["light", "strong"]},
+    "tool": {"type": "string", "pattern": "^[a-z0-9][a-z0-9+.-]*[a-z0-9+]$", "maxLength": 100},
+    "bin": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._+-]{0,40}$"}
+  }
+}

@@ -1,0 +1,11 @@
+{"id": "skipif-guard-is-info-not-a-block", "given": {"document": {"check": "mutation_check", "range": "skipif-guard"}}, "expect": {"ok": true, "info": true}, "source": "row 568"}
+{"id": "pure-addition-explains-revert-failures-is-info", "given": {"document": {"check": "mutation_check", "range": "pure-addition"}}, "expect": {"ok": true, "info": true}, "source": "row 568"}
+{"id": "bare-skip-on-a-new-test-still-blocks", "given": {"document": {"check": "mutation_check", "range": "bare-skip"}}, "expect": {"ok": false, "info": false}, "source": "row 459"}
+{"id": "alert-rules-yaml-test-is-judged-by-reverting-the-rules-file", "given": {"document": {"check": "mutation_check", "range": "alert-rules-yaml"}}, "expect": {"ok": true, "info": false}, "source": "recorded run 3773054a"}
+{"id": "embedded-test-source-string-is-not-the-flipped-assertion", "given": {"document": {"check": "mutation_check", "range": "embedded-source-string"}}, "expect": {"ok": true, "info": false}, "source": "row 459"}
+{"id": "new-module-test-that-survives-stubbing-blocks", "given": {"document": {"check": "mutation_check", "range": "new-module-hollow"}}, "expect": {"ok": false, "info": false}, "source": "row 459"}
+{"id": "assert-only-inside-a-string-literal-still-blocks", "given": {"document": {"check": "mutation_check", "range": "string-only-assert"}}, "expect": {"ok": false, "info": false}, "source": "row 459"}
+{"id": "data-only-change-is-judged-by-reverting-the-data", "given": {"document": {"check": "mutation_check", "range": "data-only-change"}}, "expect": {"ok": true, "info": false}, "source": "row 459"}
+{"id": "same-test-with-the-data-unchanged-still-blocks", "given": {"document": {"check": "mutation_check", "range": "data-unchanged"}}, "expect": {"ok": false, "info": false}, "source": "row 459"}
+{"id": "code-and-intent-example-judged-by-reverting-the-code-alone", "given": {"document": {"check": "mutation_check", "range": "code-and-example"}}, "expect": {"ok": true, "info": false}, "source": "row 459"}
+{"id": "vacuous-example-loop-still-blocks-with-the-code-alone-reverted", "given": {"document": {"check": "mutation_check", "range": "code-and-example-vacuous-loop"}}, "expect": {"ok": false, "info": false}, "source": "row 459"}

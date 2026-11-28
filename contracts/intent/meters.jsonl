@@ -1,0 +1,5 @@
+{"id": "hour-23-is-night-and-hour-07-is-day", "given": {"document": {"check": "night", "hours": [23, 6, 7, 22]}}, "expect": {"night": [true, true, false, false]}, "source": "owner"}
+{"id": "card-closed-by-a-stub-only-is-not-a-factory-landing", "given": {"document": {"check": "stub_close"}}, "expect": {"class": "not_landed", "wait_work": "unmeasured"}, "source": "owner"}
+{"id": "run-that-never-ran-is-not-a-lane", "given": {"document": {"check": "zero_length_run"}}, "expect": {"max_concurrency": 0}, "source": "owner"}
+{"id": "sonnet-5-5-run-has-a-non-null-cost", "given": {"document": {"check": "price_known", "model": "claude-sonnet-5-5"}}, "expect": {"priced": true, "warned": false}, "source": "owner"}
+{"id": "unknown-model-run-warns-and-costs-null", "given": {"document": {"check": "price_unknown", "model": "claude-nope-9"}}, "expect": {"priced": false, "warned": true}, "source": "owner"}

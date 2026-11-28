@@ -1,0 +1,3 @@
+{"id": "open-parent-blocks-child-with-dependency", "given": {"document": {"kind": "card", "status": "ready", "parent_status": "running", "waits": "<empty>"}}, "expect": {"blocked": true, "blocker": "dependency"}, "source": "row 482"}
+{"id": "done-parent-leaves-child-unblocked", "given": {"document": {"kind": "card", "status": "ready", "parent_status": "done", "waits": "<empty>"}}, "expect": {"blocked": false}, "source": "row 482"}
+{"id": "review-card-with-open-parent-stays-unblocked", "given": {"document": {"kind": "card", "status": "review", "parent_status": "running", "waits": "<empty>"}}, "expect": {"blocked": false}, "source": "row 482"}

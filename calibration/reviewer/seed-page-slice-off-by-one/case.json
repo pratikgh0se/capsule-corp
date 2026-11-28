@@ -1,0 +1,21 @@
+{
+  "schema": "reviewer_case.v1",
+  "id": "seed-page-slice-off-by-one",
+  "kind": "planted",
+  "origin": "seed: synthetic bug written by hand for R15a, not from a real escape",
+  "task": {
+    "id": "t_5eed0001",
+    "title": "Add page_slice to pager.py",
+    "body": "Add `page_slice(items, page, size)` to pager.py: the items on 1-based page `page`; an out-of-range page is empty. Add tests."
+  },
+  "patch": "change.patch",
+  "bug": {
+    "summary": "Page 1 starts at index `page * size` instead of `(page - 1) * size`, so page 1 skips the first page and the last real page is empty. The tests only check the length, so they pass.",
+    "locations": [
+      {
+        "file": "pager.py",
+        "line": 11
+      }
+    ]
+  }
+}

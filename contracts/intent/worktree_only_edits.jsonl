@@ -1,0 +1,3 @@
+{"id": "subagent-main-checkout-refused", "given": {"document": {"tool_name": "Edit", "tool_input": {"file_path": "/home/example/CodeBase/capsule-corp/capsule/tick.py"}, "agent_id": "a1"}}, "expect": {"exit": 2, "stderr_has": "Blocked by"}, "source": "row 557"}
+{"id": "subagent-worktree-allowed", "given": {"document": {"tool_name": "Edit", "tool_input": {"file_path": "/home/example/CodeBase/capsule-corp/.worktrees/x/capsule/tick.py"}, "agent_id": "a1"}}, "expect": {"exit": 0, "stderr_has": ""}, "source": "row 557"}
+{"id": "main-thread-main-checkout-allowed", "given": {"document": {"tool_name": "Edit", "tool_input": {"file_path": "/home/example/CodeBase/capsule-corp/capsule/tick.py"}}}, "expect": {"exit": 0, "stderr_has": ""}, "source": "row 557"}

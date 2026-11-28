@@ -1,0 +1,3 @@
+{"id": "a-packet-repeat-must-be-listed", "given": {"document": {"schema": "auditor_report.v1", "summary": "<non-empty>", "repeats": "<empty>"}, "inputs": {"packet": {"repeats_total": {"<not>": 0}}}}, "expect": {"repeats": "<non-empty>"}, "source": "row 456"}
+{"id": "a-missing-input-is-not-zero", "given": {"document": {"schema": "auditor_report.v1", "summary": "<non-empty>", "flaky_tests": "<empty>", "not_audited": "<empty>"}, "inputs": {"packet": {"missing": {"<some>": "flaky"}}}}, "expect": {"not_audited": "<non-empty>"}, "source": "owner"}
+{"id": "a-proposal-names-how-to-verify", "given": {"document": {"schema": "auditor_report.v1", "proposals": {"<some>": {"verify": "<empty>"}}}}, "expect": {"proposals": {"<each>": {"verify": "<non-empty>"}}}, "source": "owner"}

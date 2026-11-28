@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>__PREFIX__.capsule-tick-capsule-corp</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/env</string><string>python3</string><string>-u</string><string>-m</string>
+    <string>capsule</string><string>tick</string><string>--replace</string><string>--board</string><string>capsule-corp</string>
+  </array>
+  <key>WorkingDirectory</key><string>__CAPSULE_HOME__/harness/main</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key><string>/opt/homebrew/bin:__HOME__/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>OBSIDIAN_VAULT_PATH</key><string>__VAULT__</string>
+    <key>EVENTS_SPOOL</key><string>__CONFIG__/maintenance/state/events.jsonl</string>
+  </dict>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><dict><key>SuccessfulExit</key><false/></dict>
+  <key>ThrottleInterval</key><integer>30</integer>
+  <key>ExitTimeOut</key><integer>900</integer>
+  <key>StandardOutPath</key><string>__HOME__/.local/share/capsule/logs/tick-capsule-corp.log</string>
+  <key>StandardErrorPath</key><string>__HOME__/.local/share/capsule/logs/tick-capsule-corp.log</string>
+</dict>
+</plist>

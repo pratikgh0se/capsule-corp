@@ -1,0 +1,2 @@
+{"id": "board-query-select-prints-tsv", "given": {"document": {"board": "alpha", "sql": "select id, outcome from task_runs where id <= 2 order by id"}}, "expect": {"exit": 0, "header": "id\toutcome", "first_row": "1\tdone", "row_count": 2}, "source": "owner"}
+{"id": "board-query-refuses-escapes", "given": {"document": {"board": "alpha", "statements": [".system id", "attach database '__LEAK__' as x", "select 1; select 2", "select writefile('__LEAK__', 'x')"]}}, "expect": {"exit_codes": "2,2,2,2", "files_created": 0, "rows_unchanged": true}, "source": "owner"}

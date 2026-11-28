@@ -1,0 +1,3 @@
+{"id": "reverted-card-is-never-landed-again-and-a-human-is-told-once", "given": {"document": {"case": "land_reverted_on_main"}}, "expect": {"outcome": "reverted_on_main", "pushed": false, "asks": 1, "note": "this completion's change, reverted on main since the card's latest completed event, is never landed again"}, "source": "row 456, 2026-10-28"}
+{"id": "a-card-reverted-again-after-a-reapply-is-flagged", "given": {"document": {"case": "land_reverted_after_reapply"}}, "expect": {"outcome": "reverted_on_main", "pushed": false, "asks": 1}, "source": "row 456, 2026-10-28"}
+{"id": "card-reworked-after-a-revert-is-checked-normally", "given": {"document": {"case": "land_reworked_after_revert"}}, "expect": {"verdict_checked": true, "asks": 0}, "source": "row 456, 2026-10-28"}

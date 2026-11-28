@@ -1,0 +1,6 @@
+{"id": "disagreement-beyond-tolerance-opens-one-eval-incident", "given": {"document": {"a": 7, "ledger": 9, "days_since_close": 8}}, "expect": {"agree": false, "incidents": 1}, "source": "row 617"}
+{"id": "agreement-within-tolerance-opens-nothing", "given": {"document": {"a": 7, "ledger": 8, "days_since_close": 8}}, "expect": {"agree": true, "incidents": 0}, "source": "row 617"}
+{"id": "missing-ledger-row-after-grace-is-a-disagreement", "given": {"document": {"a": 10, "ledger": null, "days_since_close": 8}}, "expect": {"agree": false, "incidents": 1}, "source": "row 617"}
+{"id": "tokens-30pct-short", "given": {"document": {"tokens": [{"a": 1000, "msgs": [["m1", 1000]]}, {"a": 1000, "msgs": [["m1", 700]]}]}}, "expect": {"agree": false, "incidents": 1}, "source": "row 617"}
+{"id": "unjoined-over-15pct-of-a", "given": {"document": {"tokens": [{"a": 850, "msgs": [["m1", 850]]}, {"a": 300, "msgs": null}]}}, "expect": {"agree": false, "incidents": 1}, "source": "row 617"}
+{"id": "repeated-message-id-counted-once-at-max", "given": {"document": {"tokens": [{"a": 150, "msgs": [["m1", 100], ["m1", 100], ["m2", 50]]}]}}, "expect": {"agree": true, "incidents": 0}, "source": "row 617"}

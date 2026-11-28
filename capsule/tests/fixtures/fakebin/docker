@@ -1,0 +1,55 @@
+#!/usr/bin/env python3
+"""Fake `docker` for the Lookout tests (spec 10.1): never reaches a daemon. Copies stdin to
+$FAKE_PSQL_CAPTURE (one block per call), sleeps $FAKE_PSQL_SLEEP, prints $FAKE_PSQL_STDOUT_FILE,
+exits $FAKE_PSQL_RC. Also records argv[1:] to $FAKE_DOCKER_ARGV (one JSON array per line, review
+I2): the transport oracle needs the exact psql command line, not just what was piped to it -
+`ON_ERROR_STOP=1` or the wrong container name would otherwise pass every test silently.
+
+$FAKE_PSQL_REJECT_IF_CONTAINS (optional): a "|"-separated list of substrings; if this call's
+stdin contains ANY of them, exit 3 (psql's own ON_ERROR_STOP code) with a canned, VERBOSITY-
+verbose-shaped stderr - `ERROR:  <SQLSTATE>: ...` followed by a `LOCATION:` line, the real two-
+line shape VERBOSITY verbose produces - carrying $FAKE_PSQL_REJECT_SQLSTATE (default
+23502, a NOT NULL violation) instead of $FAKE_PSQL_RC. Simulates a spool row that parses fine but
+a real Postgres constraint (SQLSTATE class 23) or data-exception (class 22) error rejects. The
+"|"-list lets one test trip two independent triggers at once (round 2 I-R2-2 guard (c): a bad
+prices.json entry AND one bad row in the same spool).
+
+$FAKE_PSQL_FAIL_ON_CALL / $FAKE_PSQL_FAIL_RC (optional): if set, the Nth call (1-indexed, counted
+from $FAKE_PSQL_CAPTURE's existing blocks) exits $FAKE_PSQL_FAIL_RC (default 1) instead of
+$FAKE_PSQL_RC - simulates a transport failure partway through a multi-chunk ship, so the chunk
+loop's stop-and-leave-the-rest-unshipped path can be pinned."""
+import json
+import os
+import sys
+import time
+
+data = sys.stdin.read() if not sys.stdin.isatty() else ""
+cap = os.environ.get("FAKE_PSQL_CAPTURE")
+call_no = 1
+if cap and os.path.exists(cap):
+    with open(cap, encoding="utf-8") as f:
+        call_no = f.read().count("--FAKE-PSQL-END--") + 1
+if cap:
+    with open(cap, "a", encoding="utf-8") as f:
+        f.write(data + "\n--FAKE-PSQL-END--\n")
+argv_file = os.environ.get("FAKE_DOCKER_ARGV")
+if argv_file:
+    with open(argv_file, "a", encoding="utf-8") as f:
+        f.write(json.dumps(sys.argv[1:]) + "\n")
+time.sleep(float(os.environ.get("FAKE_PSQL_SLEEP") or 0))
+fail_on_call = os.environ.get("FAKE_PSQL_FAIL_ON_CALL")
+if fail_on_call and call_no == int(fail_on_call):
+    sys.stderr.write("simulated transport failure\n")
+    sys.exit(int(os.environ.get("FAKE_PSQL_FAIL_RC") or 1))
+reject_markers = [m for m in (os.environ.get("FAKE_PSQL_REJECT_IF_CONTAINS") or "").split("|") if m]
+hit = next((m for m in reject_markers if m in data), None)
+if hit:
+    sqlstate = os.environ.get("FAKE_PSQL_REJECT_SQLSTATE") or "23502"
+    sys.stderr.write(f'psql:<stdin>:9: ERROR:  {sqlstate}: null value in column violates'
+                     f' not-null constraint ({hit})\n'
+                     'LOCATION:  ExecConstraints, execMain.c:2042\n')
+    sys.exit(3)
+out = os.environ.get("FAKE_PSQL_STDOUT_FILE")
+if out:
+    sys.stdout.write(open(out, encoding="utf-8").read())
+sys.exit(int(os.environ.get("FAKE_PSQL_RC") or 0))

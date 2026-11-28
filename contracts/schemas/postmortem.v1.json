@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/schemas/postmortem.v1.json",
+  "title": "Korin's post-mortem of one incident (row 456; Zenkai rows 454, 455)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "run_id", "task_id", "claim_lock", "incident_id", "root_cause", "lesson", "mitigation",
+               "enforcer", "recurrence_test", "fix_card", "decision_row_text", "confidence"],
+  "properties": {
+    "schema": {"const": "postmortem.v1"},
+    "run_id": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+    "task_id": {"type": "string", "pattern": "^t_[0-9a-f]{8}$"},
+    "claim_lock": {"type": "string", "minLength": 1, "maxLength": 200},
+    "incident_id": {"type": "string", "pattern": "^inc_[0-9a-f]{8}$"},
+    "root_cause": {"type": "string", "minLength": 20, "maxLength": 3000},
+    "lesson": {"type": "string", "minLength": 10, "maxLength": 1500},
+    "mitigation": {"type": "string", "minLength": 10, "maxLength": 3000},
+    "enforcer": {"type": "string", "minLength": 3, "maxLength": 500},
+    "recurrence_test": {"type": "string", "minLength": 3, "maxLength": 300,
+                        "pattern": "^(([A-Za-z_][A-Za-z0-9_]*\\.)*test_[A-Za-z0-9_]+\\.[A-Za-z_][A-Za-z0-9_]*\\.test_[A-Za-z0-9_]+|tests/test_[A-Za-z0-9_]+\\.sh(::[^\"\\\\\n]{1,200})?)$"},
+    "fix_card": {"type": "object", "additionalProperties": false, "required": ["title", "body"],
+                 "properties": {
+                   "title": {"type": "string", "minLength": 5, "maxLength": 200},
+                   "body": {"type": "string", "minLength": 20, "maxLength": 8000}}},
+    "decision_row_text": {"type": "string", "minLength": 20, "maxLength": 4000},
+    "confidence": {"enum": ["low", "medium", "high"]},
+    "closure": {"enum": ["fixed", "watch"]}
+  }
+}

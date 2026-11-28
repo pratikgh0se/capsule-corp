@@ -1,0 +1,3 @@
+{"id": "empty-legacy-folders-deleted", "given": {"document": {"check": "grafana_prune_folders", "case": "three-legacy-folders-two-empty"}}, "expect": {"pass": "prune: deletes the empty folders"}, "source": "owner"}
+{"id": "folder-with-dashboard-kept", "given": {"document": {"check": "grafana_prune_folders", "case": "archive-holds-a-dashboard"}}, "expect": {"pass": "prune: refuses a non-empty folder and never touches others"}, "source": "owner"}
+{"id": "api-error-deletes-nothing", "given": {"document": {"check": "grafana_prune_folders", "case": "search-api-fails"}}, "expect": {"pass": "prune: an API error deletes nothing and fails with a FAILED line"}, "source": "owner"}

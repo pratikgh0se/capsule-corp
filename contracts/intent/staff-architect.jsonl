@@ -1,0 +1,2 @@
+{"id": "arch-done-names-the-brief-path", "given": {"document": {"schema": "report.v1", "role": "staff-architect", "status": "done", "implemented": "<empty>"}}, "expect": {"implemented": "<non-empty>"}, "source": "owner"}
+{"id": "arch-states-reaches-owner", "given": {"document": {"schema": "report.v1", "role": "staff-architect", "notes": "<empty>"}}, "expect": {"notes": "<non-empty>"}, "source": "owner"}

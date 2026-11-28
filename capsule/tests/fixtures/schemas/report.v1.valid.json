@@ -1,0 +1,7 @@
+{"schema": "report.v1", "run_id": "0123456789abcdef0123456789abcdef", "task_id": "t_0000aaaa",
+ "claim_lock": "host:0123456789abcdef0123456789abcdef", "role": "dev-frontend", "status": "done",
+ "implemented": ["timer screen idle state"], "left_undone": [],
+ "commands": [{"cmd": "python3 -m unittest tests.test_server", "exit": 0}],
+ "issues": [], "procedures_followed": ["tests first"],
+ "follow_ups": [{"title": "timer screen: reset button label", "files": ["static/sr/timer.js"],
+                 "body": "The reset label still reads Stop; a one-word fix outside this card's file set."}]}

@@ -1,0 +1,37 @@
+{
+  "v": 1,
+  "role": "dev",
+  "model": "claude-opus-5",
+  "path": "happy",
+  "source": "fake-e2e",
+  "note": "round-3 escalation to Opus 5 (spec \u00a77.8) succeeds where two Sonnet rounds did not; finishes the same way dev always finishes.",
+  "card": {
+    "id": "t_7k8l9m0n",
+    "title": "Add bounded retry to board_bridge's gh call (round 3)",
+    "body": "<!-- sprint-meta risk=R2 spec=2026-09-10-roles-and-souls spec_sha256=deadbeef area=maintenance slug=t_7k8l9m0n -->"
+  },
+  "calls": [
+    {
+      "tool": "kanban_show",
+      "args": {
+        "task_id": "t_7k8l9m0n"
+      }
+    },
+    {
+      "tool": "kanban_comment",
+      "args": {
+        "text": "assumptions: round 3 escalation from Sonnet 5 per row 135; same task, third attempt"
+      }
+    },
+    {
+      "tool": "kanban_request_review",
+      "args": {
+        "reviewer": "reviewer",
+        "summary": "ready for review - round 3 escalation resolved the retry ordering bug",
+        "metadata": {
+          "round": 3
+        }
+      }
+    }
+  ]
+}

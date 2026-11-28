@@ -1,0 +1,599 @@
+apiVersion: 1
+deleteRules:
+  - orgId: 1
+    uid: sync-deadman
+  # retired 2026-10-30: old gateways retired (LEGACY_PRESENT=0), D133
+  - orgId: 1
+    uid: gateway-down
+groups:
+  - orgId: 1
+    name: capsule-corp
+    folder: Capsule Corp
+    interval: 1m
+    rules:
+      - uid: job-failed
+        title: Job failed
+        condition: B
+        for: 1m
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: page
+        annotations:
+          summary: "a vault job exited non-zero in the last 15 min - ops-events"
+          runbook: docs/RUNBOOK.md#failure-alerts
+        data:
+          - refId: A
+            queryType: ""
+            relativeTimeRange:
+              from: 900
+              to: 0
+            datasourceUid: ops-pg
+            model:
+              refId: A
+              format: table
+              rawQuery: true
+              rawSql: "select count(*) from events where kind='job' and (payload->>'exit')::int<>0 and ts>now()-interval '15 minutes'"
+          - refId: B
+            queryType: ""
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0]
+
+      # gateway-down was retired 2026-10-30: old gateways retired (LEGACY_PRESENT=0), D133;
+      # it is listed under deleteRules above.
+
+      # bridge-deadman (renamed from sync-deadman, review I1, 2026-09-27): the old bridge's
+      # own sync-tick heartbeat (`maintenance/board_bridge.py` record_health(), "sync tick" /
+      # sprint-sync). `disk-high` reads this same `kind='health'` row
+      # (`order by ts desc limit 1`) within a 1-day window (t_c671377a); past it it has no
+      # data and stays OK, and this rule pages on a stale health row (over 30 minutes), so a
+      # stopped bridge sync tick is caught here, not by that one. Unchanged in shape
+      # from the original sync-deadman (kind='health', >30 min, `for: 0m`,
+      # `noDataState: Alerting`, page) - only the uid/title changed, to make room beside the new
+      # capsule-tick-deadman below. Retires with the bridge itself, in the Lookout migration's
+      # datasource-repoint step (`docs/superpowers/specs/2026-09-07-observability-team-study.md`
+      # "Kami's Lookout") - not before, and not by this branch.
+      - uid: bridge-deadman
+        title: Bridge sync stopped
+        condition: B
+        for: 0m
+        noDataState: Alerting
+        execErrState: Error
+        labels:
+          severity: page
+        annotations:
+          summary: "no sync tick for 30 min - launchctl list | grep sprint-sync"
+          runbook: docs/RUNBOOK.md#failure-alerts
+        data:
+          - refId: A
+            queryType: ""
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: ops-pg
+            model:
+              refId: A
+              format: table
+              rawQuery: true
+              rawSql: "select coalesce(extract(epoch from now()-max(ts))/60, 100000) from events where kind='health' and source <> 'capsule'"
+          - refId: B
+            queryType: ""
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [30]
+
+      # capsule-tick-deadman is an ADDITION beside bridge-deadman above, not a replacement for
+      # it (review I1, 2026-09-27; the branch's first pass at this wrongly retired
+      # sync-deadman outright) - the two watch different processes. bridge-deadman (kind=
+      # 'health') watches the old bridge's sync tick, still load-bearing for
+      # disk-high; this rule reads `kind='tick_health'` instead, the heartbeat
+      # `capsule/tick.py Tick._heartbeat` writes once per pass (board, pass number, pass
+      # duration, running/blocked counts, pid, main_sha) through the same
+      # events.log()+events.ship() path board_bridge's own heartbeat uses - a signal
+      # bridge-deadman cannot give, since the Capsule tick is a separate process the bridge's
+      # sync tick can keep running fine without. 5 min, not 30: `caps.tick_seconds` defaults to
+      # 30s (config.example.json), so 5 min is 10 missed passes, not one slow one.
+      # factory-autonomy Task 11 (spec 4.4): per board, the watched set comes only from each
+      # board's latest heartbeat `watch` (its config's `deadman` flag; a board whose tick died
+      # keeps its last heartbeat's watch=true, so it still pages): a board joins at its first
+      # heartbeat and never pages before go-live (round 2 I12: capsule-corp stays out until its
+      # first tick_health row, never before).
+      # A board with no tick_health row (fresh ops-pg) is not watched. A tick dead longer than
+      # retention's 14 days stays watched and keeps paging, because retention keeps each board's
+      # latest tick_health row. No watched board at all -> coalesce(max(..), 0): 0 is below the
+      # gt 5 threshold, so the empty case is OK, not a NULL row.
+      - uid: capsule-tick-deadman
+        title: Capsule tick stopped
+        condition: B
+        for: 0m
+        noDataState: Alerting
+        execErrState: Error
+        labels:
+          severity: page
+        annotations:
+          summary: "no Capsule tick heartbeat for 5 min - ps -ef | grep 'capsule tick'"
+          runbook: docs/RUNBOOK.md#failure-alerts
+        data:
+          - refId: A
+            queryType: ""
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: ops-pg
+            model:
+              refId: A
+              format: table
+              rawQuery: true
+              rawSql: "select coalesce(max(coalesce(extract(epoch from now()-t.last)/60, 100000)), 0) from (select board from (select distinct on (board) board, coalesce(payload->>'watch','true') as watch from events where kind='tick_health' and board is not null order by board, ts desc) w where w.watch='true') b left join (select board, max(ts) as last from events where kind='tick_health' group by board) t using (board)"
+          - refId: B
+            queryType: ""
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [5]
+
+      # loki-ingest-deadman (Zenkai Z5 detector): Loki silently rejected every log for 5 days
+      # (2026-11-09 to 11-14) and nothing alerted. This reads Loki itself (ops-loki): the count of
+      # vault log lines in the last 30 min. The selector is the always-on vault logs: heal logs
+      # every 5 minutes and obs-probe every 10, whether or not the factory runs. Docker is quit
+      # when idle and Fluent Bit skips logs written while it was down, so the window can be empty
+      # briefly after a restart: `for: 15m` absorbs that. Zero lines or no data (an empty result
+      # is no data) both page, the same absence-is-the-signal shape as capsule-tick-deadman.
+      - uid: loki-ingest-deadman
+        title: Loki ingest stopped
+        condition: B
+        for: 15m
+        noDataState: Alerting
+        execErrState: Error
+        labels:
+          severity: page
+        annotations:
+          summary: "Loki has received no log lines for 30 min - docker logs the fluent-bit and loki containers"
+          runbook: docs/RUNBOOK.md#failure-alerts
+        data:
+          - refId: A
+            queryType: instant
+            relativeTimeRange:
+              from: 1800
+              to: 0
+            datasourceUid: ops-loki
+            model:
+              refId: A
+              queryType: instant
+              editorMode: code
+              expr: 'sum(count_over_time({job="vault", vault_job=~"heal|obs-probe"}[30m]))'
+          - refId: B
+            queryType: ""
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: lt
+                    params: [1]
+
+      # backup dead man's switch (row 125). bridge-deadman/capsule-tick-deadman above catch a
+      # pipeline that stopped ticking; nothing caught a nightly backup that
+      # never ran at all (laptop asleep at 03:35 leaves no event, so there is
+      # no failed job to alert on). Same source as bridge-deadman/capsule-tick-deadman (the
+      # Postgres `events` table, ops-pg), same shape: age of the newest good event in
+      # hours, `for: 0m` and `noDataState: Alerting` because absence *is* the
+      # signal (docs/observability-conventions.md section 7 allows 0m on a
+      # page rule only for a dead man's switch). 26 h, not 24: the job runs
+      # daily at 03:35, so a 24 h threshold would fire on any normal night the
+      # job merely started late. Only exit 0 counts - a partial backup exits 1
+      # since row 125, and that is job-failed's alert, not this one's.
+      - uid: backup-missing
+        title: Backup missing
+        condition: B
+        for: 0m
+        noDataState: Alerting
+        execErrState: Error
+        labels:
+          severity: page
+        annotations:
+          summary: "no successful backup for 26 h - bash maintenance/run.sh backup"
+          runbook: docs/RUNBOOK.md#backups
+        data:
+          - refId: A
+            queryType: ""
+            relativeTimeRange:
+              from: 172800
+              to: 0
+            datasourceUid: ops-pg
+            model:
+              refId: A
+              format: table
+              rawQuery: true
+              rawSql: "select extract(epoch from now()-ts)/3600 from events where kind='job' and payload->>'job'='backup' and (payload->>'exit')::int=0 order by ts desc limit 1"
+          - refId: B
+            queryType: ""
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [26]
+
+      # partial-backup notice (row 137, C9/M213). backup.sh has exited 1 on a
+      # partial backup since row 125, so job-failed already pages for that
+      # night - what it cannot say is WHICH dump was missing. This rule is
+      # that sentence, at notice severity, so one bad night does not page
+      # twice (spec 2026-09-10-continuity-and-data-safety-design.md 4.1).
+      # for: 0m with noDataState: OK - the absence of a backup event is
+      # backup-missing's signal above, not this rule's; here no data simply
+      # means no partial backup happened.
+      - uid: backup-partial
+        title: Backup partial
+        condition: B
+        for: 0m
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: notice
+        annotations:
+          summary: "a backup ran with a dump missing - look for the *.sql.MISSING marker in the newest tarball"
+          runbook: docs/RUNBOOK.md#backups
+        data:
+          - refId: A
+            queryType: ""
+            relativeTimeRange:
+              from: 172800
+              to: 0
+            datasourceUid: ops-pg
+            model:
+              refId: A
+              format: table
+              rawQuery: true
+              rawSql: "select count(*) from (select 1 from events where kind='backup_partial' and ts>now()-interval '26 hours' limit 1) p"
+          - refId: B
+            queryType: ""
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0]
+
+      # The nightly vault eval (maintenance/run.sh vault_eval_nightly) logs one audit event titled
+      # vault-eval when it exits non-zero or hits its cap; no event means a quiet night.
+      - uid: vault-eval-failed
+        title: Vault eval failed
+        condition: B
+        for: 0m
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: notice
+        annotations:
+          summary: "the nightly vault eval failed or timed out - read the newest result-<date>.json and the nightly log"
+          runbook: docs/RUNBOOK.md#vault-context
+        data:
+          - refId: A
+            queryType: ""
+            relativeTimeRange:
+              from: 172800
+              to: 0
+            datasourceUid: ops-pg
+            model:
+              refId: A
+              format: table
+              rawQuery: true
+              rawSql: "select count(*) from events where kind='audit' and source='run.sh' and title='vault-eval' and ts>now()-interval '26 hours'"
+          - refId: B
+            queryType: ""
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0]
+
+      - uid: disk-high
+        title: Disk over 85 %
+        condition: B
+        for: 5m
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: notice
+        annotations:
+          summary: "laptop disk over 85 % - run ops-cleanup"
+          runbook: docs/RUNBOOK.md#observability
+        data:
+          - refId: A
+            queryType: ""
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: ops-pg
+            model:
+              refId: A
+              format: table
+              rawQuery: true
+              rawSql: "select (payload->>'disk_pct')::float from events where kind='health' and source <> 'capsule' and ts>now()-interval '1 day' order by ts desc limit 1"
+          - refId: B
+            queryType: ""
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [85]
+
+      - uid: window-85
+        title: 5-hour window at 85 %
+        condition: B
+        for: 0m
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: notice
+        annotations:
+          summary: "5-hour window at {{ $values.A }} % - nothing pauses automatically; hold heavy work"
+          runbook: docs/RUNBOOK.md#pause-the-pipeline
+        data:
+          - refId: A
+            queryType: ""
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: ops-pg
+            model:
+              refId: A
+              format: table
+              rawQuery: true
+              rawSql: "select (payload->>'session_pct')::float from events where kind='usage' order by ts desc limit 1"
+          - refId: B
+            queryType: ""
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                # Grafana's threshold expression only supports gt/lt/within_range/
+                # outside_range (no gte) - session_pct is rounded to 1 decimal
+                # (usage_guard.py), so gt 84.95 is exactly >=85.
+                - evaluator:
+                    type: gt
+                    params: [84.95]
+
+      - uid: week-80
+        title: Weekly window at 80 %
+        condition: B
+        for: 0m
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: notice
+        annotations:
+          summary: "weekly window at {{ $values.A }} % - plan the rest of the week"
+          runbook: docs/RUNBOOK.md#cost-knobs-the-owners-settings-2026-09-05
+        data:
+          - refId: A
+            queryType: ""
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: ops-pg
+            model:
+              refId: A
+              format: table
+              rawQuery: true
+              rawSql: "select (payload->>'week_pct')::float from events where kind='usage' order by ts desc limit 1"
+          - refId: B
+            queryType: ""
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                # See window-85's comment: no gte in threshold expressions;
+                # week_pct is rounded to 1 decimal, so gt 79.95 is exactly >=80.
+                - evaluator:
+                    type: gt
+                    params: [79.95]
+
+      - uid: ceiling
+        title: Daily ceiling reached
+        condition: B
+        for: 0m
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: notice
+        annotations:
+          summary: "12 worker runs used today - nothing more dispatches until midnight"
+          runbook: docs/RUNBOOK.md#cost-knobs-the-owners-settings-2026-09-05
+        data:
+          - refId: A
+            queryType: ""
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: ops-pg
+            model:
+              refId: A
+              format: table
+              rawQuery: true
+              rawSql: "select case when (payload->>'runs_today')::int >= (payload->>'ceiling')::int then 1 else 0 end from events where kind='usage' order by ts desc limit 1"
+          - refId: B
+            queryType: ""
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0]
+
+      # card-stuck (row 478 D8): reads the Capsule board's own `blocked` gauge. obs_probe ships
+      # `capsule.board.cards{status=blocked}` from $CAPSULE_HOME/boards/*/kanban.db every 10 min;
+      # a board with 6+ blocked samples spanning 60+ min (one missed 10 min run allowed) has a
+      # card waiting for you. The probe writes no zero sample, so max(ts) within 15 min ends the
+      # page at unblock. The old system's `card`/`stuck` events and the `kb-*` SQLite datasources
+      # are gone.
+      - uid: card-stuck
+        title: Card stuck over an hour
+        condition: B
+        for: 0m
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: notice
+        annotations:
+          summary: "a card has been waiting for you for over an hour - list it with sqlite3
+            \"file:$CAPSULE_HOME/boards/<board>/kanban.db?mode=ro\"
+            \"select id,title from tasks where status='blocked'\""
+          runbook: docs/RUNBOOK.md#observability
+        data:
+          - refId: A
+            queryType: ""
+            relativeTimeRange:
+              from: 86400
+              to: 0
+            datasourceUid: ops-pg
+            model:
+              refId: A
+              format: table
+              rawQuery: true
+              rawSql: |
+                select count(*) from (
+                  select labels->>'board' as board from samples
+                  where name = 'capsule.board.cards' and labels->>'status' = 'blocked'
+                    and ts > now() - interval '70 minutes'
+                  group by 1
+                  having count(*) >= 6 and min(ts) < now() - interval '60 minutes'
+                    and max(ts) > now() - interval '15 minutes') s
+          - refId: B
+            queryType: ""
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0]
+
+      # unowned-work-idle (row 470, t_742be58f): detector silence. Fires when the tick is alive
+      # (a non-test tick_health row in the last 10 min) but no non-test capsule_unblocked row with
+      # capsule_unowned_total arrived in the last 15 min (metrics.COUNT_MISSING_SECONDS): the
+      # unowned detector is failing (the 2026-09-27 07:05-10:30 UTC shape: tick_health every
+      # 30 s, zero exporter rows). A dead tick is capsule-tick-deadman's page (this returns 0). The
+      # backlog LEVEL is never paged; a frozen session is capsule-keeper-watch's. A second firing
+      # within 24h opens a Korin incident (`record_alert_firing`, fingerprint `unowned_work_idle`).
+      # Per board (t_86fc8bec): each board's own newest tick_health decides, so a quiet board never
+      # masks an idle one, and a board whose tick_health says paused (pause:board or
+      # pause:account:* held) is a deliberate stop: quiet. Decision row 623: the tick owns this uid
+      # (Lookout only displays it) and the severity is notice (spec 11.5).
+      - uid: unowned-work-idle
+        title: Unowned-work count missing
+        condition: B
+        for: 1m
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: notice
+        annotations:
+          summary: "the unowned-work detector has shipped no count for 25 min while the tick is alive - a second firing in 24h opens a Korin incident"
+          runbook: docs/RUNBOOK.md#unowned-work-count-missing
+        data:
+          - refId: A
+            queryType: ""
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: ops-pg
+            model:
+              refId: A
+              format: table
+              rawQuery: true
+              rawSql: "select count(*) from (select distinct on (board) board, payload from events where kind='tick_health' and board is not null and board <> 'test' and ts > now() - interval '10 minutes' order by board, ts desc) h where coalesce(h.payload->>'watch','true') = 'true' and coalesce((h.payload->>'paused')::boolean, false) = false and not exists (select 1 from events u where u.kind='capsule_unblocked' and u.board = h.board and u.payload->>'capsule_unowned_total' is not null and u.ts > now() - interval '25 minutes')"
+          - refId: B
+            queryType: ""
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0]
+
+      # lookout-quarantined (t_69633914): the Lookout shipper quarantined a spool row Postgres
+      # rejects (capsule/lookout_ship.py `_announce_quarantine` writes one `job` event, exit 0 so
+      # `job-failed` stays quiet, payload.quarantined = rows moved to spool.rejected). A notice, not
+      # a page: the rest of the spool still ships; the risk is a silently stale table.
+      - uid: lookout-quarantined
+        title: Lookout quarantined spool rows
+        condition: B
+        for: 0m
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: notice
+        annotations:
+          summary: "the Lookout shipper quarantined spool rows in the last 24h - read spool.rejected"
+          runbook: docs/RUNBOOK.md#lookout-quarantined-rows
+        data:
+          - refId: A
+            queryType: ""
+            relativeTimeRange:
+              from: 86400
+              to: 0
+            datasourceUid: ops-pg
+            model:
+              refId: A
+              format: table
+              rawQuery: true
+              rawSql: "select coalesce(sum((payload->>'quarantined')::int), 0) from events where kind='job' and payload->>'job'='lookout-quarantine' and ts>now()-interval '24 hours'"
+          - refId: B
+            queryType: ""
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0]

@@ -1,0 +1,9 @@
+# auditor (EVAL-06, the owner 2026-10-23; rows 456, 584, 617; Zenkai Z2, Z5)
+schema: auditor_report.v1
+verbs:
+- gets: the audit packet for one window (weekly, or early once 30 review rounds have happened across the board since the last audit): board events, task_runs, incidents and repeats, eval_check results, the tokens oracle, interventions, outcomes, flaky-test counts, stuck cards, the prior week's packet and the inputs missing.
+- sees: the packet and the repo read-only (the main checkout); the board db read-only; no network, no vault write, no intake write.
+- done-when: each packet metric that got worse is listed with both weeks' values; each packet repeat is listed; cost per delivered card, review rounds, flaky tests and stuck cards match the packet; each missing input is in `not_audited`, never read as zero; each proposal cites packet evidence and a verify step.
+- reports: `auditor_report.v1`: trigger, window, summary (short), worse, repeats, cost_per_card, review_rounds, flaky_tests, stuck_cards, proposals (at most 3: title, problem, evidence, fix, removes, verify), not_audited. The runner files each accepted proposal as an intake request at landing `triage`; the owner or the CoS moves it on.
+- may-not: C; edit code, a contract, a schema or a test; file, move or close a card; write the board or the intake folder; close an incident; propose more than 3 cards; write outside `sees`.
+- may-not: never bypass a Zenkai Rule (docs/ZENKAI.md) without an override that names it.

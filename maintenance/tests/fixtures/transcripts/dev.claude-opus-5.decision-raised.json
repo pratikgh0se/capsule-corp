@@ -1,0 +1,28 @@
+{
+  "v": 1,
+  "role": "dev",
+  "model": "claude-opus-5",
+  "path": "decision-raised",
+  "source": "fake-e2e",
+  "note": "round-3 escalation raises a DECISION rather than guessing a third time; the question names the two prior identical failures.",
+  "card": {
+    "id": "t_5s6t7u8v",
+    "title": "Choose the round-3 retry design after two Sonnet failures",
+    "body": "<!-- sprint-meta risk=R2 spec=2026-09-10-roles-and-souls spec_sha256=deadbeef area=maintenance slug=t_5s6t7u8v -->"
+  },
+  "calls": [
+    {
+      "tool": "kanban_show",
+      "args": {
+        "task_id": "t_5s6t7u8v"
+      }
+    },
+    {
+      "tool": "kanban_block",
+      "args": {
+        "kind": "needs_input",
+        "reason": "DECISION: The round-3 escalation landed here with the same failure twice - is the spec wrong or is round 3 missing context?\nWhy: two Sonnet rounds hit the identical blocker; Opus 5 is round 3's escalation\nClass: R2\n1. re-read the spec section and retry the same approach - already tried twice, unlikely to differ\n2. ask the lead whether the spec's acceptance line is achievable as written - may reveal a spec bug\nRecommend: 2 - two identical failures under Sonnet argue for a spec check, not a third attempt\nLearn: if round 3 escalation repeats this pattern, add a spec-ambiguity check before round 2"
+      }
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/schemas/rows/intent_example.v1.json",
+  "title": "One line of contracts/intent/<name>.jsonl (row 569; capsule/intent.py lint). The source pattern is intent.SOURCE_RE; a real calendar date stays with intent._valid_source",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "given", "expect", "source"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,63}\\Z"},
+    "given": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["document"],
+      "properties": {"document": {"type": "object"}, "inputs": {"type": "object"}}
+    },
+    "expect": {"type": "object"},
+    "source": {"type": "string", "pattern": "^(row \\d{1,4}(, (\\d{4}-\\d{2}-\\d{2}))?|recorded run [0-9a-z_-]{4,64}|owner|pratik)\\Z"}
+  }
+}

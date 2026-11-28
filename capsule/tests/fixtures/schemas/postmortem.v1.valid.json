@@ -1,0 +1,10 @@
+{"schema": "postmortem.v1", "run_id": "0123456789abcdef0123456789abcdef", "task_id": "t_0000aaaa",
+ "claim_lock": "host:0123456789abcdef0123456789abcdef", "incident_id": "inc_0000aaaa",
+ "root_cause": "The worker exited before writing run.json when the adapter raised.",
+ "lesson": "Every exit path of a worker ends in run.json.",
+ "mitigation": "Write run.json in a finally block in worker.run_one.",
+ "enforcer": "capsule/worker.py finally block",
+ "recurrence_test": "capsule.tests.test_worker.RunJson.test_written_on_adapter_error",
+ "fix_card": {"title": "worker: run.json on adapter error", "body": "Write run.json even when the adapter raises."},
+ "decision_row_text": "| 457 | Incident inc_0000aaaa: worker crash | ... |",
+ "confidence": "high"}

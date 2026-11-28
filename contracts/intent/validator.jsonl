@@ -1,0 +1,4 @@
+{"id": "not-run-listed-while-outputs-exist", "given": {"document": {"schema": "validator_result.v1", "not_run": "<non-empty>"}, "inputs": {"outputs": "<non-empty>"}}, "expect": {"not_run": "<empty>"}, "source": "row 447"}
+{"id": "pass-with-a-failing-assertion", "given": {"document": {"schema": "validator_result.v1", "verdict": "pass", "assertions": {"<some>": {"result": "fail"}}}}, "expect": {"verdict": "fail"}, "source": "row 362"}
+{"id": "retried-fail-still-has-assertions", "given": {"document": {"schema": "validator_result.v1", "verdict": "fail"}, "inputs": {"invalid_document_error": "<non-empty>"}}, "expect": {"assertions": "<non-empty>"}, "source": "recorded run t-de1466d6-378"}
+{"id": "not-run-assertion-while-outputs-exist", "given": {"document": {"schema": "validator_result.v1", "assertions": {"<some>": {"result": "not_run"}}}, "inputs": {"outputs": "<non-empty>"}}, "expect": {"assertions": {"<not>": {"<some>": {"result": "not_run"}}}}, "source": "row 447"}

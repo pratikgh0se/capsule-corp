@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/schemas/advisor_report.v1.json",
+  "title": "The weekly process advisor's report (row 394; Zenkai Z4, Z5)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "run_id", "task_id", "claim_lock", "summary", "contradiction_ranking", "override_review",
+               "proposals"],
+  "properties": {
+    "schema": {"const": "advisor_report.v1"},
+    "run_id": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+    "task_id": {"type": "string", "pattern": "^t_[0-9a-f]{8}$"},
+    "claim_lock": {"type": "string", "minLength": 1, "maxLength": 200},
+    "summary": {"type": "string", "minLength": 10, "maxLength": 3000},
+    "contradiction_ranking": {"type": "array", "maxItems": 40, "items": {
+      "type": "object", "additionalProperties": false, "required": ["contract", "count"],
+      "properties": {"contract": {"type": "string", "minLength": 1, "maxLength": 80},
+                     "count": {"type": "integer", "minimum": 0}}}},
+    "override_review": {"type": "array", "maxItems": 100, "items": {
+      "type": "object", "additionalProperties": false, "required": ["override", "verdict", "note"],
+      "properties": {"override": {"type": "string", "minLength": 1, "maxLength": 120},
+                     "verdict": {"enum": ["keep", "expire", "contract_change"]},
+                     "note": {"type": "string", "minLength": 5, "maxLength": 600}}}},
+    "proposals": {"type": "array", "maxItems": 20, "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "target", "change", "removes", "evidence", "card_title"],
+      "properties": {"kind": {"enum": ["prune", "add_rule", "golden_set"]},
+                     "target": {"type": "string", "minLength": 3, "maxLength": 200},
+                     "change": {"type": "string", "minLength": 10, "maxLength": 2000},
+                     "removes": {"type": "string", "minLength": 3, "maxLength": 600},
+                     "evidence": {"type": "string", "minLength": 5, "maxLength": 800},
+                     "card_title": {"type": "string", "minLength": 5, "maxLength": 200}}}}
+  }
+}

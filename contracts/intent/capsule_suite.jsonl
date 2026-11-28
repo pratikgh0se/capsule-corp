@@ -1,0 +1,3 @@
+{"id": "second-invocation-waits-then-succeeds", "given": {"document": {"check": "capsule_suite", "case": "second-waits", "child_secs": 1}}, "expect": {"exit": 0, "waited": true, "order": ["A start", "A end", "B start", "B end"]}, "source": "recorded run t_45a84c3f"}
+{"id": "hung-suite-is-killed-with-124", "given": {"document": {"check": "capsule_suite", "case": "timeout", "timeout": 1, "child_sleeps": 60}}, "expect": {"exit": 124, "grandchild_alive": false, "dump_names": "test_hang"}, "source": "recorded run t_45a84c3f"}
+{"id": "killed-wrapper-leaves-no-unlocked-suite", "given": {"document": {"check": "capsule_suite", "case": "wrapper-killed", "signal": "KILL"}}, "expect": {"next_run_exit": 75}, "source": "recorded run t_45a84c3f"}

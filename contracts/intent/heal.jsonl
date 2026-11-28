@@ -1,0 +1,2 @@
+{"id": "logout-pauses-pipeline-with-reason", "given": {"document": {"check": "heal", "case": "claude-logout"}}, "expect": {"pass": "logout: exit 1, one alert, stamp, pipeline paused with reason"}, "source": "row 598"}
+{"id": "heal-writes-no-gateway-event", "given": {"document": {"check": "heal", "case": "gateway-retired", "gateway_loaded": false}}, "expect": {"pass": "no gateway event and no kickstart, whatever launchctl lists"}, "source": "owner"}

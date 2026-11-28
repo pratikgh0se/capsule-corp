@@ -1,0 +1,53 @@
+{
+  "board": "capsule-corp",
+  "epics": ["epic/capsule-harness"],
+  "repo_url": "https://github.com/your-github-user/capsule-corp.git",
+  "caps": {"max_running": 1, "claim_ttl": 900, "failure_limit": 3, "checkpoint_chain": 3, "tick_seconds": 30,
+           "max_review": 2, "max_heavy": 3,
+           "external_heavy": 1},
+  "contract_commands": [
+    "python3 -m unittest discover -s capsule/tests -t .",
+    "OBSIDIAN_VAULT_PATH=$(mktemp -d) AGENT_OPS_NO_SEND=1 python3 -m unittest discover -s maintenance/tests -q",
+    "bash tests/run_shell_suites.sh --shard fast",
+    "SHELL_SUITE_TIMEOUT=720 bash tests/run_shell_suites.sh --shard slow"
+  ],
+  "contract_shards": {"python3 -m unittest discover -s capsule/tests -t .": 12},
+  "lander": {
+    "mode": "dry-run",
+    "select_tests": false,
+    "gates": [
+      "python3 tests/mutation_check.py --base {base} --head {head}",
+      "python3 tests/size_check.py --base {base} --head {head}",
+      "python3 tests/simplicity_check.py --base {base} --head {head}",
+      "python3 tests/ruff_gate.py --base {base} --head {head}",
+      "python3 tests/portability_lint.py --base {base} --head {head}"
+    ],
+    "deploy_check": "./deploy.sh --check",
+    "needs_docker": []
+  },
+  "routing": {
+    "implementer": {"provider": "claude", "account": "default", "model": "claude-sonnet-5", "fallback": null, "turn_budget": 80, "vault_read": "none"},
+    "reviewer": {"provider": "claude", "account": "default", "model": "claude-opus-5", "fallback": null, "turn_budget": 40, "vault_read": "decisions"},
+    "validator": {"provider": "claude", "account": "default", "model": "claude-haiku-4-5-20251001", "fallback": "claude-sonnet-5", "turn_budget": 8, "vault_read": "none"},
+    "guide": {"provider": "claude", "account": "default", "model": "claude-opus-5", "fallback": null, "turn_budget": 6, "vault_read": "none"}
+  },
+  "assignees": {"dev-backend": "implementer"},
+  "outbox": {"channel": "file"},
+  "deadman": true,
+  "slack": {
+    "enabled": true,
+    "identity": "telegram-gateway",
+    "board_prefix": true,
+    "channels": {
+      "blocked": "C_SET_ME_BLOCKED", "paused": "C_SET_ME_BLOCKED", "incident": "C_SET_ME_BLOCKED",
+      "done": "C_SET_ME_DONE", "scheduled": "C_SET_ME_DONE", "running": "C_SET_ME_DONE"
+    }
+  },
+  "autonomy": {"touch_cards": true, "touch_board": "capsule-corp", "touch_epic": "epic/capsule-harness",
+               "touch_assignee": "dev-backend"},
+  "redesign": {"deps_ready": false, "lanes": false, "check_gate": false, "escalation": false,
+               "flake_reruns": false, "night_runner": false, "interrupts": false,
+               "memory_rules": false, "advisor_cards_only": false, "light_runner": false, "mac_runner": false,
+               "security_review": false, "allocator": "off",
+               "vault_context": "off", "blind_tests": "off"}
+}

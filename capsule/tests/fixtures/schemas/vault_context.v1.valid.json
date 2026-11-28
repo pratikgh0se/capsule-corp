@@ -1,0 +1,7 @@
+{"schema": "vault_context.v1", "run_id": "0123456789abcdef0123456789abcdef", "task_id": "t_0000aaaa",
+ "claim_lock": "host:0123456789abcdef0123456789abcdef", "retrieved": "2026-11-08 09:14",
+ "query_hash": "0123456789abcdef", "mode": "keyword-only",
+ "arms": {"lexical": ["Knowledge/Alpha.md"], "semantic": []},
+ "kept": [{"number": 7, "rank": 1, "text": "Fake row.", "date": "2026-10-01"}],
+ "withheld": [{"path": "Specs/Old.md", "rank": 1, "text": "Fake.", "reason": "stale: status superseded"}],
+ "flags": ["low_confidence"], "bytes": 120}

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/schemas/blind_tests.v1.json",
+  "title": "Blind tester report: statements covered and not testable (row 601)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "run_id", "task_id", "claim_lock", "covered", "not_testable"],
+  "properties": {
+    "schema": {"const": "blind_tests.v1"},
+    "run_id": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+    "task_id": {"type": "string", "pattern": "^t_[0-9a-f]{8}$"},
+    "claim_lock": {"type": "string", "minLength": 1, "maxLength": 200},
+    "covered": {"type": "array", "maxItems": 100, "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["statement", "tests"],
+      "properties": {
+        "statement": {"type": "integer", "minimum": 1, "maximum": 100},
+        "tests": {"type": "array", "minItems": 1, "maxItems": 50,
+                  "items": {"type": "string", "minLength": 1, "maxLength": 200}}}}},
+    "not_testable": {"type": "array", "maxItems": 100, "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["statement", "reason"],
+      "properties": {
+        "statement": {"type": "integer", "minimum": 1, "maximum": 100},
+        "reason": {"type": "string", "minLength": 1, "maxLength": 500}}}},
+    "question": {"type": "string", "minLength": 0, "maxLength": 1000}
+  }
+}

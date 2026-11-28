@@ -1,0 +1,44 @@
+{
+  "board": "my-app",
+  "epics": ["epic/my-app-screens-epic"],
+  "repo_url": "https://github.com/your-github-user/my-app.git",
+  "caps": {"max_running": 1, "claim_ttl": 900, "failure_limit": 3, "checkpoint_chain": 3, "tick_seconds": 30,
+           "max_runtime_seconds": 3600, "review_seconds": 1800, "max_review": 3, "max_heavy": 4},
+  "contract_commands": ["ruff check --select E9,F .", "python3 -m unittest discover -s tests -p 'test_*.py' -t .", "python3 -m unittest discover -s tests/ui -t ."],
+  "routing": {
+    "implementer": {"provider": "claude", "account": "default", "model": "claude-sonnet-5", "fallback": null, "turn_budget": 80, "vault_read": "none"},
+    "reviewer":    {"provider": "claude", "account": "default", "model": "claude-opus-5", "fallback": null, "turn_budget": 40, "vault_read": "decisions"},
+    "validator":   {"provider": "claude", "account": "default", "model": "claude-haiku-4-5-20251001", "fallback": "claude-sonnet-5", "turn_budget": 8, "vault_read": "none"},
+    "guide":       {"provider": "claude", "account": "default", "model": "claude-opus-5", "fallback": null, "turn_budget": 6, "vault_read": "none"},
+    "korin":       {"provider": "claude", "account": "default", "model": "claude-opus-5", "fallback": null, "turn_budget": 30, "vault_read": "none"}
+  },
+  "human_minutes": {"approve": 2, "close": 1, "reset": 2, "answer": 3, "command": 2},
+  "korin": {"enabled": false, "max_running": 1, "test_timeout": 300, "vault_push": false, "since": "2026-10-24"},
+  "unblocked": {
+    "boards": ["capsule-corp", "my-app"],
+    "repos": ["~/CodeBase/capsule-corp", "~/CodeBase/my-app"],
+    "runs": [],
+    "review_notes": "~/.local/share/capsule/reviews",
+    "owner_holds": []
+  },
+  "assignees": {"dev-frontend": "implementer", "dev-backend": "implementer"},
+  "slack": {
+    "enabled": false,
+    "identity": "slack",
+    "channels": {
+      "blocked": "#capsule-needs-you",
+      "paused": "#capsule-needs-you",
+      "incident": "#capsule-alerts",
+      "done": "#cc-my-app",
+      "scheduled": "#cc-my-app",
+      "running": "#capsule-activity",
+      "needs_input": "#capsule-needs-you"
+    }
+  },
+  "quiet_hours": {"enabled": false, "start": "22:00", "end": "08:30", "timezone": ""},
+  "redesign": {"deps_ready": false, "lanes": false, "check_gate": false, "escalation": false,
+               "flake_reruns": false, "night_runner": false, "interrupts": false,
+               "memory_rules": false, "advisor_cards_only": false, "light_runner": false, "mac_runner": false,
+               "security_review": false, "allocator": "off",
+               "vault_context": "off", "blind_tests": "off"}
+}

@@ -1,0 +1,3 @@
+{"id": "gap-or-partial-needs-a-proposal", "given": {"document": {"schema": "lookout_proposal.v1", "coverage": {"<some>": {"status": {"<not>": "covered"}}}, "proposals": "<empty>"}}, "expect": {"proposals": "<non-empty>"}, "source": "row 64"}
+{"id": "full-coverage-needs-no-proposal", "given": {"document": {"schema": "lookout_proposal.v1", "coverage": {"<each>": {"status": "covered"}}}}, "expect": {"proposals": "<empty>"}, "source": "row 64"}
+{"id": "slo-target-needs-a-question", "given": {"document": {"schema": "lookout_proposal.v1", "proposals": {"<some>": {"kind": "slo"}}, "questions": "<empty>"}}, "expect": {"questions": "<non-empty>"}, "source": "row 21"}

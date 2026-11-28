@@ -1,0 +1,27 @@
+# source: 7e84ca7:capsule/workspace.py:170-189
+# note: the 14-line docstring hunk of _redact_clone_failure verbatim (signature + docstring); its body and clone() are trimmed to short stand-ins because their real lines exceed 100 chars, and the only measured finding the spec case may produce is none
+--- file: capsule/workspace.py ---
+def clone(repo_url):
+    _git("clone", "--", repo_url)
+--- head ---
+def _redact_clone_failure(exc, repo_url):
+    """`exc` (a `RuntimeError` from the `git clone` call in `clone()`), with `repo_url` and git's
+    own stderr both gone from its message (t_b0adfca3): `_git`'s message embeds the exact argv,
+    including `repo_url` verbatim, and stderr for a failing private https/scp remote can itself
+    echo a credential embedded in the URL in a form that does not literally match `repo_url` (git
+    strips a `file://`/`ssh://` scheme, url-decodes, or otherwise reshapes it before printing) -
+    so a partial scrub of stderr is not good enough here, and this drops stderr entirely rather
+    than risk it. `type(exc).__name__: {exc}` is the exact string `tick.py`'s call sites fold into
+    a task_run/event `error` field (which reaches tick.log and Korin's evidence), so this must be
+    what's raised, not something an outer `except` could still combine with the raw `exc`.
+    Reports the return code (parsed back out of `_git`'s own message) and
+    `repo_url_sha256(repo_url)` - already the one non-secret identifier `job.json`/incidents carry
+    for a repo_url, per that function's own docstring - so the failure stays traceable without
+    ever carrying the secret."""
+
+
+def clone(repo_url):
+    try:
+        _git("clone", "--", repo_url)
+    except RuntimeError as exc:
+        raise _redact_clone_failure(exc, repo_url) from None

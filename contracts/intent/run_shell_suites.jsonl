@@ -1,0 +1,9 @@
+{"id": "needs-docker-header-suite-is-skipped-not-run", "given": {"document": {"check": "run_shell_suites", "case": "suite-with-needs-docker-header"}}, "expect": {"pass": "needs-header-only-on-pinned-suites", "skipped": ""}, "source": "row 455"}
+{"id": "first-red-suite-is-named-and-stops-the-run", "given": {"document": {"check": "run_shell_suites", "case": "red-suite-between-greens"}}, "expect": {"pass": "stops-at-first-red"}, "source": "row 455"}
+{"id": "hung-suite-times-out-red", "given": {"document": {"check": "run_shell_suites", "case": "suite-sleeps-past-timeout"}}, "expect": {"pass": "hang-times-out"}, "source": "row 455"}
+{"id": "exit-77-suite-is-skipped-never-passed", "given": {"document": {"check": "run_shell_suites", "case": "suite-exits-77-with-a-skip-line"}}, "expect": {"pass": "exit-77-suite-is-skipped-never-passed"}, "source": "row 615"}
+{"id": "ui-check-skip-is-loud-and-counted", "given": {"document": {"check": "run_shell_suites", "case": "test-ui-check-skipped-under-runner"}}, "expect": {"pass": "ui-check-skip-is-counted"}, "source": "row 615"}
+{"id": "docker-auto-touched-path-turns-docker-on", "given": {"document": {"check": "run_shell_suites", "case": "docker-auto-base-diff-touches-observability"}}, "expect": {"pass": "docker-auto-touched-path-turns-on"}, "source": "row 615"}
+{"id": "docker-auto-bad-base-fails-loud", "given": {"document": {"check": "run_shell_suites", "case": "docker-auto-base-ref-does-not-resolve"}}, "expect": {"pass": "docker-auto-bad-base-fails-loud"}, "source": "row 615"}
+{"id": "docker-auto-env-only-turns-docker-on", "given": {"document": {"check": "run_shell_suites", "case": "env-base-set-no-flag-diff-touches-docker-path"}}, "expect": {"pass": "docker-auto-env-only-turns-on"}, "source": "row 615"}
+{"id": "docker-auto-flag-beats-env", "given": {"document": {"check": "run_shell_suites", "case": "flag-base2-env-nosuchref"}}, "expect": {"pass": "docker-auto-flag-overrides-env"}, "source": "row 615"}

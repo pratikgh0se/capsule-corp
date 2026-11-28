@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>__PREFIX__.capsule-corp-deps-sync</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>__CONFIG__/maintenance/run.sh</string>
+        <string>deps-sync</string>
+    </array>
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>3</integer>
+        <key>Minute</key>
+        <integer>40</integer>
+    </dict>
+    <key>StandardOutPath</key>
+    <string>__CONFIG__/maintenance/logs/launchd-deps-sync.out</string>
+    <key>StandardErrorPath</key>
+    <string>__CONFIG__/maintenance/logs/launchd-deps-sync.err</string>
+</dict>
+</plist>

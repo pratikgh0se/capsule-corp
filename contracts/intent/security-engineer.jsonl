@@ -1,0 +1,2 @@
+{"id": "sec-done-lists-proposed-ledger-lines", "given": {"document": {"schema": "report.v1", "role": "security-engineer", "status": "done", "implemented": "<empty>"}}, "expect": {"implemented": "<non-empty>"}, "source": "owner"}
+{"id": "sec-report-carries-check-totals", "given": {"document": {"schema": "report.v1", "role": "security-engineer", "notes": "<empty>"}}, "expect": {"notes": "<non-empty>"}, "source": "owner"}

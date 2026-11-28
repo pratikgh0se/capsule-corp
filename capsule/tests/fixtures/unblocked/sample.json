@@ -1,0 +1,46 @@
+{
+  "items": [
+    {
+      "item": "t_4a1f0c9e: wire the timer button",
+      "source": "board:capsule-corp",
+      "state": "unblocked",
+      "blocker": "",
+      "owner": "",
+      "age_s": 5400
+    },
+    {
+      "item": "capsule/slack: fix round 3",
+      "source": "branch:capsule-corp",
+      "state": "unblocked",
+      "blocker": "",
+      "owner": "",
+      "age_s": 1800
+    },
+    {
+      "item": "t_88bd21f0: sample-dep hang triage",
+      "source": "board:capsule-corp",
+      "state": "blocked",
+      "blocker": "sample-dep",
+      "owner": "",
+      "age_s": 600
+    },
+    {
+      "item": "fix/w5-gate-audit",
+      "source": "branch:sample-app",
+      "state": "blocked",
+      "blocker": "report-commit a1b2c3d",
+      "owner": "",
+      "age_s": 120
+    },
+    {
+      "item": "t_0f13ee2a: slack contact points",
+      "source": "board:capsule-corp",
+      "state": "unblocked",
+      "blocker": "",
+      "owner": "fable",
+      "age_s": 300
+    }
+  ],
+  "unblocked": 3,
+  "unowned": 2
+}

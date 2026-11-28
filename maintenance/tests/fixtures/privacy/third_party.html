@@ -1,0 +1,11 @@
+<!-- Fixture: a client page that beacons to a hosted third party in addition
+     to its own first-party API. -->
+<!doctype html>
+<html>
+  <body>
+    <script>
+      fetch("https://api.plausible.io/event", { method: "POST" });
+      fetch("/api/session");
+    </script>
+  </body>
+</html>

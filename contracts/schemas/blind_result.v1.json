@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/schemas/blind_result.v1.json",
+  "title": "Blind test result, rendered by the tick from results.jsonl; results and examples, never test code (row 601)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "run_id", "task_id", "claim_lock", "blind_commit", "base_sha", "head_sha", "red", "counts", "tests"],
+  "properties": {
+    "schema": {"const": "blind_result.v1"},
+    "run_id": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+    "task_id": {"type": "string", "pattern": "^t_[0-9a-f]{8}$"},
+    "claim_lock": {"type": "string", "minLength": 1, "maxLength": 200},
+    "blind_commit": {"type": "string", "pattern": "^[0-9a-f]{7,40}$"},
+    "base_sha": {"type": "string", "pattern": "^[0-9a-f]{7,40}$"},
+    "head_sha": {"type": "string", "pattern": "^[0-9a-f]{7,40}$"},
+    "red": {"type": "string", "pattern": "^(pass|fail|inconclusive|not-run|exempt-[0-9]+)$",
+      "description": "The base-commit red check. not-run: that check was not performed (a head-commit report-mode run); the head verdict is then in counts and tests[].result."},
+    "counts": {"type": "object", "additionalProperties": false,
+      "required": ["pass", "fail", "error", "skipped"],
+      "properties": {
+        "pass": {"type": "integer", "minimum": 0},
+        "fail": {"type": "integer", "minimum": 0},
+        "error": {"type": "integer", "minimum": 0},
+        "skipped": {"type": "integer", "minimum": 0}}},
+    "tests": {"type": "array", "maxItems": 500, "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "result", "source", "given", "expect"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1, "maxLength": 200},
+        "result": {"enum": ["pass", "fail", "error", "skipped"]},
+        "source": {"type": "string", "minLength": 1, "maxLength": 200},
+        "given": {"type": "string", "minLength": 1, "maxLength": 1000},
+        "expect": {"type": "string", "minLength": 1, "maxLength": 1000},
+        "observed": {"type": "object", "additionalProperties": false,
+          "required": ["cmd", "exit", "stdout_tail", "stderr_tail"],
+          "properties": {
+            "cmd": {"type": "string", "minLength": 1, "maxLength": 1000},
+            "exit": {"type": "integer", "minimum": -255, "maximum": 255},
+            "stdout_tail": {"type": "string", "minLength": 0, "maxLength": 2000},
+            "stderr_tail": {"type": "string", "minLength": 0, "maxLength": 2000}}}}}}
+  }
+}

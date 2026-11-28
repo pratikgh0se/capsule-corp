@@ -1,0 +1,3 @@
+{"id": "base-from-must-be-a-digest", "given": {"document": {"check": "docker_base_image", "case": "from-line-uses-a-floating-tag"}}, "expect": {"static_check": "fail"}, "source": "owner"}
+{"id": "worker-cannot-install-packages-at-runtime", "given": {"document": {"check": "docker_base_image", "case": "apt-get-install-as-default-user-with-no-network"}}, "expect": {"default_user_root": false, "apt_lists_files": 0, "apt_install_rc_zero": false}, "source": "owner"}
+{"id": "lock-row-must-name-a-digest", "given": {"document": {"check": "docker_base_image", "case": "lock-row-is-tag-only"}}, "expect": {"static_check": "fail"}, "source": "owner"}

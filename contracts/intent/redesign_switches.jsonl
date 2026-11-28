@@ -1,0 +1,3 @@
+{"id": "missing-is-off", "given": {"document": {"check": "redesign_switches", "config": {"redesign": {"lanes": true}}}}, "expect": {"lanes": true, "deps_ready": false, "check_gate": false, "allocator": "off", "vault_context": "off", "blind_tests": "off"}, "source": "owner"}
+{"id": "unknown-switch-refused", "given": {"document": {"check": "redesign_switches", "config": {"redesign": {"time_travel": true}}}}, "expect": {"load": "ValueError"}, "source": "owner"}
+{"id": "bad-mode-refused", "given": {"document": {"check": "redesign_switches", "config": {"redesign": {"allocator": "maybe"}}, "also_refused": [{"redesign": {"blind_tests": "hard"}}, {"redesign": {"lanes": "yes"}}]}}, "expect": {"load": "ValueError"}, "source": "owner"}

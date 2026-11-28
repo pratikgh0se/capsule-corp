@@ -1,0 +1,36 @@
+# rows 398, 425, D221 (M184 C3): page alerts carry the `page` class glyph (🛑) and notices the
+# `running` glyph (⚙️). The alerts webhook (SLACK_WEBHOOK_ALERTS) should point at the inbox channel
+# (slack.channels inbox, else needs_input's, blocked's); notices go to #capsule-activity.
+# Grafana's alert path once OPS_ALERT_SLACK=1 (D133). deploy.sh copies this file to contact-points-slack.yaml only while OPS_ALERT_SLACK=1 in ops.env.
+# Each url below is expanded by Grafana from its container env
+# (SLACK_WEBHOOK_ALERTS, SLACK_WEBHOOK_ACTIVITY; Infisical project capsule-corp,
+# via capsule-secret run); no webhook ever lands in the checkout. Keep the dollar
+# sign out of the templates: Grafana interpolates env references in this file.
+# A resolved alert keeps its class glyph (the green check is the DONE class, row 425 (1)).
+apiVersion: 1
+contactPoints:
+  - orgId: 1
+    name: capsule-slack-alerts
+    receivers:
+      - uid: slack-alerts
+        type: slack
+        settings:
+          url: ${SLACK_WEBHOOK_ALERTS}
+          title: |
+            🛑 {{ if eq .Status "resolved" }}resolved: {{ end }}{{ .CommonLabels.alertname }}
+          text: |
+            {{ range .Alerts }}summary: {{ .Annotations.summary }}
+            {{ end }}runbook: {{ .CommonAnnotations.runbook }}
+            reply: nothing needed unless it repeats
+  - orgId: 1
+    name: capsule-slack-activity
+    receivers:
+      - uid: slack-activity
+        type: slack
+        settings:
+          url: ${SLACK_WEBHOOK_ACTIVITY}
+          title: |
+            ⚙️ {{ if eq .Status "resolved" }}resolved: {{ end }}{{ .CommonLabels.alertname }}
+          text: |
+            {{ range .Alerts }}summary: {{ .Annotations.summary }}
+            {{ end }}runbook: {{ .CommonAnnotations.runbook }}

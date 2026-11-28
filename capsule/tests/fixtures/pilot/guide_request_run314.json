@@ -1,0 +1,32 @@
+{
+  "schema": "request.v1",
+  "task_id": "t_de1466d6",
+  "run_id": "426261695ca745a8956b805e95088ef9",
+  "claim_lock": "host-1.local:426261695ca745a8956b805e95088ef9",
+  "verb": "comment",
+  "to": "Owner",
+  "blocking": true,
+  "subject": "Task 7 review packet arrived with no spec section and no cited decision rows",
+  "body": "Task t_de1466d6 (My-app web screens, Sample Site v0.2.1, screens epic - task 7: session complete `/complete` plus the form-crossed variant) was routed for alignment review with both 'Spec section' and 'Decision rows cited' empty. The guide remit supplies no code and no diff, so those two fields are the whole reviewable basis and a substantive verdict cannot be reached. A drifted verdict has been recorded on review-input completeness only; it is not a finding against the task 7 implementation and should not trigger rework.",
+  "asks": [
+    {
+      "id": 1,
+      "ask": "Supply the spec section covering the session-complete `/complete` screen and the form-crossed variant."
+    },
+    {
+      "id": 2,
+      "ask": "Supply the decision rows this task is to be reviewed against (the 'Decision rows cited' list)."
+    },
+    {
+      "id": 3,
+      "ask": "Confirm the screens-epic gate: did the epic's first screen reach Owner before task 2? This is task 7; no board evidence was in the packet and no violation is being asserted."
+    },
+    {
+      "id": 4,
+      "ask": "Supply the absolute path of the Projects vault so the row 414 resume note `Projects/my-app - Alignment.md` can be brought current. It was not updated for this exchange - the path was unavailable and guessing it risks a write outside `sees`."
+    }
+  ],
+  "unblocks": "Receipt of asks 1 and 2 unblocks a substantive re-review of task 7. Ask 4 unblocks the row 414 obligation for this exchange.",
+  "escalated": true,
+  "escalation_reason": "Row 414 obligation cannot be discharged within the guide's permitted write scope this exchange."
+}

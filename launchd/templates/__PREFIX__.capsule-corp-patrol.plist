@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>__PREFIX__.capsule-corp-patrol</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/env</string><string>python3</string><string>-u</string><string>-m</string>
+    <string>capsule</string><string>patrol</string>
+  </array>
+  <key>WorkingDirectory</key><string>__CAPSULE_HOME__/harness/main</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key><string>/opt/homebrew/bin:__HOME__/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>CAPSULE_HOME</key><string>__CAPSULE_HOME__</string>
+  </dict>
+  <key>StartInterval</key><integer>1800</integer>
+  <key>RunAtLoad</key><true/>
+  <key>StandardOutPath</key><string>__CAPSULE_HOME__/logs/patrol-launchd.log</string>
+  <key>StandardErrorPath</key><string>__CAPSULE_HOME__/logs/patrol-launchd.log</string>
+</dict>
+</plist>

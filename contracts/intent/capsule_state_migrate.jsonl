@@ -1,0 +1,3 @@
+{"id": "live-writer-refuses-and-moves-nothing", "given": {"document": {"check": "capsule_state_migrate", "case": "tick-lock-held-or-run-sh-live"}}, "expect": {"exit": 1, "state_moved": false, "old_path_is_symlink": false}, "source": "row 609"}
+{"id": "migrate-keeps-every-file-and-leaves-a-shim", "given": {"document": {"check": "capsule_state_migrate", "case": "quiet-gap-migrate"}}, "expect": {"exit": 0, "old_path_is_symlink": true, "sha256_manifest_equal": true, "count_and_bytes_equal": true}, "source": "row 609"}
+{"id": "straggler-dir-is-never-overwritten", "given": {"document": {"check": "capsule_state_migrate", "case": "job-recreated-old-path-after-mv"}}, "expect": {"exit": 2, "stray_files_kept": true, "merge_commands_printed": true}, "source": "row 609"}

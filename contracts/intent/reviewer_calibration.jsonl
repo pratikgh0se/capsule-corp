@@ -1,0 +1,3 @@
+{"id": "planted-bug-is-caught-by-a-fail-with-a-finding-within-3-lines", "given": {"document": {"check": "planted-verdict", "verdict": "fail", "finding_file": "a.py", "finding_line": 13}}, "expect": {"outcome": "caught"}, "source": "owner"}
+{"id": "a-pass-verdict-is-never-a-catch-even-with-the-right-finding", "given": {"document": {"check": "planted-verdict", "verdict": "pass", "finding_file": "a.py", "finding_line": 10}}, "expect": {"outcome": "missed"}, "source": "owner"}
+{"id": "any-finding-on-a-clean-case-is-a-false-flag", "given": {"document": {"check": "false-flag"}}, "expect": {"outcome": "false_flag", "false_flag_rate": 1.0}, "source": "owner"}

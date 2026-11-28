@@ -1,0 +1,345 @@
+[
+ {
+  "id": "rb-01",
+  "title": "Stop the lander choking on empty commits",
+  "body": "## Problem\nWhen a worker finishes with no diff, lander.py raises on the empty cherry-pick and the card sits in `landing` forever.\n\n## Fix\n- In lander.py, treat an empty commit as a no-op landing and mark the card done.\n- Log one line saying the commit was empty.\n\n## Acceptance\n- Replay of card t_9f2 lands cleanly.",
+  "files": [
+   "lander.py"
+  ],
+  "level": "risky",
+  "flags": [
+   "judges"
+  ],
+  "why": "D15 'touches judges'; section 195 lists protected paths as judges and capsule/lander.py is in the PROTECTED tuple, named here by bare filename 'lander.py'. 'A card that must change a judge is risky (D15)'."
+ },
+ {
+  "id": "rb-02",
+  "title": "Make the second-oracle check easier on small cards",
+  "body": "## Why\nReviewers complain that the gate which decides whether two independent oracles agree is too strict for one-line cards.\n\n## What\nThe intent module that governs that gate (the `intent.py` file) should skip the second-oracle requirement when the diff is under 5 lines. Keep the rest as is.",
+  "files": [],
+  "level": "risky",
+  "flags": [
+   "judges"
+  ],
+  "why": "D15 judges / section 195 'guards' and gates; intent.py is a PROTECTED path (row 470 comment: it governs the second-oracle gate). Relaxing a gate is touching a judge; bare filename 'intent.py' in prose."
+ },
+ {
+  "id": "rb-03",
+  "title": "Soften the guide agent's tone",
+  "body": "### Goal\nThe guide sounds curt. Update SOUL.md in the guide persona folder so it opens with a greeting and uses fewer bullet lists.\n\n### Notes\n- Persona folder is `personas/guide/`.\n- No code changes.",
+  "files": [
+   "personas/guide/SOUL.md"
+  ],
+  "level": "risky",
+  "flags": [
+   "judges"
+  ],
+  "why": "Section 195: 'role contracts' and protected paths are never writable by builders; PROTECTED includes '**/SOUL*.md'. D15 'touches judges' makes it risky even though it is prose only."
+ },
+ {
+  "id": "rb-04",
+  "title": "Track how many times a card was retried",
+  "body": "## Context\nOwner wants to see retry counts on the board.\n\n## Work\n1. Give every row in `cards` a new `retry_count` integer column, default 0, NOT NULL.\n2. On startup, fill it for existing cards by counting their rows in `runs`.\n3. Increment it in the dispatcher when a card is re-queued.\n\nEstimate: 1h.",
+  "files": [
+   "store/cards.py",
+   "store/schema.sql"
+  ],
+  "level": "risky",
+  "flags": [
+   "data"
+  ],
+  "why": "D15 'touches data, schema or retention': adds a column to an existing table and backfills existing rows, although the word 'migration' is never used. The 1h estimate and 2 files do not make it big."
+ },
+ {
+  "id": "rb-05",
+  "title": "Shorten how long run logs are kept",
+  "body": "Disk is at 91%. Run logs under `~/.local/state/capsule/runs/` are kept for 90 days; change that to 14 days and delete anything older in the nightly sweep.\n\nNothing else changes. Should be a one-line constant plus a sweep loop.",
+  "files": [
+   "maintenance/sweep.py"
+  ],
+  "level": "risky",
+  "flags": [
+   "data"
+  ],
+  "why": "D15 'touches data, schema or retention': changes a retention period and deletes existing data. Small size, so only 'data'."
+ },
+ {
+  "id": "rb-06",
+  "title": "Charge for the Pro plan",
+  "body": "## Goal\nLet users upgrade to Pro from the settings page.\n\n## Tasks\n- Create a Stripe Checkout session from `/billing/upgrade`.\n- Show the new price ($19/mo) on the pricing table.\n- Handle the success redirect and flip `plan` to `pro`.\n\nEstimate: 2h.",
+  "files": [
+   "web/billing.py",
+   "web/templates/pricing.html"
+  ],
+  "level": "risky",
+  "flags": [
+   "public"
+  ],
+  "why": "D15 'public/external/money': Stripe, checkout and pricing are money and an external service. 2h estimate and 2 files, so not big."
+ },
+ {
+  "id": "rb-07",
+  "title": "Cut release 0.4.0",
+  "body": "## Steps\n1. Bump the version in `pyproject.toml` to 0.4.0.\n2. Tag `v0.4.0` and push the tag.\n3. Upload the wheel to PyPI.\n4. Send the announcement email to the early-access list.\n\nChangelog is already written.",
+  "files": [
+   "pyproject.toml",
+   "CHANGELOG.md"
+  ],
+  "level": "risky",
+  "flags": [
+   "public"
+  ],
+  "why": "D15 'public/external': publishing to PyPI, pushing a tag and emailing a list are public and external and not reversible."
+ },
+ {
+  "id": "rb-08",
+  "title": "Notify customer systems when a card finishes",
+  "body": "### Feature\nAdd an outgoing webhook: when a card reaches `done`, POST a JSON payload with the card id, title and PR link to the URL configured per project in `webhook_url`.\n\n### Details\n- Retry 3 times with backoff.\n- Sign the body with HMAC.",
+  "files": [
+   "capsule_hooks/outgoing.py"
+  ],
+  "level": "risky",
+  "flags": [
+   "public"
+  ],
+  "why": "D15 'external': a webhook sends data to systems outside the repo. The word 'hooks' in the path is not Claude hooks; label comes from the external call."
+ },
+ {
+  "id": "rb-09",
+  "title": "Move the status page to the new host",
+  "body": "The status page is moving to the new box.\n\n- Update the CNAME for status.capsule.example so it points at the new load balancer.\n- Lower the TTL to 60s first, raise it back after.\n- Verify with `dig`.",
+  "files": [],
+  "level": "risky",
+  "flags": [
+   "public"
+  ],
+  "why": "D15 'public/external': a DNS change affects the public internet. No file is named, so the classifier must read the prose (DNS, CNAME, TTL)."
+ },
+ {
+  "id": "rb-10",
+  "title": "Make room in tick.py",
+  "body": "## Problem\nThe size gate is failing on tick.py: the file is 1203 lines and the baseline is 1200.\n\n## Plan\nAdd the new `heartbeat` helper (about 25 lines), then raise the size baseline in `maintenance/size_baseline.json` for tick.py from 1200 to 1230. Rationale: the helper is cohesive and splitting it out is out of scope for today.",
+  "files": [
+   "capsule/tick.py",
+   "maintenance/size_baseline.json"
+  ],
+  "level": "risky",
+  "flags": [
+   "judges"
+  ],
+  "why": "Section 195 / D15 'touches judges (tests/gates/guards/hooks)': the size baseline is a gate and raising it relaxes it. The 'out of scope' clause sits beside the baseline edit, so it must not excuse it. Memory rule: size-baseline raises need approval."
+ },
+ {
+  "id": "rb-11",
+  "title": "Quiet the flaky deploy test",
+  "body": "`test_deploy_bootstrap_reloads_job` fails about 1 run in 8 on CI. Add `@pytest.mark.skip(reason=\"flaky\")` to it and open a follow-up card. We need green builds today.",
+  "files": [
+   "capsule/tests/test_deploy.py"
+  ],
+  "level": "risky",
+  "flags": [
+   "judges"
+  ],
+  "why": "D15 'touches judges (tests...)': skipping a test removes a gate; section 4.10 says no agent edits tests, gates, guards or hooks without Owner approving the check."
+ },
+ {
+  "id": "rb-12",
+  "title": "Rename `task_id` to `card_id` in log helpers",
+  "body": "Pure rename of a local variable and keyword argument. No behaviour change.\n\nFiles (core):\n- capsule/logs/writer.py\n- capsule/logs/reader.py\n- capsule/logs/rotate.py\n- capsule/logs/format.py\n- capsule/logs/__init__.py\n\nFiles (callers):\n- capsule/board/render.py\n- capsule/board/filters.py\n- capsule/status/summary.py\n- capsule/status/export.py\n- capsule/cli/show.py\n- capsule/cli/list.py\n- capsule/cli/watch.py\n\nEstimate: 1h (mostly search and replace).",
+  "files": [
+   "capsule/logs/writer.py",
+   "capsule/logs/reader.py",
+   "capsule/logs/rotate.py",
+   "capsule/logs/format.py",
+   "capsule/logs/__init__.py",
+   "capsule/board/render.py",
+   "capsule/board/filters.py",
+   "capsule/status/summary.py",
+   "capsule/status/export.py",
+   "capsule/cli/show.py",
+   "capsule/cli/list.py",
+   "capsule/cli/watch.py"
+  ],
+  "level": "risky",
+  "flags": [
+   "big"
+  ],
+  "why": "D21 'Big card = 10+ files': 12 files are listed under two 'Files' headings (5+7) even though the estimate is only 1h. Only 'big' applies."
+ },
+ {
+  "id": "rb-13",
+  "title": "Rework how the board groups cards",
+  "body": "Group cards on the board by epic first, then by status, instead of the flat list. Needs a new collapsed state per group that survives reload.\n\nEstimate: 4h\n\nTouches the board component and its state file only.",
+  "files": [
+   "web/board/Board.tsx",
+   "web/board/state.ts"
+  ],
+  "level": "risky",
+  "flags": [
+   "big"
+  ],
+  "why": "D21 'Big card = ... 3+ hours of agent time': the estimate is 4h with only 2 files."
+ },
+ {
+  "id": "rb-14",
+  "title": "Replace the pre-edit hook and refactor its callers",
+  "body": "## Goal\nSwap the PreToolUse hook for the new matcher API and update every caller.\n\n## Files\n- bin/worktree-only-edits.py\n- capsule/hooks/loader.py\n- capsule/hooks/registry.py\n\n## Files (callers)\n- capsule/runner/exec.py\n- capsule/runner/env.py\n- capsule/runner/limits.py\n- capsule/sandbox/mounts.py\n- capsule/sandbox/paths.py\n- capsule/sandbox/audit.py\n- capsule/cli/run.py\n- capsule/cli/doctor.py\n\n## Files (docs)\n- docs/hooks.md\n\nRegistering in settings.json is out of scope; edit the hook itself though.",
+  "files": [
+   "bin/worktree-only-edits.py",
+   "capsule/hooks/loader.py",
+   "capsule/hooks/registry.py",
+   "capsule/runner/exec.py",
+   "capsule/runner/env.py",
+   "capsule/runner/limits.py",
+   "capsule/sandbox/mounts.py",
+   "capsule/sandbox/paths.py",
+   "capsule/sandbox/audit.py",
+   "capsule/cli/run.py",
+   "capsule/cli/doctor.py",
+   "docs/hooks.md"
+  ],
+  "level": "risky",
+  "flags": [
+   "judges",
+   "big"
+  ],
+  "why": "D15 judges: it replaces a hook (section 195 'guards and hooks'); D21 big: 12 files across three Files headings. The 'out of scope' sentence covers only the settings registration, not the hook edit."
+ },
+ {
+  "id": "rb-15",
+  "title": "Add an archive timestamp to runs",
+  "body": "Add `archived_at` (nullable timestamp) to the `runs` table so the board can hide old runs (backfilling old rows is out of scope).",
+  "files": [
+   "store/runs.py"
+  ],
+  "level": "risky",
+  "flags": [
+   "data"
+  ],
+  "why": "D15 'touches data, schema': adds a column to an existing table. 'out of scope' on the same line is about the backfill and does not remove the schema change."
+ },
+ {
+  "id": "rb-16",
+  "title": "Fix duration parser dropping minutes",
+  "body": "## Bug\n`parse_duration(\"1h30m\")` returns 3600 instead of 5400; the minutes group is ignored when an hours group is present.\n\n## Fix\nMake the regex capture both groups. Add a new unit test file `test_durations.py` with the cases `1h30m`, `45m`, `2h`. Do not touch any existing test.\n\nEstimate: 30m.",
+  "files": [
+   "capsule/util/durations.py",
+   "capsule/util/test_durations.py"
+  ],
+  "level": "low",
+  "flags": [],
+  "why": "Not judges: it adds a new test for its own fix and relaxes or edits no existing gate; no protected path, schema, money or external effect; one fix well under 10 files and 3h."
+ },
+ {
+  "id": "rb-17",
+  "title": "Log a clearer message when the card has no owner",
+  "body": "The board prints `None` when a card has no owner. Print `unassigned` instead.\n\nNote: do not touch lander.py or anything in contracts/; those are protected and out of scope. The change is only in `capsule/board/render.py`.",
+  "files": [
+   "capsule/board/render.py"
+  ],
+  "level": "low",
+  "flags": [],
+  "why": "Section 195 makes a card risky when it must change a judge. Here lander.py and contracts/ appear only as 'do not touch', so no judge is changed."
+ },
+ {
+  "id": "rb-18",
+  "title": "Typo in the README quickstart",
+  "body": "Line 14 says `capsue run` instead of `capsule run`. Fix the typo.",
+  "files": [
+   "README.md"
+  ],
+  "level": "low",
+  "flags": [],
+  "why": "Docs-only one-character edit. README.md is not in the PROTECTED tuple (only CLAUDE.md, AGENTS.md, SOUL*.md, ZENKAI.md are)."
+ },
+ {
+  "id": "rb-19",
+  "title": "Ping my Slack when the nightly sweep finishes",
+  "body": "Post a one-line message to Owner's own Slack DM (the `SLACK_SELF_DM` channel from the local config) with how many files the sweep removed. This only goes to the owner, nobody else.",
+  "files": [
+   "maintenance/sweep_notify.py"
+  ],
+  "level": "low",
+  "flags": [],
+  "why": "D15 'public/external' means outside the owner's own surfaces; a DM to the owner himself is not public. No data, judge, money or size trigger."
+ },
+ {
+  "id": "rb-20",
+  "title": "Rename helper `fmt_ts` to `format_timestamp`",
+  "body": "Mechanical rename, no behaviour change.\n\nFiles:\n- capsule/util/time.py\n- capsule/board/render.py\n- capsule/board/filters.py\n- capsule/status/summary.py\n- capsule/status/export.py\n- capsule/cli/show.py\n- capsule/cli/list.py\n- capsule/cli/watch.py\n- capsule/logs/format.py\n\nEstimate: 45m.",
+  "files": [
+   "capsule/util/time.py",
+   "capsule/board/render.py",
+   "capsule/board/filters.py",
+   "capsule/status/summary.py",
+   "capsule/status/export.py",
+   "capsule/cli/show.py",
+   "capsule/cli/list.py",
+   "capsule/cli/watch.py",
+   "capsule/logs/format.py"
+  ],
+  "level": "low",
+  "flags": [],
+  "why": "D21 big is 10+ files; this card lists exactly 9 files and estimates 45m, so it is below both thresholds."
+ },
+ {
+  "id": "rb-21",
+  "title": "Cache the project list in the settings page",
+  "body": "Settings page calls the projects endpoint twice on load. Cache the first result for the render.\n\nEstimate: 2.5h",
+  "files": [
+   "web/settings/Settings.tsx",
+   "web/settings/useProjects.ts"
+  ],
+  "level": "low",
+  "flags": [],
+  "why": "D21 big is 3+ hours; 2.5h is below it and only 2 files are involved. No other risk word."
+ },
+ {
+  "id": "rb-22",
+  "title": "Widen the status column on the board",
+  "body": "Status labels like `needs-review` wrap onto two lines. Set the column to `min-width: 9rem` and align the badge. Estimate ~2h including a screenshot check.",
+  "files": [
+   "web/board/board.css",
+   "web/board/Badge.tsx",
+   "web/board/Board.tsx"
+  ],
+  "level": "low",
+  "flags": [],
+  "why": "Pure styling, 3 files, ~2h which is under D21's 3h. No judge, data, public or money."
+ },
+ {
+  "id": "rb-23",
+  "title": "Add a --json flag to `capsule status`",
+  "body": "## What\n`capsule status --json` prints the same counts as the table but as a JSON object. Default output stays as it is.\n\n## Tests\nAdd one new test in the status CLI test file for the new flag; existing tests stay unchanged.\n\nEstimate: 1h.",
+  "files": [
+   "capsule/cli/status.py",
+   "capsule/cli/test_status.py"
+  ],
+  "level": "low",
+  "flags": [],
+  "why": "A local CLI output option; the test is new coverage for its own feature and relaxes nothing. No public effect, no schema, 2 files, 1h."
+ },
+ {
+  "id": "rb-24",
+  "title": "Show retry count next to each card",
+  "body": "The `retry_count` column already exists on `cards` and is already filled in. Just read it and show `x2` beside the title on the board. Read-only: no change to the table.",
+  "files": [
+   "web/board/CardRow.tsx",
+   "capsule/board/query.py"
+  ],
+  "level": "low",
+  "flags": [],
+  "why": "D15 'touches data, schema or retention' means changing them; this card only reads an existing column and states no schema, backfill or retention change."
+ },
+ {
+  "id": "rb-25",
+  "title": "Add timing line to the tick log",
+  "body": "At the end of each tick, log `tick took 1.2s` (info level). Use the existing logger, no new dependencies. Don't change tick behaviour.\n\nEstimate: 20m.",
+  "files": [
+   "capsule/tick.py"
+  ],
+  "level": "low",
+  "flags": [],
+  "why": "tick.py is not a protected path and the change is a one-line log; no baseline change is requested, no data, public or money, and it is small."
+ }
+]

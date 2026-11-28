@@ -1,0 +1,2 @@
+{"id": "missing-grep-fails-closed-and-names-the-tool", "given": {"document": {"path_without": "grep"}}, "expect": {"capture": "failed", "names": "grep missing"}, "source": "row 470"}
+{"id": "healthy-capture-with-nothing-unclassified-reads-none", "given": {"document": {"path_without": "nothing"}}, "expect": {"capture": "none"}, "source": "row 470"}

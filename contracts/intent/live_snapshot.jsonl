@@ -1,0 +1,3 @@
+{"id": "disk-under-25-gb-is-red", "given": {"document": {"check": "live_snapshot", "case": "disk-free-below-the-line", "signals": {"disk_free_gb": 20}}}, "expect": {"tile": "red"}, "source": "owner"}
+{"id": "snapshot-older-than-3-minutes-is-red", "given": {"document": {"check": "live_snapshot", "case": "collector-stopped", "signals": {"snapshot_age_s": 240}}}, "expect": {"tile": "red"}, "source": "owner"}
+{"id": "no-offline-test-running-is-not-a-failure", "given": {"document": {"check": "live_snapshot", "case": "dark-test-has-no-start-marker", "signals": {"exit": 2, "stderr": "dark_test: no start marker"}}}, "expect": {"tile": "green"}, "source": "owner"}

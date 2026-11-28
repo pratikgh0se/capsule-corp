@@ -1,0 +1,72 @@
+{
+ "vault": "/home/example/sample-vault",
+ "scanned": "2026-09-06",
+ "total_notes": 127,
+ "total_issues": 6,
+ "counts": {
+  "Duplicates": 2,
+  "Missing frontmatter": 2,
+  "Template leftovers": 2
+ },
+ "issues": [
+  {
+   "type": "template_leftover",
+   "severity": "error",
+   "message": "Unfilled template syntax in: Architecture/capsule-corp/2026-09-06-vault-jobs-design.md",
+   "files": [
+    "Architecture/capsule-corp/2026-09-06-vault-jobs-design.md"
+   ]
+  },
+  {
+   "type": "template_leftover",
+   "severity": "error",
+   "message": "Unfilled template syntax in: Architecture/capsule-corp/2026-09-06-vault-jobs.md",
+   "files": [
+    "Architecture/capsule-corp/2026-09-06-vault-jobs.md"
+   ]
+  },
+  {
+   "type": "no_frontmatter",
+   "severity": "warning",
+   "message": "Missing frontmatter: log.md",
+   "files": [
+    "log.md"
+   ]
+  },
+  {
+   "type": "duplicate",
+   "severity": "warning",
+   "message": "Likely duplicates: 'skill'",
+   "files": [
+    "copilot/skills/copilot-web-search/SKILL.md",
+    "copilot/skills/notes-markdown/SKILL.md",
+    "copilot/skills/copilot-video-transcript/SKILL.md",
+    "copilot/skills/notes-bases/SKILL.md",
+    "copilot/skills/symposium-publish/SKILL.md",
+    "copilot/skills/copilot-web-fetch/SKILL.md",
+    "copilot/skills/notes-cli/SKILL.md",
+    "copilot/skills/copilot-read-pdf/SKILL.md",
+    "copilot/skills/copilot-fetch-x/SKILL.md",
+    "copilot/skills/json-canvas/SKILL.md"
+   ]
+  },
+  {
+   "type": "duplicate",
+   "severity": "info",
+   "message": "Same title, different content: 'sprint pipeline spec b design'",
+   "files": [
+    "Projects/Sprint Pipeline - Spec B Design.md",
+    "~/sample-vault/Projects/Sprint Pipeline - Spec B Design.md"
+   ]
+  },
+  {
+   "type": "duplicate",
+   "severity": "info",
+   "message": "Same title, different content: 'examples'",
+   "files": [
+    "copilot/skills/notes-bases/references/EXAMPLES.md",
+    "copilot/skills/json-canvas/references/EXAMPLES.md"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,108 @@
+# source: 0fc0b0b:tests/size_check.py:36,65,100,137
+--- file: tests/size_check.py ---
+def read_at(repo, sha, path):
+    r = sh(["git", "show", f"{sha}:{path}"], repo)
+    return r.stdout if r.returncode == 0 else None
+
+
+def ruff_violations(repo, sha, files):
+    """ruff C901 at `sha`, materialised in a scratch dir (never the caller's checkout).
+    `[]` (advisory skip) when ruff is not installed."""
+    with tempfile.TemporaryDirectory() as td:
+        present = []
+        for p in files:
+            text = read_at(repo, sha, p)
+            if text is None:
+                continue
+            dest = Path(td) / p
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_text(text)
+            present.append(p)
+        if not present:
+            return []
+        try:
+            r = subprocess.run(
+                ["ruff", "check", "--select", "C901", "--output-format", "concise",
+                 "--config", f"lint.mccabe.max-complexity={COMPLEXITY_LIMIT}", *present],
+                cwd=td, capture_output=True, text=True, timeout=120)
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            return []
+        if "not found" in (r.stderr or "").lower() or "no module named" in (r.stderr or "").lower():
+            return []
+        return [(m.group("path"), int(m.group("line")), "complexity", int(m.group("n")))
+                for line in r.stdout.splitlines() for m in [_RUFF_RE.match(line.strip())] if m]
+
+
+def generate_baseline(repo):
+    files = _lines(["git", "ls-files", "*.py"], repo)
+    data = sorted(key(v) for v in measure(repo, "HEAD", files))
+    (Path(repo) / BASELINE_PATH).write_text(json.dumps(data, indent=2) + "\n")
+    print(f"wrote {len(data)} baseline entries to {BASELINE_PATH}")
+    return 0
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--base"); ap.add_argument("--head")
+    ap.add_argument("--repo", default=".")
+    ap.add_argument("--generate-baseline", action="store_true")
+    a = ap.parse_args(argv)
+    if a.generate_baseline:
+        return generate_baseline(a.repo)
+    if not a.base or not a.head:
+        ap.error("--base and --head are required unless --generate-baseline")
+    ok, report = check(a.repo, a.base, a.head)
+    print(report)
+    return 0 if ok else 1
+
+--- head ---
+def read_at(repo, sha, path):
+    r = sh(["git", "show", f"{sha}:{path}"], repo); return r.stdout if r.returncode == 0 else None
+
+
+def ruff_violations(repo, sha, files):
+    """ruff C901 at `sha` in a scratch dir. `[]` (advisory skip) when ruff is absent."""
+    with tempfile.TemporaryDirectory() as td:
+        present = []
+        for p in files:
+            text = read_at(repo, sha, p)
+            if text is None:
+                continue
+            dest = Path(td) / p
+            dest.parent.mkdir(parents=True, exist_ok=True); dest.write_text(text)
+            present.append(p)
+        if not present:
+            return []
+        try:
+            r = subprocess.run(
+                ["ruff", "check", "--select", "C901", "--output-format", "concise",
+                 "--config", f"lint.mccabe.max-complexity={COMPLEXITY_LIMIT}", *present],
+                cwd=td, capture_output=True, text=True, timeout=120)
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            return []
+        if "not found" in (r.stderr or "").lower() or "no module named" in (r.stderr or "").lower():
+            return []
+        return [(m.group("path"), int(m.group("line")), "complexity", int(m.group("n")), m.group("name"))
+                for line in r.stdout.splitlines() for m in [_RUFF_RE.match(line.strip())] if m]
+
+
+def generate_baseline(repo):
+    files = _lines(["git", "ls-files", "*.py"], repo)
+    data = sorted(key(v) for v in measure(repo, "HEAD", files))
+    (Path(repo) / BASELINE_PATH).write_text(json.dumps(data, indent=2) + "\n")
+    print(f"wrote {len(data)} baseline entries to {BASELINE_PATH}"); return 0
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--base"); ap.add_argument("--head"); ap.add_argument("--repo", default=".")
+    ap.add_argument("--generate-baseline", action="store_true")
+    a = ap.parse_args(argv)
+    if a.generate_baseline:
+        return generate_baseline(a.repo)
+    if not a.base or not a.head:
+        ap.error("--base and --head are required unless --generate-baseline")
+    ok, report = check(a.repo, a.base, a.head)
+    print(report)
+    return 0 if ok else 1
+

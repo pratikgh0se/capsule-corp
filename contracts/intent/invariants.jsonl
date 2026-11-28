@@ -1,0 +1,2 @@
+{"id": "a-modified-tracked-file-pages-main-checkout-write-no-pause", "given": {"document": {"check": "main_checkout", "modified_tracked": ["capsule/x.py"]}}, "expect": {"outcome": "opened", "kind": "main_checkout_write", "paused": false}, "source": "row 611"}
+{"id": "a-completed-card-that-is-not-done-opens-lost-card-state", "given": {"document": {"check": "lost_state", "status": "running", "events": ["created", "completed"]}}, "expect": {"outcome": "opened", "kind": "lost_card_state", "paused": false}, "source": "row 611"}

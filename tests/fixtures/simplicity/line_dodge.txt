@@ -1,0 +1,167 @@
+# source: dfa0aa7:tests/mutation_check.py:1126
+--- file: tests/mutation_check.py ---
+def _resolve_import_chain(repo, base, head, wt, test_path, prod_files, names, weaken_is_good=False):
+    """Keep-and-rerun `test_path`'s `names` selection inside worktree `wt`
+    until collection stops failing on a resolvable missing-new-name shape, a
+    genuinely different failure surfaces, `CHAIN_ITERATION_LIMIT` modules
+    have been kept without resolving, or the exact same `(module, symbol)`
+    resolution repeats (a cycle, review round 1 finding 6 - no point burning
+    the remaining iterations' timeouts, each at least 180s, on a repeat).
+
+    Handles a collection-time `cannot import name 'X' from 'M'` AND (card
+    t_285a8851) a run-time `AttributeError: module 'M' has no attribute 'X'`
+    inside a test body, which `is_collection_error` never sees - so it is
+    tried before the collection-error branch, not instead of it.
+
+    Returns `(state, extra, out, kept)`:
+      - state="resolved": `extra` is the final `rc`, `out` the final output,
+        `kept` the (possibly empty) list of `(module_path, symbol)` restored.
+        A genuine pass/fail (or an unrelated failure that reached test
+        execution) is scored normally by the caller from `extra`/`kept`.
+      - state="napt": the resolvable module's diff is not additions-only AND
+        no module has been kept yet (`kept` is empty); `extra` is the symbol
+        name (n/a, weaken carries the requirement) - unchanged from round 10.
+      - state="addition_explained" (row 459, only when `weaken_is_good`): the
+        pure additions explain every failure; `extra` names them, no keep.
+      - state="new_module": the collection error is explained by a production
+        file that is new in this range (round 2's rule); `extra` is None.
+      - state="error": a genuinely unrelated/broken collection error
+        (`extra` is None); the review round 1 fail-closed backstop
+        (`extra` is None); OR a napt hit found PARTWAY down an already
+        non-empty chain (review round 1 finding 5 - reaching n/a directly
+        here would be a quieter version of round 10's plain ERROR for the
+        exact same shape; `extra` is the `(module_path, symbol)` that wasn't
+        a pure addition, `kept` still carries every module resolved before
+        it, so the caller's label shows the whole chain).
+      - state="unresolved": `CHAIN_ITERATION_LIMIT` modules were kept, or the
+        same `(module_path, symbol)` resolution repeated, and it still
+        doesn't resolve; `extra` is the `(module_path, symbol)` that could
+        not be kept (the Nth name, review round 1 finding 6), `kept` names
+        every module/symbol actually resolved before it.
+
+    Every module written into `wt` to "keep" it is restored back to its
+    `--base` content before this function returns, on every exit path - the
+    caller sees `wt` exactly as it found it, just like `make_worktree`/
+    `remove_worktree` bracket the whole revert phase."""
+    kept = []
+    seen = set()
+    new_prod_files = [pf for pf in prod_files if file_status(repo, base, head, pf) == "A"]
+    context = newsymbol.collect(show_file(repo, head, test_path), [
+        show_file(repo, head, f) for f in changed_files(repo, base, head) if is_test_support_file(f)])
+    try:
+        while True:
+            rc, out = run_discover(wt, (wt / test_path).parent, Path(test_path).name, names)
+            if rc == 0:
+                return "resolved", rc, out, list(kept)
+            symbol_hit = analyze_symbol_import_error(out, repo, base, head, prod_files)
+            if symbol_hit is not None:
+                module_path, symbol, additions_only = symbol_hit
+                if not additions_only:
+                    return (("error", (module_path, symbol)) if kept else ("napt", symbol)) + (out, list(kept))
+                known = {s for _, s in kept} | {symbol}
+                if weaken_is_good and not is_collection_error(out) and newsymbol.addition_explains_failures(
+                        out, known, context, (CANNOT_IMPORT_RE, ATTRIBUTE_ERROR_RE)):
+                    return "addition_explained", ", ".join(sorted(known)), out, list(kept)
+                if (module_path, symbol) in seen or len(kept) >= CHAIN_ITERATION_LIMIT:
+                    return "unresolved", (module_path, symbol), out, list(kept)
+                (wt / module_path).write_text(show_file(repo, head, module_path), encoding="utf-8")
+                kept.append((module_path, symbol))
+                seen.add((module_path, symbol))
+                continue
+            if is_collection_error(out):
+                if new_module_import_error(out, new_prod_files):
+                    return "new_module", None, out, list(kept)
+                return "error", None, out, list(kept)
+            if _mentions_missing_prod_symbol(out, repo, base, prod_files):
+                return "error", None, out, list(kept)
+            # rc != 0, not a resolvable missing-new-name shape, not a
+            # collection error at all: a genuine failure (or a genuinely
+            # unrelated run-time error) that reached test execution.
+            return "resolved", rc, out, list(kept)
+    finally:
+        for module_path, _ in kept:
+            revert_to_base(repo, base, wt, module_path, file_status(repo, base, head, module_path))
+
+--- head ---
+def _resolve_import_chain(repo, base, head, wt, test_path, prod_files, names, weaken_is_good=False):
+    """Keep-and-rerun `test_path`'s `names` selection inside worktree `wt`
+    until collection stops failing on a resolvable missing-new-name shape, a
+    genuinely different failure surfaces, `CHAIN_ITERATION_LIMIT` modules
+    have been kept without resolving, or the exact same `(module, symbol)`
+    resolution repeats (a cycle, review round 1 finding 6 - no point burning
+    the remaining iterations' timeouts, each at least 180s, on a repeat).
+
+    Handles a collection-time `cannot import name 'X' from 'M'` AND (card
+    t_285a8851) a run-time `AttributeError: module 'M' has no attribute 'X'`
+    inside a test body, which `is_collection_error` never sees - so it is
+    tried before the collection-error branch, not instead of it.
+
+    Returns `(state, extra, out, kept)`:
+      - state="resolved": `extra` is the final `rc`, `out` the final output,
+        `kept` the (possibly empty) list of `(module_path, symbol)` restored.
+        A genuine pass/fail (or an unrelated failure that reached test
+        execution) is scored normally by the caller from `extra`/`kept`.
+      - state="napt": the resolvable module's diff is not additions-only AND
+        no module has been kept yet (`kept` is empty); `extra` is the symbol
+        name (n/a, weaken carries the requirement) - unchanged from round 10.
+      - state="addition_explained" (row 459, only when `weaken_is_good`): the
+        pure additions explain every failure; `extra` names them, no keep.
+      - state="new_module": the collection error is explained by a production
+        file that is new in this range (round 2's rule); `extra` is None.
+      - state="error": a genuinely unrelated/broken collection error
+        (`extra` is None); the review round 1 fail-closed backstop
+        (`extra` is None); OR a napt hit found PARTWAY down an already
+        non-empty chain (review round 1 finding 5 - reaching n/a directly
+        here would be a quieter version of round 10's plain ERROR for the
+        exact same shape; `extra` is the `(module_path, symbol)` that wasn't
+        a pure addition, `kept` still carries every module resolved before
+        it, so the caller's label shows the whole chain).
+      - state="unresolved": `CHAIN_ITERATION_LIMIT` modules were kept, or the
+        same `(module_path, symbol)` resolution repeated, and it still
+        doesn't resolve; `extra` is the `(module_path, symbol)` that could
+        not be kept (the Nth name, review round 1 finding 6), `kept` names
+        every module/symbol actually resolved before it.
+
+    Every module written into `wt` to "keep" it is restored back to its
+    `--base` content before this function returns, on every exit path - the
+    caller sees `wt` exactly as it found it, just like `make_worktree`/
+    `remove_worktree` bracket the whole revert phase."""
+    kept = []
+    seen = set()
+    new_prod_files = [pf for pf in prod_files if file_status(repo, base, head, pf) == "A"]
+    context = newsymbol.collect(show_file(repo, head, test_path), [
+        show_file(repo, head, f) for f in changed_files(repo, base, head) if is_test_support_file(f)])
+    try:
+        while True:
+            rc, out = run_discover(wt, (wt / test_path).parent, Path(test_path).name, names)
+            if rc == 0:
+                return "resolved", rc, out, list(kept)
+            symbol_hit = analyze_symbol_import_error(out, repo, base, head, prod_files)
+            if symbol_hit is not None:
+                module_path, symbol, additions_only = symbol_hit
+                if not additions_only:
+                    return (("error", (module_path, symbol)) if kept else ("napt", symbol)) + (out, list(kept))
+                known = newsymbol.known_names(kept, symbol, show_file(repo, base, module_path), show_file(repo, head, module_path))
+                if weaken_is_good and not is_collection_error(out) and newsymbol.addition_explains_failures(
+                        out, known, context, (CANNOT_IMPORT_RE, ATTRIBUTE_ERROR_RE)):
+                    return "addition_explained", ", ".join(sorted(known)), out, list(kept)
+                if (module_path, symbol) in seen or len(kept) >= CHAIN_ITERATION_LIMIT:
+                    return "unresolved", (module_path, symbol), out, list(kept)
+                (wt / module_path).write_text(show_file(repo, head, module_path), encoding="utf-8")
+                kept.append((module_path, symbol))
+                seen.add((module_path, symbol))
+                continue
+            if is_collection_error(out):
+                if new_module_import_error(out, new_prod_files):
+                    return "new_module", None, out, list(kept)
+                return "error", None, out, list(kept)
+            if _mentions_missing_prod_symbol(out, repo, base, prod_files):
+                return "error", None, out, list(kept)
+            # rc != 0, not a resolvable missing-new-name shape, not a
+            # collection error at all: a genuine failure (or a genuinely
+            # unrelated run-time error) that reached test execution.
+            return "resolved", rc, out, list(kept)
+    finally:
+        for module_path, _ in kept:
+            revert_to_base(repo, base, wt, module_path, file_status(repo, base, head, module_path))
+

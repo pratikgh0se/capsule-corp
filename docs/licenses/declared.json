@@ -1,0 +1,10 @@
+{
+  "playwright": "Apache-2.0",
+  "coverage": "Apache-2.0",
+  "diff-cover": "Apache-2.0",
+  "ruff": "MIT",
+  "hypothesis": "MPL-2.0",
+  "pytest": "MIT",
+  "mutmut": "BSD-3-Clause",
+  "semgrep-rules": "source-available"
+}

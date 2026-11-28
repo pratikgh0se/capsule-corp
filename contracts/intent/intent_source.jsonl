@@ -1,0 +1,2 @@
+{"id": "a-hunch-is-not-an-intent-source", "given": {"document": {"row": {"id": "x", "given": {"document": {"status": "done"}}, "expect": {"status": "done"}, "source": "a hunch"}}}, "expect": {"valid": false}, "source": "row 569"}
+{"id": "a-decision-row-with-an-amend-date-is-an-intent-source", "given": {"document": {"row": {"id": "x", "given": {"document": {"status": "done"}}, "expect": {"status": "done"}, "source": "row 452, 2026-09-27"}}}, "expect": {"valid": true}, "source": "row 454"}

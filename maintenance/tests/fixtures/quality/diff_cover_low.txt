@@ -1,0 +1,11 @@
+-------------
+Diff Coverage
+Diff: origin/main...HEAD, staged and unstaged changes
+-------------
+server.py (60.0%): Missing lines 41-48
+timer.py (20.0%): Missing lines 210-214
+-------------
+Total:   34 lines
+Missing: 20 lines
+Coverage: 41%
+-------------

@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/schemas/vault_context.v1.json",
+  "title": "Vault context retrieved for one card: kept, withheld, flags (row 626, MEM-13)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "run_id", "task_id", "claim_lock", "retrieved", "query_hash", "mode", "arms",
+               "kept", "withheld", "flags", "bytes"],
+  "properties": {
+    "schema": {"const": "vault_context.v1"},
+    "run_id": {"type": "string", "maxLength": 64},
+    "task_id": {"type": "string", "maxLength": 32},
+    "claim_lock": {"type": "string", "maxLength": 200},
+    "retrieved": {"type": "string", "maxLength": 32},
+    "query_hash": {"type": "string", "minLength": 8, "maxLength": 64},
+    "mode": {"enum": ["hybrid", "keyword-only", "none"]},
+    "arms": {"type": "object", "additionalProperties": false, "required": ["lexical", "semantic"],
+      "properties": {
+        "lexical": {"type": "array", "maxItems": 10, "items": {"type": "string"}},
+        "semantic": {"type": "array", "maxItems": 10, "items": {"type": "string"}}}},
+    "kept": {"type": "array", "maxItems": 6, "items": {
+      "type": "object", "additionalProperties": false, "required": ["rank", "text"],
+      "properties": {
+        "path": {"type": "string"}, "title": {"type": "string"}, "number": {"type": "integer"},
+        "rank": {"type": "integer", "minimum": 1}, "agreed": {"type": "boolean"},
+        "date": {"type": "string"}, "updated": {"type": "string"}, "status": {"type": "string"},
+        "text": {"type": "string", "maxLength": 600}, "mark": {"type": "string"},
+        "supersedes": {"type": "array"}, "contradicts": {"type": "array"},
+        "aux": {"type": "boolean"}}}},
+    "withheld": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false, "required": ["rank", "text", "reason"],
+      "properties": {
+        "path": {"type": "string"}, "title": {"type": "string"}, "number": {"type": "integer"},
+        "rank": {"type": "integer", "minimum": 1}, "agreed": {"type": "boolean"},
+        "date": {"type": "string"}, "updated": {"type": "string"}, "status": {"type": "string"},
+        "text": {"type": "string", "maxLength": 600}, "mark": {"type": "string"},
+        "supersedes": {"type": "array"}, "contradicts": {"type": "array"},
+        "aux": {"type": "boolean"}, "reason": {"type": "string", "minLength": 1}}}},
+    "flags": {"type": "array", "items": {"enum": ["empty", "low_confidence", "stale_withheld",
+      "contradiction", "high_stakes", "sample"]}},
+    "bytes": {"type": "integer", "minimum": 0}
+  }
+}

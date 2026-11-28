@@ -1,0 +1,4 @@
+{"schema": "review_verdict.v1", "run_id": "0123456789abcdef0123456789abcdef", "task_id": "t_0000aaaa",
+ "claim_lock": "host:0123456789abcdef0123456789abcdef", "role": "reviewer", "verdict": "fail",
+ "findings": [{"file": "capsule/spool.py", "line": 42, "class": "slop", "text": "unused import"}],
+ "not_reviewed": ["capsule/db.py"]}

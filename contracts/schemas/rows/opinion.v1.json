@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/schemas/rows/opinion.v1.json",
+  "title": "One panel seat's opinion on an owner-question dossier (ask gate, design 2026-11-23 section 6; capsule/ask_panel.py)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "dossier",
+    "seat",
+    "pick",
+    "reversible",
+    "class",
+    "changes_owner_decision",
+    "reason"
+  ],
+  "properties": {
+    "schema": {
+      "const": "opinion.v1"
+    },
+    "dossier": {
+      "type": "string",
+      "pattern": "^dq_[0-9a-f]{8}\\Z"
+    },
+    "seat": {
+      "enum": [
+        "precedent",
+        "engineering"
+      ]
+    },
+    "pick": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]{1,20}\\Z"
+    },
+    "reversible": {
+      "type": "boolean"
+    },
+    "class": {
+      "enum": [
+        "technical",
+        "product",
+        "scope",
+        "taste",
+        "money",
+        "release",
+        "safety",
+        "access",
+        "outward"
+      ]
+    },
+    "changes_owner_decision": {
+      "type": "boolean"
+    },
+    "precedent": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "ref",
+        "quote"
+      ],
+      "properties": {
+        "ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "quote": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        }
+      }
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 600
+    }
+  }
+}

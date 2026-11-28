@@ -1,0 +1,4 @@
+{"id": "ready-card-pointing-at-an-ended-run-is-unowned", "given": {"document": {"status": "ready", "current_run_id": "ended-run"}}, "expect": {"owner": "<empty>"}, "source": "row 581, 2026-10-08"}
+{"id": "ready-card-with-a-running-run-row-is-owned", "given": {"document": {"status": "ready", "current_run_id": "running-run"}}, "expect": {"owner": "live-run"}, "source": "row 581, 2026-10-08"}
+{"id": "review-card-with-a-live-dispatcher-is-owned-by-factory", "given": {"document": {"status": "review", "current_run_id": "<empty>", "dispatcher": "live"}}, "expect": {"owner": "factory"}, "source": "owner"}
+{"id": "review-card-with-no-dispatcher-is-unowned", "given": {"document": {"status": "review", "current_run_id": "<empty>", "dispatcher": "none"}}, "expect": {"owner": "<empty>"}, "source": "owner"}

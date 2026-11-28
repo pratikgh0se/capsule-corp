@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/schemas/lookout_proposal.v1.json",
+  "title": "The Lookout's observability proposal for one app (TEAM-14; rows 21, 64)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "run_id", "task_id", "claim_lock", "app", "trigger", "coverage", "proposals", "questions",
+               "confidence"],
+  "properties": {
+    "schema": {"const": "lookout_proposal.v1"},
+    "run_id": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+    "task_id": {"type": "string", "pattern": "^t_[0-9a-f]{8}$"},
+    "claim_lock": {"type": "string", "minLength": 1, "maxLength": 200},
+    "app": {"type": "string", "minLength": 1, "maxLength": 100},
+    "trigger": {"enum": ["milestone", "weekly", "on_demand"]},
+    "coverage": {"type": "array", "maxItems": 60, "items": {
+      "type": "object", "additionalProperties": false, "required": ["signal", "status", "evidence"],
+      "properties": {
+        "signal": {"type": "string", "minLength": 1, "maxLength": 200},
+        "status": {"enum": ["covered", "partial", "missing"]},
+        "evidence": {"type": "string", "minLength": 1, "maxLength": 500}}}},
+    "proposals": {"type": "array", "maxItems": 30, "items": {
+      "type": "object", "additionalProperties": false, "required": ["kind", "path", "change", "reason"],
+      "properties": {
+        "kind": {"enum": ["contract", "dashboard", "alert", "slo", "instrumentation"]},
+        "path": {"type": "string", "minLength": 1, "maxLength": 300},
+        "change": {"type": "string", "minLength": 10, "maxLength": 3000},
+        "reason": {"type": "string", "minLength": 10, "maxLength": 1500}}}},
+    "questions": {"type": "array", "maxItems": 10, "items": {"type": "string", "minLength": 10, "maxLength": 500}},
+    "confidence": {"enum": ["low", "medium", "high"]}
+  }
+}

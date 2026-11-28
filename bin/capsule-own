@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# capsule-own - claim (or release) a branch in `capsule unblocked`'s own ownership
+# registry (row 470 fix round 1, M4).
+#
+# `capsule unblocked`'s branch adapter reads ownership from
+# $CAPSULE_HOME/queue/<repo-name>/owners.json (row 470 fix round 1, I4 - never a file
+# inside the repo's own tree): {"<branch>": {"owner": "<name>", "heartbeat": <unix ts>}}.
+# A branch's entry counts as owned only while its heartbeat is under 40 minutes old
+# (capsule/unblocked.py's OWNER_HEARTBEAT_MAX_S) - an agent that claims a branch and then
+# goes quiet (crashes, gets killed) silently falls back to unowned within 40 minutes,
+# which is the point: ownership here is a live heartbeat, not a permanent claim.
+#
+# Usage:
+#   capsule-own <repo> <branch> <owner>    stamp <branch>'s heartbeat to now, owned by <owner>
+#   capsule-own <repo> <branch> --release  remove <branch>'s entry outright (finished with it)
+#
+# <repo> is a path to the repo (its basename is the key under $CAPSULE_HOME/queue/, the
+# same one `capsule unblocked` itself uses - Path(repo).name).
+#
+# This is the one supported way to touch owners.json by hand or from a script (a worker
+# claiming its own branch on dispatch, a review step releasing one) - editing the file
+# directly risks a torn write another reader could catch mid-write; this always writes a
+# tmp file and renames it into place atomically.
+set -uo pipefail
+
+usage() { echo "usage: capsule-own <repo> <branch> <owner>|--release" >&2; exit 2; }
+
+[ $# -eq 3 ] || usage
+REPO_PATH="$1"; BRANCH="$2"; OWNER="$3"
+REPO_NAME="$(basename "$(cd -P "$REPO_PATH" 2>/dev/null && pwd -P || echo "$REPO_PATH")")"
+# CAPSULE_HOME rule (row 609; the same block is in every script that defaults it, = capsule/paths.py home()): explicit wins; under AGENT_OPS_NO_SEND a temp dir, never the live home.
+# Known differences from tempfile.gettempdir(): TEMP/TMP are not read without TMPDIR; a missing or unwritable TMPDIR falls back to /tmp only in Python; only one trailing slash is stripped; a relative TMPDIR is not made absolute.
+if [ -z "${CAPSULE_HOME:-}" ]; then
+  if [ -n "${AGENT_OPS_NO_SEND:-}" ]; then CAPSULE_HOME="${TMPDIR:-/tmp}"; CAPSULE_HOME="${CAPSULE_HOME%/}/capsule-home-no-send"
+  else CAPSULE_HOME="$HOME/.local/share/capsule"; fi
+fi
+HOME_DIR="$CAPSULE_HOME"
+QUEUE_DIR="$HOME_DIR/queue/$REPO_NAME"
+OWNERS_FILE="$QUEUE_DIR/owners.json"
+
+mkdir -p "$QUEUE_DIR"
+
+python3 - "$OWNERS_FILE" "$BRANCH" "$OWNER" <<'PY'
+import json, os, sys, time
+
+path, branch, owner = sys.argv[1:]
+try:
+    doc = json.loads(open(path).read())
+    if not isinstance(doc, dict):
+        doc = {}
+except (OSError, ValueError):
+    doc = {}
+
+if owner == "--release":
+    doc.pop(branch, None)
+    action = "released"
+else:
+    doc[branch] = {"owner": owner, "heartbeat": time.time()}
+    action = f"owned by {owner!r}"
+
+tmp = path + ".tmp"
+with open(tmp, "w") as f:
+    json.dump(doc, f, indent=1)
+os.replace(tmp, path)
+print(f"capsule-own: {branch} {action} ({path})")
+PY

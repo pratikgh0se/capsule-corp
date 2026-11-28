@@ -1,0 +1,8 @@
+{
+  "events": {
+    "factory_down_or_stuck": {"classes": ["incident"], "words": ["factory down", "factory stuck", "keeper silent", "boards are paused", "board is paused"]},
+    "security_or_secrets": {"classes": [], "words": ["secret", "credential", "security"]},
+    "irreversible_action_waiting": {"classes": [], "words": ["irreversible"]},
+    "budget_nearly_gone": {"classes": ["paused"], "words": ["budget"]}
+  }
+}

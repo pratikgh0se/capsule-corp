@@ -1,0 +1,10 @@
+# Dev-only path globs (fnmatch) for the deep licence scan (D240): a finding under one of these is a dev tool, not part of Capsule's shipped code, and may use any licence.
+# One glob per line. Such tools may appear in worker images as separate programs (aggregate distribution).
+*/site-packages/hypothesis/*
+*/site-packages/pytest/*
+*/site-packages/_pytest/*
+*/site-packages/mutmut/*
+*/site-packages/coverage/*
+*/site-packages/diff_cover/*
+*/site-packages/ruff/*
+*/site-packages/playwright/*

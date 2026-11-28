@@ -1,0 +1,935 @@
+{
+  "uid": "lookout-trace",
+  "title": "Agent Trace & Logs",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "graphTooltip": 0,
+  "refresh": "1m",
+  "tags": [
+    "the-lookout"
+  ],
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "Asia/Bangkok",
+  "weekStart": "",
+  "fiscalYearStartMonth": 0,
+  "links": [
+    {
+      "type": "link",
+      "title": "System Now",
+      "url": "/d/system-now",
+      "keepTime": true,
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": false,
+      "targetBlank": false,
+      "tags": [],
+      "tooltip": ""
+    },
+    {
+      "type": "link",
+      "title": "Phone summary",
+      "url": "/d/phone-summary",
+      "keepTime": true,
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": false,
+      "targetBlank": false,
+      "tags": [],
+      "tooltip": ""
+    },
+    {
+      "type": "link",
+      "title": "Factory Overview",
+      "url": "/d/lookout-home",
+      "keepTime": true,
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": false,
+      "targetBlank": false,
+      "tags": [],
+      "tooltip": ""
+    },
+    {
+      "type": "link",
+      "title": "Card & Epic Explorer",
+      "url": "/d/lookout-explorer",
+      "keepTime": true,
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": false,
+      "targetBlank": false,
+      "tags": [],
+      "tooltip": ""
+    },
+    {
+      "type": "link",
+      "title": "Merges & Delivery",
+      "url": "/d/lookout-delivery",
+      "keepTime": true,
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": false,
+      "targetBlank": false,
+      "tags": [],
+      "tooltip": ""
+    },
+    {
+      "type": "link",
+      "title": "Costs & Budgets",
+      "url": "/d/lookout-costs",
+      "keepTime": true,
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": false,
+      "targetBlank": false,
+      "tags": [],
+      "tooltip": ""
+    },
+    {
+      "type": "link",
+      "title": "Agent costs per card",
+      "url": "/d/card-costs",
+      "keepTime": true,
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": false,
+      "targetBlank": false,
+      "tags": [],
+      "tooltip": ""
+    },
+    {
+      "type": "link",
+      "title": "Merge timeline",
+      "url": "/d/merge-timeline",
+      "keepTime": true,
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": false,
+      "targetBlank": false,
+      "tags": [],
+      "tooltip": ""
+    },
+    {
+      "type": "link",
+      "title": "Incidents & alerts",
+      "url": "/d/incidents",
+      "keepTime": true,
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": false,
+      "targetBlank": false,
+      "tags": [],
+      "tooltip": ""
+    },
+    {
+      "type": "link",
+      "title": "Alerts",
+      "url": "/d/lookout-alerts",
+      "keepTime": true,
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": false,
+      "targetBlank": false,
+      "tags": [],
+      "tooltip": ""
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "name": "Annotations & Alerts",
+        "type": "dashboard",
+        "hide": true,
+        "enable": true,
+        "iconColor": "rgba(0, 211, 255, 1)"
+      }
+    ]
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "product",
+        "label": "Product",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "ops-pg"
+        },
+        "query": "select board from v_factory union select board from cap_cards order by 1",
+        "definition": "select board from v_factory union select board from cap_cards order by 1",
+        "refresh": 2,
+        "multi": false,
+        "includeAll": false,
+        "hide": 0,
+        "current": {},
+        "options": [],
+        "sort": 1,
+        "skipUrlSync": false,
+        "regex": ""
+      },
+      {
+        "name": "task_id",
+        "label": "Card",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "ops-pg"
+        },
+        "query": "select task_id from cap_cards where board = '$product' order by snap_ts desc",
+        "definition": "select task_id from cap_cards where board = '$product' order by snap_ts desc",
+        "refresh": 2,
+        "multi": false,
+        "includeAll": false,
+        "hide": 0,
+        "current": {},
+        "options": [],
+        "sort": 1,
+        "skipUrlSync": false,
+        "regex": ""
+      },
+      {
+        "name": "run_id",
+        "label": "Run",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "ops-pg"
+        },
+        "query": "select run_id from cap_runs where board = '$product' and task_id = '$task_id'",
+        "definition": "select run_id from cap_runs where board = '$product' and task_id = '$task_id'",
+        "refresh": 2,
+        "multi": true,
+        "includeAll": true,
+        "hide": 0,
+        "current": {},
+        "options": [],
+        "sort": 1,
+        "skipUrlSync": false,
+        "regex": ""
+      },
+      {
+        "name": "era",
+        "label": "Era",
+        "type": "custom",
+        "hide": 2,
+        "multi": false,
+        "includeAll": false,
+        "query": "capsule : capsule,hermes : hermes",
+        "options": [
+          {
+            "selected": true,
+            "text": "capsule",
+            "value": "capsule"
+          },
+          {
+            "selected": false,
+            "text": "hermes",
+            "value": "hermes"
+          }
+        ],
+        "current": {
+          "selected": true,
+          "text": "capsule",
+          "value": "capsule"
+        },
+        "skipUrlSync": false
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "This card",
+      "description": "Title, product, epic, status, what it waits on, its commit and its PR.",
+      "type": "stat",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "ops-pg"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "ops-pg"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "select c.title, c.board as \"product\", c.epic, c.status, c.waiting_words as \"waiting on\", (select left(sha, 12) from cap_commits m where m.board = c.board and m.task_id = c.task_id order by committed_at desc limit 1) as \"commit\", (select url from cap_prs p where p.board = c.board and p.epic = c.epic order by updated_at desc limit 1) as \"pr\" from cap_cards c where c.board = '$product' and c.task_id = '$task_id'"
+        }
+      ],
+      "gridPos": {
+        "h": 4,
+        "w": 20,
+        "x": 0,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "string"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value_and_name",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "percentChangeColorMode": "standard"
+      },
+      "links": []
+    },
+    {
+      "id": 2,
+      "title": "Last report from the factory",
+      "description": "Seconds since the tick last reported to ops-pg (v_factory.age_s). Green under 90 s, amber under 300 s, red beyond: a dead tick, a dead shipper or a dead Postgres.",
+      "type": "stat",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "ops-pg"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "ops-pg"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "select max(age_s) as \"age_s\" from v_factory where board = '$product'"
+        }
+      ],
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 90
+              },
+              {
+                "color": "red",
+                "value": 300
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "percentChangeColorMode": "standard"
+      },
+      "links": []
+    },
+    {
+      "id": 3,
+      "title": "Runs",
+      "description": "Every agent run on this card (Q10), with tokens and the list-price estimate.",
+      "type": "table",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "ops-pg"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "ops-pg"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "select run_id, role, model, runner, started_at, extract(epoch from coalesce(ended_at, now()) - started_at)::bigint as duration_s, outcome, error_class, tokens_in, tokens_out, tokens_cache_read, tokens_cache_write, round(usd_est::numeric, 4) as cost_usd from v_run_cost where board = '$product' and task_id = '$task_id' and era = '$era' order by started_at"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "duration_s"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "cost_usd"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "tokens_in"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "tokens_out"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "tokens_cache_read"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "tokens_cache_write"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "countRows": false,
+          "fields": ""
+        },
+        "sortBy": []
+      }
+    },
+    {
+      "id": 4,
+      "title": "Timeline",
+      "description": "Who worked on this card, in order.",
+      "type": "state-timeline",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "ops-pg"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "ops-pg"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "select started_at as \"time\", task_id, role from cap_runs where board = '$product' and task_id = '$task_id' and era = '$era' union all select ended_at, task_id, 'idle' from cap_runs where board = '$product' and task_id = '$task_id' and era = '$era' and ended_at is not null order by 1"
+        }
+      ],
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "completed": {
+                  "color": "green",
+                  "index": 0
+                },
+                "done": {
+                  "color": "green",
+                  "index": 1
+                },
+                "review_requested": {
+                  "color": "green",
+                  "index": 2
+                },
+                "changes_requested": {
+                  "color": "orange",
+                  "index": 3
+                },
+                "reclaimed": {
+                  "color": "orange",
+                  "index": 4
+                },
+                "blocked": {
+                  "color": "blue",
+                  "index": 5
+                },
+                "running": {
+                  "color": "text",
+                  "index": 6
+                },
+                "timed_out": {
+                  "color": "red",
+                  "index": 7
+                },
+                "gave_up": {
+                  "color": "red",
+                  "index": 8
+                },
+                "crashed": {
+                  "color": "red",
+                  "index": 9
+                },
+                "spawn_failed": {
+                  "color": "red",
+                  "index": 10
+                },
+                "failed": {
+                  "color": "red",
+                  "index": 11
+                },
+                "protocol_violation": {
+                  "color": "red",
+                  "index": 12
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "no data",
+          "custom": {
+            "lineWidth": 0,
+            "fillOpacity": 70,
+            "spanNulls": false,
+            "insertNulls": false,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "mergeValues": true,
+        "showValue": "auto",
+        "alignValue": "left",
+        "rowHeight": 0.8,
+        "perPage": 20,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "transformations": [
+        {
+          "id": "partitionByValues",
+          "options": {
+            "fields": [
+              "task_id"
+            ],
+            "keepFields": false
+          }
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "What happened",
+      "description": "The card's story in words, newest first (Q10).",
+      "type": "table",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "ops-pg"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "ops-pg"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "select ts as \"time\", what, actor as \"by\", run_id as \"run\", link from v_card_story where board = '$product' and task_id = '$task_id' order by ts desc"
+        }
+      ],
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "link"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Open",
+                    "url": "${__data.fields.link}",
+                    "targetBlank": false
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "countRows": false,
+          "fields": ""
+        },
+        "sortBy": []
+      }
+    },
+    {
+      "id": 6,
+      "title": "Worker log",
+      "description": "What the agent said, from Loki, for the chosen runs.",
+      "type": "logs",
+      "datasource": {
+        "type": "loki",
+        "uid": "ops-loki"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "ops-loki"
+          },
+          "expr": "{job=\"capsule-worker\", board=\"$product\", run_id=~\"$run_id\"}",
+          "queryType": "range"
+        }
+      ],
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Descending"
+      }
+    },
+    {
+      "id": 7,
+      "title": "Tick log mentions",
+      "description": "Tick log lines that name this card.",
+      "type": "logs",
+      "datasource": {
+        "type": "loki",
+        "uid": "ops-loki"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "ops-loki"
+          },
+          "expr": "{job=\"capsule-tick\"} |= \"$task_id\"",
+          "queryType": "range"
+        }
+      ],
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 36
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Descending"
+      }
+    },
+    {
+      "id": 8,
+      "title": "Messages sent",
+      "description": "Outbox (Slack and file) lines that name this card.",
+      "type": "logs",
+      "datasource": {
+        "type": "loki",
+        "uid": "ops-loki"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "ops-loki"
+          },
+          "expr": "{job=\"capsule-outbox\"} |= \"$task_id\"",
+          "queryType": "range"
+        }
+      ],
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 36
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Descending"
+      }
+    },
+    {
+      "id": 9,
+      "title": "Incidents on this card",
+      "description": "Anything Korin opened on this card.",
+      "type": "table",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "ops-pg"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "ops-pg"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "select id, kind, status, role, opened_at, closed_at, root_cause, fix_card from cap_incidents where board = '$product' and task_id = '$task_id' order by opened_at desc"
+        }
+      ],
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 42
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "filterable": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "countRows": false,
+          "fields": ""
+        },
+        "sortBy": []
+      }
+    }
+  ]
+}

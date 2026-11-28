@@ -1,0 +1,171 @@
+#!/usr/bin/env python3
+"""capsule-suite - run the capsule unit suite under a machine-wide exclusive flock.
+
+Usage: capsule-suite [--maintenance] [--max-wait SECS] [--timeout SECS] [--lock-dir DIR]
+                     [--shards N] [-- CMD...]
+
+Default CMD: `python3 -m unittest discover -s capsule/tests -q` (with --maintenance:
+`-s maintenance/tests`), run from the cwd's git repo root. Blocks on an exclusive flock of
+<lock-dir>/suite.lock (--maintenance: suite-maintenance.lock, a separate lock) so concurrent
+agents queue instead of racing or guessing from the process list. The child inherits the lock fd,
+so the lock outlives a SIGKILLed wrapper until the suite itself ends; the OS frees it then.
+Exits with the child's code (128+N for a signal); 75 = gave up waiting (--max-wait, default 45
+min, 0 = do not wait; wake-up order is not first-come); 124 = the run exceeded --timeout
+(default 15 min): SIGUSR1 first (bin/suite_hook/sitecustomize.py registers a faulthandler dump of
+the hung stack, with no abort so macOS shows no "Python quit unexpectedly" dialog), then the group
+is SIGKILLed.
+--lock-dir exists for tests only; the default is ~/.local/state/capsule.
+--shards N (N >= 2, default command only) splits the same discovery into N parallel groups of
+test modules under the same lock and --timeout: see bin/suite_hook/sharded.py. Without it, or
+with --shards 1, nothing changes.
+"""
+import argparse
+import fcntl
+import json
+import os
+import signal
+import subprocess
+import sys
+import time
+
+DEFAULT_DIR = os.path.expanduser("~/.local/state/capsule")
+HOOK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "suite_hook")
+sys.path.insert(0, HOOK)
+import sharded  # noqa: E402
+
+
+class WaitExpired(Exception):
+    pass
+
+
+def _expire(signum, frame):
+    raise WaitExpired
+
+
+def acquire(fd, holder_file, max_wait):
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return
+    except BlockingIOError:
+        pass
+    try:
+        with open(holder_file) as f:
+            h = json.load(f)
+        who = f"holder pid {h['pid']}, started {h['started']}, cwd {h['cwd']}"
+    except (OSError, ValueError, KeyError):
+        who = "holder unknown"
+    if max_wait <= 0:
+        print(f"gave up: suite lock is held ({who}); retry later", flush=True)
+        sys.exit(75)
+    print(f"waiting for suite lock ({who})", flush=True)
+    signal.signal(signal.SIGALRM, _expire)
+    signal.setitimer(signal.ITIMER_REAL, max_wait)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX)
+    except WaitExpired:
+        print(f"gave up waiting for suite lock after {max_wait:g}s ({who}); retry later",
+              flush=True)
+        sys.exit(75)
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+
+
+class Killed(Exception):
+    def __init__(self, signum):
+        self.signum = signum
+
+
+def _terminated(signum, frame):
+    raise Killed(signum)
+
+
+def _write_holder(path, proc):
+    info = {"pid": os.getpid(), "child_pid": proc.pid, "cwd": os.getcwd(),
+            "started": time.strftime("%Y-%m-%dT%H:%M:%S")}
+    with open(path + ".tmp", "w") as f:
+        json.dump(info, f)
+    os.replace(path + ".tmp", path)
+
+
+def run_child(cmd, timeout, fd, holder_file):
+    """The child inherits the lock fd: if this wrapper is SIGKILLed the orphan still holds it."""
+    hook = os.path.join(os.path.dirname(os.path.abspath(__file__)), "suite_hook")
+    env = dict(os.environ, PYTHONFAULTHANDLER="1",
+               PYTHONPATH=os.pathsep.join(p for p in (hook, os.environ.get("PYTHONPATH")) if p))
+    proc = subprocess.Popen(cmd, start_new_session=True, pass_fds=(fd,), env=env)
+    for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
+        signal.signal(sig, _terminated)
+    try:
+        _write_holder(holder_file, proc)
+        code = proc.wait(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        print(f"capsule-suite: timed out after {timeout:g}s; SIGUSR1 for a faulthandler stack "
+              "dump, then SIGKILL", flush=True)
+        os.kill(proc.pid, signal.SIGUSR1)
+        time.sleep(2)
+        os.killpg(proc.pid, signal.SIGKILL)
+        proc.wait()
+        return 124
+    except Killed as k:
+        os.killpg(proc.pid, signal.SIGKILL)
+        proc.wait()
+        return 128 + k.signum
+    return 128 - code if code < 0 else code
+
+
+def shards_arg(text):
+    if not (text.isascii() and text.isdigit() and int(text) >= 1):
+        raise argparse.ArgumentTypeError(f"{text!r} is not a positive whole number")
+    return int(text)
+
+
+def selected(base, tests):
+    """The selector's unittest ids under `tests` (a directory), [] for none, None for FULL."""
+    run = subprocess.run([sys.executable, "tests/select_tests.py", "--base", base, "--head", "HEAD"],
+                         capture_output=True, text=True)
+    if run.returncode != 0 or run.stdout.split() == ["FULL"]:
+        return None
+    return [t for t in run.stdout.split() if t.startswith(tests.replace("/", ".") + ".")]
+
+
+def main(argv):
+    ap = argparse.ArgumentParser(prog="capsule-suite")
+    ap.add_argument("--maintenance", action="store_true")
+    ap.add_argument("--max-wait", type=float, default=45 * 60)
+    ap.add_argument("--timeout", type=float, default=15 * 60)
+    ap.add_argument("--lock-dir", default=DEFAULT_DIR)
+    ap.add_argument("--shards", type=shards_arg, default=1)
+    ap.add_argument("--select", metavar="BASE", help="run only the tests BASE...HEAD needs"
+                    " (tests/select_tests.py); FULL falls back to the whole discovery")
+    ap.add_argument("cmd", nargs=argparse.REMAINDER)
+    a = ap.parse_args(argv)
+    cmd = a.cmd[1:] if a.cmd[:1] == ["--"] else a.cmd
+    if cmd and a.shards > 1:
+        ap.error("--shards splits the default discovery; it cannot take a command")
+    tests = "maintenance/tests" if a.maintenance else "capsule/tests"
+    cmd_given = bool(cmd)
+    if not cmd:
+        cmd = [sys.executable, "-m", "unittest", "discover", "-s", tests, "-q"]
+    top = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True)
+    if top.returncode == 0:
+        os.chdir(top.stdout.strip())
+    if a.select and not cmd_given:
+        picked = selected(a.select, tests)
+        if picked == []:
+            print("capsule-suite: no tests selected for this diff", flush=True)
+            return 0
+        if picked:
+            cmd, a.shards = [sys.executable, "-m", "unittest", "-q", *picked], 1
+    os.makedirs(a.lock_dir, exist_ok=True)
+    name = "suite-maintenance" if a.maintenance else "suite"
+    lock = os.path.join(a.lock_dir, f"{name}.lock")
+    holder_file = lock + ".holder"
+    fd = os.open(lock, os.O_RDWR | os.O_CREAT, 0o644)
+    acquire(fd, holder_file, a.max_wait)
+    if a.shards > 1:
+        return sharded.main(a, tests, fd, holder_file, _write_holder)
+    return run_child(cmd, a.timeout, fd, holder_file)
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

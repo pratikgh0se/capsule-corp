@@ -1,0 +1,21 @@
+{
+  "schema": "reviewer_case.v1",
+  "id": "seed-mean-empty-list-unguarded",
+  "kind": "planted",
+  "origin": "seed: synthetic bug written by hand for R15a, not from a real escape",
+  "task": {
+    "id": "t_5eed0003",
+    "title": "Add mean to stats.py",
+    "body": "Add `mean(values)` to stats.py: the average of `values`, and 0.0 for an empty list. Add tests."
+  },
+  "patch": "change.patch",
+  "bug": {
+    "summary": "mean([]) raises ZeroDivisionError: the empty-list guard the card asks for (0.0) is missing. The added tests cover only a non-empty list, so they pass.",
+    "locations": [
+      {
+        "file": "stats.py",
+        "line": 15
+      }
+    ]
+  }
+}

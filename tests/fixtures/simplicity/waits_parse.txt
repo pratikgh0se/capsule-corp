@@ -1,0 +1,79 @@
+# source: ffb561c:capsule/waits_parse.py:1-25;capsule/unblocked.py:131,244-250
+--- file: capsule/waits_parse.py ---
+--- head ---
+"""A card/comment/branch marker's own `waits: <token>` line (row 529, decision row 529):
+recognised only as a line-start key, the exact same shape `capsule.cardmeta.parse_builds`
+uses for `builds:` - never matched mid-sentence. Its own module (mirroring `cardmeta.py`'s
+own reason for existing) so the parser can be tested apart from `unblocked.py`, which is
+frozen at its row-514 size baseline and has no room left to hold this regex itself.
+
+Row 519/529: a card's own triage-log line, such as "triage 2026-09-28 (row 519): KEEP,
+the owner. Waits: the current landing queue; dispatch in priority order.", has "waits:"
+mid-sentence - after "KEEP, the owner. " - not at that line's own start, so it must never be
+read as a `waits: owner` marker. A prior, looser reading of this text hid 13 ready cards
+as blocked on the owner (found 2026-09-29)."""
+import re
+
+WAITS_RE = re.compile(r"(?im)^\s*waits:\s*(.+?)\s*$")
+
+
+def parse_waits(text):
+    """`text`'s last `waits:` line's value (its last match wins - the freshest line, same
+    "last match wins" shape as `cardmeta.parse_builds`); `None` when there is no such line.
+    Recognised only as a line-start key: leading whitespace before `waits:` is allowed
+    (indented under a bullet), anything else before it on the same physical line is not."""
+    if not text:
+        return None
+    matches = WAITS_RE.findall(text)
+    return matches[-1] if matches else None
+--- file: capsule/unblocked.py ---
+import fnmatch
+import glob
+import json
+import re
+import shutil
+import sqlite3
+import subprocess
+import time
+from pathlib import Path
+from capsule import cardmeta, config, dispatch, dispatch_gate, paths, spool
+
+
+def parse_waits(text):
+    """The `waits:` value in `text` (its last match wins - the freshest line), or None."""
+    if not text:
+        return None
+    matches = WAITS_RE.findall(text)
+    return matches[-1] if matches else None
+
+--- head ---
+import fnmatch
+import glob
+import json
+import re
+import shutil
+import sqlite3
+import subprocess
+import time
+from pathlib import Path
+from capsule import cardmeta, config, dispatch, dispatch_gate, paths, spool, waits_parse
+
+
+def parse_waits(text):
+    """The `waits:` value in `text` (its last match wins - the freshest line), or None.
+    This module is frozen at its row-514 size baseline, so the line-start-only regex
+    itself (row 529) lives in its own module, `waits_parse.parse_waits`."""
+    return waits_parse.parse_waits(text)
+
+--- file: capsule/__init__.py ---
+"""Capsule: the Capsule Corp 2.0 harness (spec docs/superpowers/specs/2026-09-24-capsule-corp-2-design.md)."""
+--- head ---
+"""Capsule: the Capsule Corp 2.0 harness (spec docs/superpowers/specs/2026-09-24-capsule-corp-2-design.md)."""
+--- file: tests/size_baseline.json ---
+{
+  "capsule/unblocked.py::file_length": 941
+}
+--- head ---
+{
+  "capsule/unblocked.py::file_length": 941
+}

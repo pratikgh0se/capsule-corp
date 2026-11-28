@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Reviewer calibration case (R15a): one patch, and the bug planted in it (or none)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "id",
+    "kind",
+    "origin",
+    "task",
+    "patch"
+  ],
+  "properties": {
+    "schema": {
+      "const": "reviewer_case.v1"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+    },
+    "kind": {
+      "enum": [
+        "planted",
+        "clean"
+      ]
+    },
+    "origin": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300
+    },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "body"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^t_[0-9a-f]{8}$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "body": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        }
+      }
+    },
+    "patch": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]+\\.patch$"
+    },
+    "bug": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary",
+        "locations"
+      ],
+      "properties": {
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "locations": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "file",
+              "line"
+            ],
+            "properties": {
+              "file": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              },
+              "line": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100000
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "description": "A case directory holds case.json, the patch it names, and an optional base/ directory: the pre-patch files the patch applies to, each named <path>.base (its context and removed lines must match them), so a real run can build the reviewer's workspace from the case alone."
+}

@@ -1,0 +1,874 @@
+{
+  "uid": "lookout-explorer",
+  "title": "Card & Epic Explorer",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "graphTooltip": 0,
+  "refresh": "1m",
+  "tags": [
+    "the-lookout"
+  ],
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "Asia/Bangkok",
+  "weekStart": "",
+  "fiscalYearStartMonth": 0,
+  "links": [
+    {
+      "type": "link",
+      "title": "System Now",
+      "url": "/d/system-now",
+      "keepTime": true,
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": false,
+      "targetBlank": false,
+      "tags": [],
+      "tooltip": ""
+    },
+    {
+      "type": "link",
+      "title": "Phone summary",
+      "url": "/d/phone-summary",
+      "keepTime": true,
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": false,
+      "targetBlank": false,
+      "tags": [],
+      "tooltip": ""
+    },
+    {
+      "type": "link",
+      "title": "Factory Overview",
+      "url": "/d/lookout-home",
+      "keepTime": true,
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": false,
+      "targetBlank": false,
+      "tags": [],
+      "tooltip": ""
+    },
+    {
+      "type": "link",
+      "title": "Merges & Delivery",
+      "url": "/d/lookout-delivery",
+      "keepTime": true,
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": false,
+      "targetBlank": false,
+      "tags": [],
+      "tooltip": ""
+    },
+    {
+      "type": "link",
+      "title": "Agent Trace & Logs",
+      "url": "/d/lookout-trace",
+      "keepTime": true,
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": false,
+      "targetBlank": false,
+      "tags": [],
+      "tooltip": ""
+    },
+    {
+      "type": "link",
+      "title": "Costs & Budgets",
+      "url": "/d/lookout-costs",
+      "keepTime": true,
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": false,
+      "targetBlank": false,
+      "tags": [],
+      "tooltip": ""
+    },
+    {
+      "type": "link",
+      "title": "Agent costs per card",
+      "url": "/d/card-costs",
+      "keepTime": true,
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": false,
+      "targetBlank": false,
+      "tags": [],
+      "tooltip": ""
+    },
+    {
+      "type": "link",
+      "title": "Merge timeline",
+      "url": "/d/merge-timeline",
+      "keepTime": true,
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": false,
+      "targetBlank": false,
+      "tags": [],
+      "tooltip": ""
+    },
+    {
+      "type": "link",
+      "title": "Incidents & alerts",
+      "url": "/d/incidents",
+      "keepTime": true,
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": false,
+      "targetBlank": false,
+      "tags": [],
+      "tooltip": ""
+    },
+    {
+      "type": "link",
+      "title": "Alerts",
+      "url": "/d/lookout-alerts",
+      "keepTime": true,
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": false,
+      "targetBlank": false,
+      "tags": [],
+      "tooltip": ""
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "name": "Annotations & Alerts",
+        "type": "dashboard",
+        "hide": true,
+        "enable": true,
+        "iconColor": "rgba(0, 211, 255, 1)"
+      }
+    ]
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "product",
+        "label": "Product",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "ops-pg"
+        },
+        "query": "select board from v_factory union select board from cap_cards order by 1",
+        "definition": "select board from v_factory union select board from cap_cards order by 1",
+        "refresh": 2,
+        "multi": true,
+        "includeAll": true,
+        "hide": 0,
+        "current": {},
+        "options": [],
+        "sort": 1,
+        "skipUrlSync": false,
+        "regex": "",
+        "allValue": "select board from v_factory union select board from cap_cards"
+      },
+      {
+        "name": "epic",
+        "label": "Epic",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "ops-pg"
+        },
+        "query": "select distinct coalesce(epic, '(none)') from cap_cards where board in ($product) order by 1",
+        "definition": "select distinct coalesce(epic, '(none)') from cap_cards where board in ($product) order by 1",
+        "refresh": 2,
+        "multi": true,
+        "includeAll": true,
+        "hide": 0,
+        "current": {},
+        "options": [],
+        "sort": 1,
+        "skipUrlSync": false,
+        "regex": "",
+        "allValue": "select distinct coalesce(epic, '(none)') from cap_cards"
+      },
+      {
+        "name": "status",
+        "label": "Status",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "ops-pg"
+        },
+        "query": "select distinct status from cap_cards order by 1",
+        "definition": "select distinct status from cap_cards order by 1",
+        "refresh": 2,
+        "multi": true,
+        "includeAll": true,
+        "hide": 0,
+        "current": {},
+        "options": [],
+        "sort": 1,
+        "skipUrlSync": false,
+        "regex": "",
+        "allValue": "select distinct status from cap_cards"
+      },
+      {
+        "name": "era",
+        "label": "Era",
+        "type": "custom",
+        "hide": 2,
+        "multi": false,
+        "includeAll": false,
+        "query": "capsule : capsule,hermes : hermes",
+        "options": [
+          {
+            "selected": true,
+            "text": "capsule",
+            "value": "capsule"
+          },
+          {
+            "selected": false,
+            "text": "hermes",
+            "value": "hermes"
+          }
+        ],
+        "current": {
+          "selected": true,
+          "text": "capsule",
+          "value": "capsule"
+        },
+        "skipUrlSync": false
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Epic progress",
+      "description": "Percent of each epic's cards done; the label shows the PR state.",
+      "type": "bargauge",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "ops-pg"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "ops-pg"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "select epic || ' - PR ' || coalesce(publish_state, 'none') as \"epic\", round(100.0 * cards_done / nullif(cards_total, 0), 1) as \"done\" from cap_epics where board in ($product) and epic in ($epic) order by epic"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 100
+              }
+            ]
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "orientation": "horizontal",
+        "displayMode": "lcd",
+        "valueMode": "color",
+        "showUnfilled": true,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "sizing": "auto",
+        "maxVizHeight": 300
+      }
+    },
+    {
+      "id": 2,
+      "title": "Epic at a glance",
+      "description": "Cards, blocked, commits ahead of main and PR, per epic.",
+      "type": "stat",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "ops-pg"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "ops-pg"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "select cards_total as \"cards\", cards_blocked as \"blocked\", ahead_of_main as \"ahead of main\", coalesce(pr_number::text, 'no PR') as \"PR\" from cap_epics where board in ($product) and epic in ($epic)"
+        }
+      ],
+      "gridPos": {
+        "h": 4,
+        "w": 20,
+        "x": 0,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value_and_name",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "percentChangeColorMode": "standard"
+      },
+      "links": [],
+      "repeat": "epic",
+      "repeatDirection": "h",
+      "maxPerRow": 4
+    },
+    {
+      "id": 3,
+      "title": "Last report from the factory",
+      "description": "Seconds since the tick last reported to ops-pg (v_factory.age_s). Green under 90 s, amber under 300 s, red beyond: a dead tick, a dead shipper or a dead Postgres.",
+      "type": "stat",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "ops-pg"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "ops-pg"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "select max(age_s) as \"age_s\" from v_factory where board in ($product)"
+        }
+      ],
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 90
+              },
+              {
+                "color": "red",
+                "value": 300
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "percentChangeColorMode": "standard"
+      },
+      "links": []
+    },
+    {
+      "id": 4,
+      "title": "Every card",
+      "description": "Status of every card in scope (Q4, Q5), newest first.",
+      "type": "table",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "ops-pg"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "ops-pg"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "select board as product, task_id, title, status, role_now as role, (select outcome from cap_runs r where r.board = c.board and r.task_id = c.task_id and r.era = '$era' order by started_at desc limit 1) as \"last run\", failure_count as failures, review_rounds as rounds, commits, extract(epoch from now() - created_at)::bigint as age_s, waiting_words as \"waiting on\" from cap_cards c where board in ($product) and coalesce(epic, '(none)') in ($epic) and status in ($status) order by created_at desc"
+        }
+      ],
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "age_s"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "task_id"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Card story",
+                    "url": "/d/lookout-trace?var-product=${__data.fields.product}&var-task_id=${__data.fields.task_id}",
+                    "targetBlank": false
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "countRows": false,
+          "fields": ""
+        },
+        "sortBy": []
+      }
+    },
+    {
+      "id": 5,
+      "title": "Where work piles up",
+      "description": "Cards per status; the swelling column is where work waits.",
+      "type": "bargauge",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "ops-pg"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "ops-pg"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "select status, count(*) as \"cards\" from cap_cards where board in ($product) and coalesce(epic, '(none)') in ($epic) and status in ($status) group by status order by 2 desc"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "orientation": "horizontal",
+        "displayMode": "lcd",
+        "valueMode": "color",
+        "showUnfilled": true,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "sizing": "auto",
+        "maxVizHeight": 300
+      }
+    },
+    {
+      "id": 6,
+      "title": "Stuck and why",
+      "description": "Open blocks, oldest first: what is blocked, on whom, since when.",
+      "type": "table",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "ops-pg"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "ops-pg"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "select c.board as product, c.task_id, c.title, b.kind, b.reason, b.waiting_on as \"waiting on\", b.opened_at as since from cap_blocks b join cap_cards c on c.board = b.board and c.task_id = b.task_id where b.closed_at is null and c.board in ($product) and coalesce(c.epic, '(none)') in ($epic) order by b.opened_at asc"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "task_id"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Card story",
+                    "url": "/d/lookout-trace?var-product=${__data.fields.product}&var-task_id=${__data.fields.task_id}",
+                    "targetBlank": false
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "countRows": false,
+          "fields": ""
+        },
+        "sortBy": []
+      }
+    },
+    {
+      "id": 7,
+      "title": "Flow over time",
+      "description": "Cards per status at each health pass, last 7 days. Is flow getting worse?",
+      "type": "timeseries",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "ops-pg"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "ops-pg"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "select h.ts as time, kv.key as metric, kv.value::float as \"cards\" from events h, jsonb_each_text(h.payload->'counts') kv where h.kind = 'health' and h.source = 'capsule' and h.board in ($product) and h.ts > now() - interval '7 days' and $__timeFilter(h.ts) and kv.value ~ '^[0-9]+$' order by 1"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 32
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "showPoints": "auto",
+            "pointSize": 5,
+            "spanNulls": true,
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "axisColorMode": "text",
+            "axisBorderShow": false,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "barAlignment": 0,
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "Incidents",
+      "description": "Korin's open and recent incidents.",
+      "type": "table",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "ops-pg"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "ops-pg"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "select board as product, task_id, kind, status, root_cause, fix_card, opened_at from cap_incidents where board in ($product) order by opened_at desc limit 50"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 40
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "task_id"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Card story",
+                    "url": "/d/lookout-trace?var-product=${__data.fields.product}&var-task_id=${__data.fields.task_id}",
+                    "targetBlank": false
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "countRows": false,
+          "fields": ""
+        },
+        "sortBy": []
+      }
+    }
+  ]
+}

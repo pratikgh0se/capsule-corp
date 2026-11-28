@@ -1,0 +1,35 @@
+apiVersion: 1
+providers:
+  # OBS-05 (spec 6.1): one provider per folder. Grafana's file provider recurses, so the
+  # providers' paths must be sibling subfolders and nothing may sit at the dashboards/ root
+  # (it would be loaded twice, with the same uid).
+  - name: the-lookout
+    folder: The Lookout
+    folderUid: the-lookout
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: false
+    options:
+      path: /var/lib/grafana/dashboards/lookout
+      foldersFromFilesStructure: false
+  - name: plumbing
+    folder: Plumbing
+    folderUid: plumbing
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: false
+    options:
+      path: /var/lib/grafana/dashboards/plumbing
+      foldersFromFilesStructure: false
+  - name: weekly
+    folder: Weekly
+    folderUid: weekly
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: false
+    options:
+      path: /var/lib/grafana/dashboards/weekly
+      foldersFromFilesStructure: false

@@ -1,0 +1,3 @@
+{"schema": "decision.v1", "run_id": "0123456789abcdef0123456789abcdef", "task_id": "t_0000aaaa",
+ "claim_lock": "host:0123456789abcdef0123456789abcdef", "question": "Which break length?",
+ "options": [{"id": "a", "label": "5 min"}, {"id": "b", "label": "10 min"}], "recommended": "a"}

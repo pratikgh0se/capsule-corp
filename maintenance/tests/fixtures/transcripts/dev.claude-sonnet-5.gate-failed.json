@@ -1,0 +1,34 @@
+{
+  "v": 1,
+  "role": "dev",
+  "model": "claude-sonnet-5",
+  "path": "gate-failed",
+  "source": "fake-e2e",
+  "note": "the merge gate reported gate: not merged; dev cannot make it green from inside this task's diff and blocks rather than widening scope unilaterally.",
+  "card": {
+    "id": "t_9c0d1e2f",
+    "title": "Fix the flaky CI job blocking merge",
+    "body": "<!-- sprint-meta risk=R2 spec=2026-09-10-roles-and-souls spec_sha256=deadbeef area=maintenance slug=t_9c0d1e2f -->"
+  },
+  "calls": [
+    {
+      "tool": "kanban_show",
+      "args": {
+        "task_id": "t_9c0d1e2f"
+      }
+    },
+    {
+      "tool": "kanban_comment",
+      "args": {
+        "text": "gate: not merged - pytest job failing on maintenance/tests/test_merge_gate.py"
+      }
+    },
+    {
+      "tool": "kanban_block",
+      "args": {
+        "kind": "dependency",
+        "reason": "BLOCKER: the CI failure reproduces locally but the root cause is in a fixture outside this task's diff\nNEED: a decision on whether to widen this task's scope to fix the shared fixture or hand the fixture bug to a new card"
+      }
+    }
+  ]
+}

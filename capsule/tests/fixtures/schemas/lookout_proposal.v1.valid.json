@@ -1,0 +1,8 @@
+{"schema": "lookout_proposal.v1", "run_id": "0123456789abcdef0123456789abcdef", "task_id": "t_0000aaaa",
+ "claim_lock": "host:0123456789abcdef0123456789abcdef", "app": "ollama-dashboard", "trigger": "weekly",
+ "coverage": [{"signal": "poll loop heartbeat", "status": "missing", "evidence": "no events.log call in poller.py"}],
+ "proposals": [{"kind": "instrumentation", "path": "poller.py",
+                "change": "Log one poll_tick event per poll loop pass.",
+                "reason": "The poll loop can stall with no signal."}],
+ "questions": ["Should a stalled poll loop page Owner or only show on the dashboard?"],
+ "confidence": "medium"}

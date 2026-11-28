@@ -1,0 +1,28 @@
+{"id": "green-suites-and-gates-are-checked-and-nothing-moves", "given": {"document": {"case": "green"}}, "expect": {"verdict": "checked", "detail": "refs unmoved"}, "source": "row 600"}
+{"id": "red-suite-is-red-and-no-merge", "given": {"document": {"case": "red"}}, "expect": {"verdict": "red", "detail": "refs unmoved"}, "source": "row 600"}
+{"id": "contract-edit-with-matching-sums-still-holds-for-the-stamp", "given": {"document": {"case": "protected_sums"}}, "expect": {"verdict": "held", "detail": "refs unmoved"}, "source": "row 393"}
+{"id": "checked-card-in-land-mode-is-pushed-and-landed", "given": {"document": {"case": "land_green"}}, "expect": {"outcome": "landed", "pushed": true}, "source": "row 600"}
+{"id": "rejected-push-lands-nothing-and-is-rechecked-never-forced", "given": {"document": {"case": "land_push_rejected"}}, "expect": {"outcome": "push_rejected", "pushed": false}, "source": "row 600"}
+{"id": "red-after-push-is-reverted-by-a-new-commit-and-opens-an-incident", "given": {"document": {"case": "red_after_push"}}, "expect": {"outcome": "reverted", "pushed": true}, "source": "row 600"}
+{"id": "docker-path-diff-is-held-for-the-keeper-and-moves-nothing", "given": {"document": {"case": "docker_path"}}, "expect": {"verdict": "held", "detail": "refs unmoved"}, "source": "row 632, 2026-10-29"}
+{"id": "tick-dry-run-checks-an-approved-done-card-once-and-moves-nothing", "given": {"document": {"case": "step_dry_run"}}, "expect": {"step": "dry-run", "then": "idle", "landing_checked": 1, "pushed": false}, "source": "row 600, 2026-10-19"}
+{"id": "tick-with-no-dry-run-or-land-mode-never-checks-or-lands", "given": {"document": {"case": "step_off"}}, "expect": {"step": "off", "landing_checked": 0, "pushed": false}, "source": "row 600, 2026-10-19"}
+{"id": "tick-land-mode-pushes-one-card-then-verifies-it-next-pass", "given": {"document": {"case": "step_land"}}, "expect": {"step": "landed", "then": "verified", "pushed": true}, "source": "row 600, 2026-10-19"}
+{"id": "stale-keeper-claim-makes-the-lander-busy-and-pushes-nothing", "given": {"document": {"case": "keeper_claim_stale"}}, "expect": {"mutex": "busy", "pushed": false}, "source": "row 600, 2026-10-19"}
+{"id": "keeper-claim-holds-an-owed-revert-and-pushes-nothing", "given": {"document": {"case": "keeper_claim_revert_owed"}}, "expect": {"mutex": "busy", "pushed": false}, "source": "row 600, 2026-10-19"}
+{"id": "keeper-guard-stops-while-a-pushed-landing-is-unverified", "given": {"document": {"case": "guard_landed_pushed"}}, "expect": {"mutex": "stop", "exit": 1}, "source": "row 600, 2026-10-19"}
+{"id": "keeper-guard-is-clear-and-creates-nothing-on-an-untaken-board", "given": {"document": {"case": "guard_board_not_taken"}}, "expect": {"mutex": "clear", "exit": 0}, "source": "row 600, 2026-10-19"}
+{"id": "branch-behind-origin-main-waits-and-pushes-nothing", "given": {"document": {"case": "behind_main"}}, "expect": {"verdict": "wait", "detail": "refs unmoved"}, "source": "row 600, 2026-10-19"}
+{"id": "tick-pass-returns-while-the-landing-worker-runs", "given": {"document": {"case": "step_slow"}}, "expect": {"step": "running", "then": "running", "spawned": 1, "pushed": false}, "source": "row 600, 2026-10-19"}
+{"id": "tick-land-mode-skips-the-suites-while-busy", "given": {"document": {"case": "step_busy"}}, "expect": {"step": "busy", "spawned": 0, "landing_checked": 0, "pushed": false}, "source": "row 600, 2026-10-19"}
+{"id": "tick-stops-respawning-a-worker-that-crashes-three-times", "given": {"document": {"case": "step_crash"}}, "expect": {"step": "worker_error", "then": "crashed", "spawned": 3, "pushed": false}, "source": "row 600, 2026-10-19"}
+{"id": "suites-detail-names-failing-test", "given": {"document": {"case": "suites_red"}}, "expect": {"suites": "fail", "detail": "FAIL: test_x (m.C)"}, "source": "owner"}
+{"id": "red-then-green-is-flaky-not-red", "given": {"document": {"case": "suites_flaky"}}, "expect": {"suites": "pass", "detail": "red, then green on retry (flaky)", "flaky_event": 1}, "source": "owner"}
+{"id": "red-twice-is-red", "given": {"document": {"case": "suites_red_twice"}}, "expect": {"suites": "fail", "detail": "FAIL: test_x (m.C)"}, "source": "owner"}
+{"id": "card-behind-main-is-replayed-and-lands", "given": {"document": {"case": "replay_lands"}}, "expect": {"replay": "landed", "pushed": true}, "source": "owner"}
+{"id": "replay-conflict-waits-and-names-files", "given": {"document": {"case": "replay_conflict"}}, "expect": {"replay": "wait", "files": "a.txt", "pushed": false}, "source": "owner"}
+{"id": "pg-script-diff-is-held-for-the-keeper-too", "given": {"document": {"case": "pg_script"}}, "expect": {"verdict": "held", "detail": "refs unmoved", "host_marker": "absent", "hold": "needs_docker_tests"}, "source": "row 632, 2026-10-30"}
+{"id": "observability-diff-is-held-for-the-keeper-too", "given": {"document": {"case": "observability_path"}}, "expect": {"verdict": "held", "detail": "refs unmoved", "host_marker": "absent", "hold": "needs_docker_tests"}, "source": "row 632, 2026-10-30"}
+{"id": "maintenance-sql-diff-is-held-for-the-keeper-too", "given": {"document": {"case": "maintenance_sql"}}, "expect": {"verdict": "held", "detail": "refs unmoved", "host_marker": "absent", "hold": "needs_docker_tests"}, "source": "row 632, 2026-10-30"}
+{"id": "day-branch-card-lands-on-its-branch-and-main-is-unmoved", "given": {"document": {"case": "day_branch_land"}}, "expect": {"outcome": "landed", "pushed": true}, "source": "row 600"}
+{"id": "first-landing-creates-the-missing-day-branch-from-main", "given": {"document": {"case": "day_branch_missing"}}, "expect": {"outcome": "landed", "pushed": true}, "source": "row 600"}

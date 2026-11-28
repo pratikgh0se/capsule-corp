@@ -1,0 +1,3 @@
+{"id": "allowlisted-personal-path-fails", "given": {"document": {"check": "public_lint", "allowlist": ["capsule/"], "files": {"capsule/a.py": "HOME = \"/Users/someone/code\""}}}, "expect": {"exit": 1, "hits": {"capsule/a.py:1": "personal-path"}}, "source": "owner"}
+{"id": "exception-file-passes", "given": {"document": {"check": "public_lint", "allowlist": ["LICENSE"], "files": {"LICENSE": "Copyright (c) 2026 Pratik Ghose"}}}, "expect": {"exit": 0}, "source": "owner"}
+{"id": "missing-allowlist-entry-is-not-public", "given": {"document": {"check": "public_lint", "allowlist": ["capsule/"], "files": {"docs/RUNBOOK.md": "a personal path under /Users/someone"}}}, "expect": {"exit": 0, "scanned": false}, "source": "owner"}

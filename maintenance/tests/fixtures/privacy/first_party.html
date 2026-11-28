@@ -1,0 +1,12 @@
+<!-- Fixture: a client page whose only network calls are relative paths or the
+     app's own localhost origin - nothing outbound to a third party. -->
+<!doctype html>
+<html>
+  <body>
+    <script>
+      fetch("/api/todos");
+      fetch("/api/session", { method: "POST" });
+      fetch("http://localhost:8765/api/presets");
+    </script>
+  </body>
+</html>

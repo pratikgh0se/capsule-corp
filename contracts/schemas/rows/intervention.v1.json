@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/schemas/rows/intervention.v1.json",
+  "title": "One human intervention file under <board>/human/ (row 569; written by capsule/human.py, read by Tick._interventions)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["task_id", "kind", "text", "at"],
+  "properties": {
+    "task_id": {"type": "string", "pattern": "^[0-9A-Za-z_-]{1,64}\\Z"},
+    "kind": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,39}\\Z"},
+    "text": {"type": "string", "maxLength": 10000},
+    "at": {"type": "integer", "minimum": 0},
+    "tag": {"enum": ["migration-reset", "handover-route", "patrol"]},
+    "assignee": {"type": "string", "minLength": 1, "maxLength": 200},
+    "check": {"type": "string", "minLength": 1, "maxLength": 200},
+    "ttl": {"type": "string", "minLength": 1, "maxLength": 40},
+    "fix_card": {"type": "string", "minLength": 1, "maxLength": 200},
+    "issuer": {"type": "string", "minLength": 1, "maxLength": 200},
+    "author": {"enum": ["owner", "pratik", "cos", "capsule"]},
+    "role": {"type": "string", "minLength": 1, "maxLength": 40},
+    "via": {"enum": ["terminal", "slack"]},
+    "ask": {"type": "string", "pattern": "^[0-9a-f]{16}\\Z"}
+  }
+}

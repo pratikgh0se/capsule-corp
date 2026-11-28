@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/schemas/rows/unblocked_item.v1.json",
+  "title": "One item of the unblocked detector's --json report (row 569; capsule/unblocked.py Item.as_dict; gates dispatch, the Stop hook and the dead-man metric)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["item", "source", "state", "blocker", "owner", "age_s"],
+  "properties": {
+    "item": {"type": "string", "minLength": 1, "maxLength": 1000},
+    "source": {"type": "string", "pattern": "^(board:.+|human:.+|branch|run-layer)\\Z"},
+    "state": {"enum": ["unblocked", "blocked", "unclassified", "notice"]},
+    "blocker": {"type": "string", "maxLength": 1000},
+    "owner": {"type": "string", "maxLength": 200},
+    "age_s": {"description": "number of seconds or null; the stdlib validator has no nullable type, so only the minimum is checked", "minimum": 0}
+  }
+}

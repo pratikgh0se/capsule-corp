@@ -1,0 +1,4 @@
+{"id": "silent-keeper-with-waiting-work-pages-once", "given": {"document": {"check": "keeper_watch", "case": "log-75-min-old-3-waiting"}}, "expect": {"pass": "silent-log-pages-once"}, "source": "row 492"}
+{"id": "same-silence-episode-never-pages-twice", "given": {"document": {"check": "keeper_watch", "case": "same-state-next-firing"}}, "expect": {"pass": "same-episode-no-second-page"}, "source": "row 492"}
+{"id": "silence-with-nothing-waiting-is-not-an-alert", "given": {"document": {"check": "keeper_watch", "case": "log-75-min-old-nothing-waiting"}}, "expect": {"pass": "nothing-waiting-no-page"}, "source": "row 492"}
+{"id": "declared-pause-silences-the-page-until-it-expires", "given": {"document": {"check": "keeper_watch", "case": "log-75-min-old-3-waiting-pause-file-3h"}}, "expect": {"pass": "declared-pause-quiet"}, "source": "row 492"}

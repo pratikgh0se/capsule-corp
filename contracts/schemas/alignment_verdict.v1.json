@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/schemas/alignment_verdict.v1.json",
+  "title": "Alignment verdict, guide (rows 364, 416)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "run_id", "task_id", "claim_lock", "verdict", "rows", "reason"],
+  "properties": {
+    "schema": {"const": "alignment_verdict.v1"},
+    "run_id": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+    "task_id": {"type": "string", "pattern": "^t_[0-9a-f]{8}$"},
+    "claim_lock": {"type": "string", "minLength": 1, "maxLength": 200},
+    "verdict": {"enum": ["aligned", "drifted"]},
+    "rows": {"type": "array", "minItems": 0,
+             "items": {"type": "integer", "minimum": 1, "maximum": 9999}},
+    "reason": {"type": "string", "minLength": 1, "maxLength": 2000},
+    "spec_conflict_rows": {"type": "array", "minItems": 0,
+                          "items": {"type": "integer", "minimum": 1, "maximum": 9999}},
+    "amendment": {"type": "array", "minItems": 1, "maxItems": 3, "items": {
+      "type": "object", "additionalProperties": false, "required": ["target", "find", "replace"],
+      "properties": {
+        "target": {"enum": ["card", "spec_section"]},
+        "find": {"type": "string", "minLength": 1, "maxLength": 2000},
+        "replace": {"type": "string", "maxLength": 2400}}}},
+    "notes": {"type": "array", "maxItems": 5,
+              "items": {"type": "string", "minLength": 1, "maxLength": 1000}}
+  }
+}

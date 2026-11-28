@@ -1,0 +1,1 @@
+{"type": "result", "subtype": "error_max_turns", "is_error": true, "session_id": "00000000-0000-0000-0000-000000000000", "num_turns": 2, "duration_api_ms": 1000, "total_cost_usd": 0.01, "result": null, "usage": {"input_tokens": 10, "cache_creation_input_tokens": 0, "cache_read_input_tokens": 0, "output_tokens": 5}}

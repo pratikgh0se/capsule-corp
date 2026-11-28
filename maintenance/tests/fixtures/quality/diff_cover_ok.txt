@@ -1,0 +1,11 @@
+-------------
+Diff Coverage
+Diff: origin/main...HEAD, staged and unstaged changes
+-------------
+server.py (100%)
+static/app.js (100%)
+-------------
+Total:   120 lines
+Missing: 0 lines
+Coverage: 86%
+-------------

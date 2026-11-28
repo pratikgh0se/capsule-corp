@@ -1,0 +1,3 @@
+{"id": "typo-in-a-payload-key-is-refused", "given": {"document": {"event": "parked_by_human", "keys": ["by", "triger"]}}, "expect": {"accepted": false}, "source": "row 569"}
+{"id": "unknown-event-kind-is-refused", "given": {"document": {"event": "parkd", "keys": ["by"]}}, "expect": {"accepted": false}, "source": "row 569"}
+{"id": "a-human-park-payload-is-accepted", "given": {"document": {"event": "parked_by_human", "keys": ["by", "trigger", "was"]}}, "expect": {"accepted": true}, "source": "row 569"}

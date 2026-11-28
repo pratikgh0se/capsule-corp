@@ -1,0 +1,5 @@
+{
+ "owner_acts": {"abs": 1, "rel": 0.10, "delay_days": 7, "ledger_due_days": 1},
+ "interventions": {"abs": 0, "rel": 0.0, "delay_days": 1},
+ "fresh_tokens": {"abs": 0, "rel": 0.15, "delay_days": 1, "unjoined": 0.15}
+}

@@ -1,0 +1,90 @@
+name: Worker images
+on:
+  push:
+    branches: [main]
+    paths: ["docker/base/**", "docker/stacks/**", "docker/build-base.sh", ".github/workflows/image.yml"]
+  schedule:
+    # M137 / row 133: a weekly rebuild so a dependency that disappeared from
+    # the base image surfaces on a Monday morning rather than mid-card. The
+    # `concurrency: group: image` block below serialises this against a push.
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
+permissions:
+  contents: read
+  packages: write
+concurrency:
+  group: image
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9  # v3.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      # build-base.sh records the image id as a digest and chains stacks by `FROM capsule-base@sha256:<id>`;
+      # that only resolves locally with the containerd image store (the runner default is the classic
+      # store, so BuildKit fell through to docker.io and failed "pull access denied").
+      - name: enable the containerd image store
+        run: |
+          f=/etc/docker/daemon.json; c=$(sudo cat "$f" 2>/dev/null || true); [ -n "$c" ] || c='{}'
+          printf '%s' "$c" | jq '.features["containerd-snapshotter"]=true' | sudo tee "$f" >/dev/null
+          sudo systemctl restart docker
+          docker info -f '{{ .DriverStatus }}' | grep -q io.containerd
+      - id: tag
+        run: echo "tag=$(date -u +%Y-%m-%d)-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+      # The same order and tags as a tester's route (docker/build-base.sh): the base, then each
+      # stack chained from the base row of the record. The runner is throwaway, so the 40 GB
+      # local-disk floor is lowered here, in this checkout only.
+      - run: |
+          export CAPSULE_HOME="$RUNNER_TEMP/capsule-home"
+          mkdir -p "$CAPSULE_HOME"
+          echo 1 > docker/BUILD_MIN_FREE_BYTES
+          for layer in base python web; do docker/build-base.sh "$layer"; done
+      - run: RUN_DOCKER_TESTS=1 bash tests/test_docker_image.sh capsule-python:local
+      # Push only from main, and only after the image test passed: a failing image is never `latest`.
+      - if: github.ref == 'refs/heads/main'
+        env:
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          owner=$(printf '%s' "$OWNER" | tr '[:upper:]' '[:lower:]')
+          for name in capsule-base capsule-python capsule-web; do
+            for t in "${{ steps.tag.outputs.tag }}" latest; do
+              docker tag "$name:local" "ghcr.io/$owner/$name:$t"
+              docker push "ghcr.io/$owner/$name:$t"
+            done
+          done
+      # Row 140: the weekly deep licence scan (file-level, report-only). It runs after the push so a
+      # finding never blocks an image; the review step exits 1 on a finding not in
+      # docs/licenses/deep-scan-accepted.txt and 2 on a missing report.
+      - name: trivy licence scan (python)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25  # v0.36.0
+        env:
+          TRIVY_LICENSE_FULL: true
+          TRIVY_PKG_TYPES: library
+        with:
+          scan-type: image
+          image-ref: capsule-python:local
+          scanners: license
+          format: json
+          output: trivy-lic-python.json
+          version: v0.76.2
+          exit-code: '0'
+      - name: trivy licence scan (web)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25  # v0.36.0
+        env:
+          TRIVY_LICENSE_FULL: true
+          TRIVY_PKG_TYPES: library
+        with:
+          scan-type: image
+          image-ref: capsule-web:local
+          scanners: license
+          format: json
+          output: trivy-lic-web.json
+          version: v0.76.2
+          exit-code: '0'
+      - name: deep licence check
+        run: python3 maintenance/notice_gen.py --deep-review "$GITHUB_WORKSPACE/trivy-lic-python.json" "$GITHUB_WORKSPACE/trivy-lic-web.json"   # generated reports in the workspace

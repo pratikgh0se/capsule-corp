@@ -1,0 +1,3 @@
+{"id": "flag-off-runs-the-boards-commands", "given": {"document": {"change": "capsule/bar.py", "select_tests": false}}, "expect": {"kind": "full"}, "source": "owner"}
+{"id": "flag-on-small-diff-runs-its-tests", "given": {"document": {"change": "capsule/bar.py", "select_tests": true}}, "expect": {"kind": "picked"}, "source": "owner"}
+{"id": "flag-on-sql-change-runs-the-boards-commands", "given": {"document": {"change": "capsule/schema.sql", "select_tests": true}}, "expect": {"kind": "full"}, "source": "owner"}

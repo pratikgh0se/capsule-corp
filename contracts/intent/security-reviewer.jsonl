@@ -1,0 +1,3 @@
+{"id": "pass-with-findings", "given": {"document": {"schema": "review_verdict.v1", "role": "security", "verdict": "pass", "findings": "<non-empty>"}}, "expect": {"verdict": "fail"}, "source": "row 362"}
+{"id": "security-review-silent-on-paths", "given": {"document": {"schema": "review_verdict.v1", "role": "security", "notes": "<empty>"}}, "expect": {"notes": "<non-empty>"}, "source": "row 366"}
+{"id": "security-run-claims-reviewer-role", "given": {"document": {"schema": "review_verdict.v1", "role": "reviewer"}}, "expect": {"role": "security"}, "source": "row 366"}

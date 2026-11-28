@@ -1,0 +1,25 @@
+#!/usr/bin/env python3
+"""Fake `gh` for the CI-watch tests: never reaches GitHub. Records argv[1:] to $FAKE_GH_ARGV (one
+JSON array per line), prints $FAKE_GH_STDOUT, writes $FAKE_GH_STDERR to stderr, exits
+$FAKE_GH_RC (default 0). $FAKE_GH_BY_COMMIT (a JSON {sha: stdout}) overrides the stdout for a
+`--commit` it names. With `--branch B`, runs carrying another headBranch are dropped."""
+import json
+import os
+import sys
+
+if os.environ.get("FAKE_GH_ARGV"):
+    with open(os.environ["FAKE_GH_ARGV"], "a", encoding="utf-8") as f:
+        f.write(json.dumps(sys.argv[1:]) + "\n")
+sys.stderr.write(os.environ.get("FAKE_GH_STDERR", ""))
+out = os.environ.get("FAKE_GH_STDOUT", "[]")
+if "--commit" in sys.argv:
+    out = json.loads(os.environ.get("FAKE_GH_BY_COMMIT", "{}")).get(
+        sys.argv[sys.argv.index("--commit") + 1], out)
+if "--branch" in sys.argv:       # like the real flag: only that branch's runs (rows with headBranch)
+    branch = sys.argv[sys.argv.index("--branch") + 1]
+    try:
+        out = json.dumps([r for r in json.loads(out) if r.get("headBranch", branch) == branch])
+    except ValueError:
+        pass                      # not JSON: pass it through, so a test can feed garbage
+sys.stdout.write(out)
+sys.exit(int(os.environ.get("FAKE_GH_RC", "0")))

@@ -1,0 +1,34 @@
+{
+  "v": 1,
+  "role": "reviewer",
+  "model": "claude-opus-5",
+  "path": "three-approaches-exhausted",
+  "source": "fake-e2e",
+  "note": "reviewer hits the review round cap (quality_gate.ROUND_CAP=4) after three genuinely distinct findings and escalates instead of requesting changes a fourth time.",
+  "card": {
+    "id": "t_3u4v5w6x",
+    "title": "Review: make the retry wrapper idempotent under FakeSh replay",
+    "body": "<!-- sprint-meta risk=R2 spec=2026-09-10-roles-and-souls spec_sha256=deadbeef area=maintenance slug=t_3u4v5w6x -->"
+  },
+  "calls": [
+    {
+      "tool": "kanban_show",
+      "args": {
+        "task_id": "t_3u4v5w6x"
+      }
+    },
+    {
+      "tool": "kanban_comment",
+      "args": {
+        "text": "assumptions: this is the third change-request round on this card; round 4 is the cap (quality_gate.ROUND_CAP)"
+      }
+    },
+    {
+      "tool": "kanban_block",
+      "args": {
+        "kind": "capability",
+        "reason": "BLOCKER: three review rounds have requested changes for the same idempotency gap and round 4 is the cap\nTRIED: round 1 - flagged the memoization bug; round 2 - flagged the nonce approach as untestable; round 3 - flagged the call-site duplication\nNEED: a lead decision on whether to keep iterating past the round cap or re-scope the task"
+      }
+    }
+  ]
+}

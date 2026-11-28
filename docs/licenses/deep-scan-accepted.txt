@@ -1,0 +1,5 @@
+# Deep licence scan: accepted findings (weekly "Worker images" CI, maintenance/notice_gen.py --deep-review).
+# One finding per line, TAB-separated: <licence>, <path glob (fnmatch)>, <reason>
+# A finding is listed in the CI run summary until a line here matches both its licence id and its path.
+# Example: MPL-2.0 <TAB> */site-packages/hypothesis/* <TAB> weak copyleft, test-only dependency, unmodified
+# The owner fills this after the first run.

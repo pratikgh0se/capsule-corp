@@ -1,0 +1,2 @@
+{"id": "an-item-in-an-unknown-state-is-not-a-detector-item", "given": {"document": {"row": {"item": "capsule-corp:t_0123abcd do it", "source": "board:capsule-corp", "state": "idle", "blocker": "", "owner": "", "age_s": 5}}}, "expect": {"valid": false}, "source": "row 569"}
+{"id": "a-ready-unowned-board-card-item-is-valid", "given": {"document": {"row": {"item": "capsule-corp:t_0123abcd do it", "source": "board:capsule-corp", "state": "unblocked", "blocker": "", "owner": "", "age_s": 5}}}, "expect": {"valid": true}, "source": "row 470"}

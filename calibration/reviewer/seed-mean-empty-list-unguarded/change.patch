@@ -1,0 +1,27 @@
+diff --git a/stats.py b/stats.py
+index 644cc85..7a874d1 100644
+--- a/stats.py
++++ b/stats.py
+@@ -8,3 +8,8 @@ def median(values):
+     if len(ordered) % 2:
+         return ordered[mid]
+     return (ordered[mid - 1] + ordered[mid]) / 2
++
++
++def mean(values):
++    """Average of `values`; 0.0 for an empty list."""
++    return sum(values) / len(values)
+diff --git a/tests/test_stats.py b/tests/test_stats.py
+new file mode 100644
+index 0000000..c9d59e4
+--- /dev/null
++++ b/tests/test_stats.py
+@@ -0,0 +1,8 @@
++import unittest
++
++from stats import mean
++
++
++class MeanTests(unittest.TestCase):
++    def test_mean_of_a_non_empty_list(self):
++        self.assertEqual(mean([1, 2, 3]), 2)

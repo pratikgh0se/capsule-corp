@@ -1,0 +1,4 @@
+{"schema": "blind_tests.v1", "run_id": "0123456789abcdef0123456789abcdef", "task_id": "t_0000aaaa",
+ "claim_lock": "host:0123456789abcdef0123456789abcdef",
+ "covered": [{"statement": 1, "tests": ["test_help_lists_verbs"]}],
+ "not_testable": [{"statement": 2, "reason": "the snapshot names no command that shows the log line"}]}

@@ -1,0 +1,13 @@
+{"schema": "auditor_report.v1", "run_id": "0123456789abcdef0123456789abcdef", "task_id": "t_0000aaaa",
+ "claim_lock": "host:0123456789abcdef0123456789abcdef", "trigger": "weekly", "window": [1760000000, 1760604800],
+ "summary": "Wasted runs rose this week and one incident repeated; nightly flake state was unreadable.",
+ "worse": [{"metric": "wasted_run_rate", "before": 0.1, "after": 0.3, "evidence": "packet.interventions"}],
+ "repeats": [{"incident": "inc_0000aaaa", "repeat_of": "inc_0000bbbb", "kind": "crash"}],
+ "cost_per_card": {"tokens": 150000, "landed": 2, "oracle_agree": true},
+ "review_rounds": {"median": 2, "max": 4, "at_limit": ["t_0000bbbb"]},
+ "flaky_tests": [{"test": "capsule.tests.test_x.TestX.test_y", "count": 2, "source": "landing"}],
+ "stuck_cards": [{"task_id": "t_0000cccc", "status": "review", "idle_h": 30.5}],
+ "proposals": [{"title": "Fix the flaky test_y ordering", "problem": "test_y failed twice at landing this week.",
+                "evidence": ["t_0000cccc", "wasted_run_rate"], "fix": "Sort the fixture rows before comparing them.",
+                "removes": "nothing", "verify": "capsule.tests.test_x.TestX.test_y"}],
+ "not_audited": [{"input": "flaky", "why": "nightly state unreadable"}]}

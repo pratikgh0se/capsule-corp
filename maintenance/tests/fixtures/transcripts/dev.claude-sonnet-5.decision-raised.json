@@ -1,0 +1,28 @@
+{
+  "v": 1,
+  "role": "dev",
+  "model": "claude-sonnet-5",
+  "path": "decision-raised",
+  "source": "fake-e2e",
+  "note": "dev raises a DECISION block (contracts.format_decision) instead of choosing between the two designs unilaterally.",
+  "card": {
+    "id": "t_5e6f7a8b",
+    "title": "Extract the CLI retry wrapper into its own module",
+    "body": "<!-- sprint-meta risk=R2 spec=2026-09-10-roles-and-souls spec_sha256=deadbeef area=maintenance slug=t_5e6f7a8b -->"
+  },
+  "calls": [
+    {
+      "tool": "kanban_show",
+      "args": {
+        "task_id": "t_5e6f7a8b"
+      }
+    },
+    {
+      "tool": "kanban_block",
+      "args": {
+        "kind": "needs_input",
+        "reason": "DECISION: Should the retry wrapper live in board_bridge.py or a new retry.py?\nWhy: the CLI call needs a bounded retry and two callers will want it\nClass: R2\n1. add it to board_bridge.py - keeps the change small but board_bridge grows another concern\n2. extract maintenance/retry.py - clean seam, one more file to wire into tests\nRecommend: 2 - the seam is worth it once a second caller exists\nLearn: if a third caller needs it, extraction is clearly right"
+      }
+    }
+  ]
+}

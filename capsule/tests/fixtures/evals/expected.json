@@ -1,0 +1,239 @@
+{
+ "_note": [
+  "Known over-count (E1 decision pending): intervention.v1 has no author field, so every file in human/ and human/done/ counts as an owner act, including ones the chief of staff ran under delegation.",
+  "The owner's acts are hand labels here (owner_act_rows, double_recorded); a counter must derive them from row text, never from a field."
+ ],
+ "good_board": {
+  "landed_cards": [
+   10,
+   "10 cards are done with a completed event"
+  ],
+  "landed_card_names": [
+   [
+    "g0",
+    "g1",
+    "g2",
+    "g3",
+    "g4",
+    "g5",
+    "g6",
+    "g7",
+    "g8",
+    "g9"
+   ],
+   "g0-g9 are all landed"
+  ],
+  "landed_without_landed_word_names": [
+   [],
+   "every landing is worded LANDED"
+  ],
+  "owner_act_rows": [
+   [
+    804,
+    805,
+    806,
+    807,
+    808,
+    809
+   ],
+   "hand label: decision rows 804-809 are Owner's acts (GO g4..g9)"
+  ],
+  "double_recorded": [
+   [],
+   "no act is recorded twice on this board"
+  ],
+  "owner_act_ids": [
+   [
+    "spool:1.json",
+    "spool:2.json",
+    "spool:3.json",
+    "spool:4.json",
+    "row:804",
+    "row:805",
+    "row:806",
+    "row:807",
+    "row:808",
+    "row:809"
+   ],
+   "4 spool files (g0-g3, archived in human/done/) plus the 6 Owner rows"
+  ],
+  "owner_acts": [
+   10,
+   "the 10 distinct acts above"
+  ],
+  "eval_owner_acts_a": [
+   10,
+   "E2 oracle A for the week of 1970-01-12: the 10 acts above"
+  ],
+  "eval_owner_acts_b": [
+   10,
+   "E2 oracle B: the hand ledger row a reader would write for the same week (4 spool files + rows 804-809)"
+  ],
+  "eval_agree": [
+   true,
+   "both E2 metrics agree: owner_acts 10 vs 10, interventions 4 files vs 4 events"
+  ],
+  "eval_incidents": [
+   0,
+   "agreement opens no eval incident"
+  ],
+  "owner_touches_per_card": [
+   1.0,
+   "GATING Q2b: all 10 acts over 10 landed cards"
+  ],
+  "owner_touches_per_landed_card_only": [
+   1.0,
+   "informational: acts on landed cards only, 10 over 10"
+  ],
+  "interventions_total": [
+   4,
+   "4 human spool files, each also one intervention event"
+  ],
+  "interventions_per_card": [
+   0.4,
+   "4 interventions over 10 cards with activity"
+  ],
+  "migration_resets": [
+   0,
+   "no migration-reset file on this board"
+  ],
+  "fresh_tokens_total": [
+   20000,
+   "10 runs of 1000+500+500 fresh tokens"
+  ],
+  "max_rework_rounds": [
+   0,
+   "every card has one implementer run"
+  ],
+  "repeat_incidents": [
+   0,
+   "no incident rows"
+  ],
+  "reverts": [
+   0,
+   "no Revert subject in the git log rows"
+  ]
+ },
+ "bad_board": {
+  "landed_cards": [
+   5,
+   "b0-b4 are done with a completed event; b5 is blocked and failed; b6 is done by hand with no completed event"
+  ],
+  "landed_card_names": [
+   [
+    "b0",
+    "b1",
+    "b2",
+    "b3",
+    "b4"
+   ],
+   "b3 is landed although its log line lacks LANDED; b6 is not landed"
+  ],
+  "landed_without_landed_word_names": [
+   [
+    "b3"
+   ],
+   "b3 has only a 'worktree hook LIVE ... completed' log line"
+  ],
+  "owner_act_rows": [
+   [
+    701,
+    703,
+    704,
+    707
+   ],
+   "hand label: rows 701, 703, 704, 707 are Owner's; 702 and 706 are mentions by the chief of staff"
+  ],
+  "double_recorded": [
+   [
+    {
+     "row": 704,
+     "card": "b3"
+    }
+   ],
+   "row 704 'Owner approved b3' records the act of b3's approve file (4.json), same day: one act; row 707 is on another day, so not a double record"
+  ],
+  "owner_act_ids": [
+   [
+    "spool:1.json",
+    "spool:2.json",
+    "spool:3.json",
+    "spool:4.json",
+    "row:701",
+    "row:703",
+    "row:707"
+   ],
+   "4 spool files (3.json still pending) plus rows 701 (names b0 and b4, one act), 703 and 707 (b1 again, on another day than b1's spool acts: a new act); 704 is 4.json again; 5.json is a migration reset"
+  ],
+  "owner_acts": [
+   7,
+   "the 7 distinct acts above"
+  ],
+  "eval_owner_acts_a": [
+   7,
+   "E2 oracle A for the week of 1970-01-12: the 7 acts above"
+  ],
+  "eval_owner_acts_b": [
+   9,
+   "E2 oracle B: a deliberately wrong ledger row (9 acts); |7-9| = 2 > max(1, 0.1 * 9)"
+  ],
+  "eval_agree": [
+   false,
+   "owner_acts disagrees beyond the tolerance; interventions agree (4 files, 4 events, the migration reset out of both)"
+  ],
+  "eval_incidents": [
+   1,
+   "one contradiction incident, role eval, key eval:owner_acts"
+  ],
+  "owner_touches_per_card": [
+   1.4,
+   "GATING Q2b: all 7 acts in the window over 5 landed cards; b5's unblock act is a real cost and stays in"
+  ],
+  "owner_touches_per_landed_card_only": [
+   1.2,
+   "informational: 6 acts on landed cards (3.json is on b5, which never landed) over 5"
+  ],
+  "interventions_total": [
+   4,
+   "4 non-migration spool files and 4 matching intervention events"
+  ],
+  "interventions_per_card": [
+   0.6667,
+   "4 interventions over the 6 cards with activity (b6 has no run); migration reset excluded"
+  ],
+  "migration_resets": [
+   1,
+   "5.json is tagged migration-reset: out of Q2b and Q2c, counted apart"
+  ],
+  "fresh_tokens_total": [
+   118000,
+   "b0,b3,b4,b5 2000 each (b5 failed run still costs); b1 5 runs of 2000; b2 one run of 100000"
+  ],
+  "fresh_tokens_max_card": [
+   100000,
+   "b2 is the token runaway"
+  ],
+  "max_rework_rounds": [
+   4,
+   "b1 has 5 implementer runs"
+  ],
+  "repeat_incidents": [
+   1,
+   "a crash incident reopened within 30 days of its close; an unrelated open crash 'disk full' is not a repeat"
+  ],
+  "reverts": [
+   1,
+   "one git subject starts with Revert"
+  ]
+ },
+ "empty_board": {
+  "landed_cards": [
+   0,
+   "both cards failed and none is done"
+  ],
+  "owner_touches_per_card": [
+   "insufficient",
+   "no landed card to divide by; never 0.0"
+  ]
+ }
+}

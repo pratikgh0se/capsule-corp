@@ -1,0 +1,147 @@
+[
+  {
+    "License": "BSD License",
+    "Name": "Jinja2",
+    "Version": "3.1.6"
+  },
+  {
+    "License": "BSD-3-Clause",
+    "Name": "MarkupSafe",
+    "Version": "3.0.4"
+  },
+  {
+    "License": "MIT License",
+    "Name": "PyYAML-ft",
+    "Version": "8.0.0"
+  },
+  {
+    "License": "BSD-2-Clause",
+    "Name": "Pygments",
+    "Version": "2.21.0"
+  },
+  {
+    "License": "0BSD",
+    "Name": "chardet",
+    "Version": "7.7.0"
+  },
+  {
+    "License": "BSD-3-Clause",
+    "Name": "click",
+    "Version": "8.5.1"
+  },
+  {
+    "License": "Apache-2.0",
+    "Name": "coverage",
+    "Version": "7.17.0"
+  },
+  {
+    "License": "Apache-2.0",
+    "Name": "diff_cover",
+    "Version": "10.6.0"
+  },
+  {
+    "License": "MIT AND PSF-2.0",
+    "Name": "greenlet",
+    "Version": "3.5.6"
+  },
+  {
+    "License": "MPL-2.0",
+    "Name": "hypothesis",
+    "Version": "6.170.9"
+  },
+  {
+    "License": "MIT",
+    "Name": "iniconfig",
+    "Version": "2.3.1"
+  },
+  {
+    "License": "MIT License",
+    "Name": "libcst",
+    "Version": "1.9.0"
+  },
+  {
+    "License": "MIT License",
+    "Name": "linkify-it-py",
+    "Version": "2.2.0"
+  },
+  {
+    "License": "MIT License",
+    "Name": "markdown-it-py",
+    "Version": "4.3.0"
+  },
+  {
+    "License": "MIT License",
+    "Name": "mdit-py-plugins",
+    "Version": "0.7.0"
+  },
+  {
+    "License": "MIT License",
+    "Name": "mdurl",
+    "Version": "0.1.2"
+  },
+  {
+    "License": "BSD-3-Clause",
+    "Name": "mutmut",
+    "Version": "3.8.0"
+  },
+  {
+    "License": "Apache-2.0 OR BSD-2-Clause",
+    "Name": "packaging",
+    "Version": "26.4"
+  },
+  {
+    "License": "MIT",
+    "Name": "platformdirs",
+    "Version": "4.14.8"
+  },
+  {
+    "License": "Apache-2.0",
+    "Name": "playwright",
+    "Version": "1.64.1"
+  },
+  {
+    "License": "MIT License",
+    "Name": "pluggy",
+    "Version": "1.7.0"
+  },
+  {
+    "License": "MIT License",
+    "Name": "pyee",
+    "Version": "14.0.0"
+  },
+  {
+    "License": "MIT",
+    "Name": "pytest",
+    "Version": "9.1.1"
+  },
+  {
+    "License": "MIT License",
+    "Name": "rich",
+    "Version": "15.0.0"
+  },
+  {
+    "License": "MIT",
+    "Name": "ruff",
+    "Version": "0.17.4"
+  },
+  {
+    "License": "BSD-3-Clause",
+    "Name": "setproctitle",
+    "Version": "1.3.8"
+  },
+  {
+    "License": "Apache Software License",
+    "Name": "sortedcontainers",
+    "Version": "2.4.0"
+  },
+  {
+    "License": "MIT License",
+    "Name": "textual",
+    "Version": "8.2.8"
+  },
+  {
+    "License": "PSF-2.0",
+    "Name": "typing_extensions",
+    "Version": "4.16.0"
+  }
+]

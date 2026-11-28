@@ -1,0 +1,144 @@
+#!/usr/bin/env bash
+# bin/capsule-state-migrate (t_c8b3d583, U3; state-root ruling 3): move <repo>/maintenance/state to
+# the state root (AGENT_OPS_STATE_DIR, default ~/.local/state/capsule-corp/maint) with ONE atomic
+# `mv`, then leave a symlink at the old path so every old reader and the pinned EVENTS_SPOOL still
+# resolve to the same files. No copy mode, no --force, nothing is deleted. Run it only in a
+# tick-stopped gap (RUNBOOK "State root"); tests use temp dirs, never the real state.
+#   capsule-state-migrate [--dry-run]   checks, prints the plan, writes nothing
+#   capsule-state-migrate --verify      re-check the live root against the manifest saved at migration
+# Exit: 0 migrated / already migrated / dry-run / verified; 1 refused or oracle failed; 2 straggler.
+set -u
+MODE=run
+case "${1:-}" in
+  "") ;;
+  --dry-run) MODE=dry ;;
+  --verify) MODE=verify ;;
+  *) echo "usage: capsule-state-migrate [--dry-run|--verify]" >&2; exit 1 ;;
+esac
+REPO="$(cd "$(dirname "$0")/.." && pwd)"
+OLD="$REPO/maintenance/state"
+DEST="${AGENT_OPS_STATE_DIR:-$HOME/.local/state/capsule-corp/maint}"
+PARENT="$(dirname "$DEST")"
+MANIFEST="$DEST.manifest.json"
+# CAPSULE_HOME rule (row 609; the same block is in every script that defaults it, = capsule/paths.py home()): explicit wins; under AGENT_OPS_NO_SEND a temp dir, never the live home.
+# Known differences from tempfile.gettempdir(): TEMP/TMP are not read without TMPDIR; a missing or unwritable TMPDIR falls back to /tmp only in Python; only one trailing slash is stripped; a relative TMPDIR is not made absolute.
+if [ -z "${CAPSULE_HOME:-}" ]; then
+  if [ -n "${AGENT_OPS_NO_SEND:-}" ]; then CAPSULE_HOME="${TMPDIR:-/tmp}"; CAPSULE_HOME="${CAPSULE_HOME%/}/capsule-home-no-send"
+  else CAPSULE_HOME="$HOME/.local/share/capsule"; fi
+fi
+CHOME="$CAPSULE_HOME"
+die() { echo "capsule-state-migrate: $*" >&2; exit 1; }
+
+PY='
+import fcntl, glob, hashlib, json, os, shlex, subprocess, sys
+q = shlex.quote
+cmd = sys.argv[1]
+if cmd == "manifest":
+    out = {}
+    for root, _, files in os.walk(sys.argv[2]):
+        for n in files:
+            p = os.path.join(root, n)
+            rel = os.path.relpath(p, sys.argv[2])
+            out[rel] = os.readlink(p) if os.path.islink(p) else hashlib.sha256(open(p, "rb").read()).hexdigest()
+    json.dump(out, open(sys.argv[3], "w"), sort_keys=True)
+elif cmd == "hashcheck":
+    want = json.load(open(sys.argv[3]))
+    bad = [r for r, h in want.items() if not os.path.isfile(os.path.join(sys.argv[2], r))
+           or hashlib.sha256(open(os.path.join(sys.argv[2], r), "rb").read()).hexdigest() != h]
+    print("\n".join(bad)); sys.exit(1 if bad else 0)
+elif cmd == "lock":
+    for p in sorted(glob.glob(os.path.join(sys.argv[2], "tick-*.lock"))):
+        fd = os.open(p, os.O_RDONLY)
+        try:
+            fcntl.flock(fd, fcntl.LOCK_SH | fcntl.LOCK_NB)
+        except OSError:
+            print(p); sys.exit(1)
+        finally:
+            os.close(fd)
+elif cmd == "runsh":
+    for line in subprocess.run(["ps", "-axo", "pid=,command="], capture_output=True, text=True).stdout.splitlines():
+        pid, _, rest = line.strip().partition(" ")
+        w = rest.split()
+        if w and w[0].rsplit("/", 1)[-1] in ("bash", "sh", "zsh") and len(w) > 1:
+            w = w[1:]
+        if int(pid) != os.getpid() and w and w[0].endswith(("maintenance/run.sh", "maintenance/report.sh")):
+            print(line.strip()); sys.exit(1)
+elif cmd == "strays":
+    old, dest = sys.argv[2], sys.argv[3]
+    for root, dirs, files in os.walk(old):
+        for n in sorted(files):
+            p = os.path.join(root, n)
+            rel = os.path.relpath(p, old)
+            d = os.path.join(dest, rel)
+            if rel == "events.jsonl":
+                keep = q(old + ".stray-events.jsonl")
+                print("  cat %s >> %s   # then keep the stray: mv -n %s %s" % (q(p), q(d), q(p), keep))
+            elif not os.path.lexists(d):
+                print("  mkdir -p %s && mv -n %s %s" % (q(os.path.dirname(d)), q(p), q(d)))
+            else:
+                print("  CONFLICT %s: both exist, resolve by hand: diff %s %s" % (rel, q(p), q(d)))
+elif cmd == "volume":
+    p = sys.argv[3]
+    while not os.path.exists(p):
+        p = os.path.dirname(p)
+    a, b = os.stat(sys.argv[2]).st_dev, os.stat(p).st_dev
+    sys.exit(0 if a == b else 1)
+elif cmd == "offset":
+    d = sys.argv[2]
+    o, e = os.path.join(d, "events.offset"), os.path.join(d, "events.jsonl")
+    if os.path.isfile(o):
+        sys.exit(0 if int(open(o).read().strip() or 0) <= (os.path.getsize(e) if os.path.isfile(e) else 0) else 1)
+'
+py() { python3 -c "$PY" "$@"; }
+count() { find "$1" -type f | wc -l | tr -d ' '; }
+bytes() { find "$1" -type f -exec cat {} + 2>/dev/null | wc -c | tr -d ' '; }
+
+if [ "$MODE" = verify ]; then
+  [ -f "$MANIFEST" ] || die "no manifest at $MANIFEST: nothing was migrated here"
+  bad="$(py hashcheck "$DEST" "$MANIFEST")" || die "oracle 1 (sha256 manifest) FAILED: $bad"
+  want="$(python3 -c 'import json,sys; print(len(json.load(open(sys.argv[1]))))' "$MANIFEST")"
+  [ "$(count "$DEST")" = "$want" ] || die "oracle 2 (file count) FAILED: $(count "$DEST") files, manifest has $want"
+  echo "verified: $want files, hashes match"; exit 0
+fi
+
+if [ -L "$OLD" ]; then
+  [ "$(readlink "$OLD")" = "$DEST" ] || die "$OLD is a symlink to $(readlink "$OLD"), not $DEST"
+  echo "already migrated: $OLD -> $DEST"; exit 0
+fi
+if [ ! -e "$OLD" ] && [ -f "$MANIFEST" ] && [ -d "$DEST" ]; then
+  die "mv done, shim missing: state is at $DEST. Run: ln -s '$DEST' '$OLD'"
+fi
+[ -d "$OLD" ] || die "no state directory at $OLD"
+held="$(py lock "$CHOME")" || die "tick lock held ($held): stop both ticks first"
+live="$(py runsh)" || die "maintenance/run.sh is running ($live): wait for the job to finish"
+if [ -e "$DEST" ] && [ -n "$(ls -A "$DEST" 2>/dev/null)" ]; then die "destination $DEST exists and is not empty"; fi
+py volume "$OLD" "$PARENT" || die "$OLD and $PARENT are on different volumes: mv would not be atomic"
+
+n0="$(count "$OLD")"; b0="$(bytes "$OLD")"
+echo "plan: mv $OLD -> $DEST ($n0 files, $b0 bytes), then ln -s $DEST $OLD"
+if [ "$MODE" = dry ]; then echo "dry-run: nothing written"; exit 0; fi
+
+mkdir -p -m 700 "$PARENT" || die "cannot create $PARENT"
+py manifest "$OLD" "$MANIFEST" || die "manifest failed"
+[ -d "$DEST" ] && rmdir "$DEST"   # an existing EMPTY destination: mv would nest into it
+mv "$OLD" "$DEST" || die "mv failed; state is where it was"
+
+if [ -e "$OLD" ] || [ -L "$OLD" ]; then
+  echo "STRAGGLER: a job recreated $OLD between mv and ln -s. Nothing was overwritten." >&2
+  echo "Merge plan (no line overwrites or deletes a file; run the lines you accept, resolve CONFLICTs by hand):" >&2
+  py strays "$OLD" "$DEST" >&2
+  echo "  find $(printf %q "$OLD") -depth -type d -empty -exec rmdir {} +" >&2
+  echo "  rmdir $(printf %q "$OLD") && ln -s $(printf %q "$DEST") $(printf %q "$OLD")   # fails while any stray file is left: nothing is lost" >&2
+  exit 2
+fi
+ln -s "$DEST" "$OLD" || die "ln -s failed; state is at $DEST: run  ln -s '$DEST' '$OLD'"
+
+fail=0
+[ -L "$OLD" ] || { echo "oracle FAILED: $OLD is not a symlink" >&2; fail=1; }
+bad="$(py hashcheck "$OLD" "$MANIFEST")" || { echo "oracle 1 (sha256 manifest) FAILED: $bad" >&2; fail=1; }
+[ "$(count "$OLD/")" = "$n0" ] && [ "$(bytes "$OLD/")" = "$b0" ] || { echo "oracle 2 (count/bytes) FAILED" >&2; fail=1; }
+py offset "$DEST" || { echo "events.offset is beyond events.jsonl" >&2; fail=1; }
+echo "rollback: rm '$OLD' && mv '$DEST' '$OLD'"
+echo "  (valid only while U1/U2 are not landed: after they land, code writes the new root directly; needs the same quiet gap, ticks stopped and no run.sh/report.sh)"
+[ $fail = 0 ] || exit 1
+echo "migrated: $n0 files, $b0 bytes; manifest $MANIFEST; check with --verify"

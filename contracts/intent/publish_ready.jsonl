@@ -1,0 +1,1 @@
+{"id": "publish-ready-bound-to-head", "given": {"document": {"check": "epic_pr_publish", "pr_was_ready": true, "pushed_head_differs_from_previous_head": true}}, "expect": {"pr_returned_to_draft": true, "stored_ready_and_review_cleared": true, "new_head_reviewed_before_ready_again": true, "pr_body_lists_current_cards": true}, "source": "row 156"}

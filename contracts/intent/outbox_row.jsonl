@@ -1,0 +1,2 @@
+{"id": "a-row-for-an-unknown-channel-is-not-an-outbox-row", "given": {"document": {"row": {"id": 1, "channel": "email", "body": "capsule: done", "created_at": 100, "attempts": 0, "status": "pending"}}}, "expect": {"valid": false}, "source": "row 569"}
+{"id": "a-pending-file-row-is-valid", "given": {"document": {"row": {"id": 1, "channel": "file", "body": "capsule: done", "created_at": 100, "attempts": 0, "status": "pending"}}}, "expect": {"valid": true}, "source": "row 425"}

@@ -1,0 +1,3 @@
+{"id": "tautology-behind-an-assigned-alias-fails", "given": {"document": {"check": "mutation_alias", "range": "assigned-alias"}}, "expect": {"ok": false, "na": false}, "source": "row 526"}
+{"id": "discriminating-test-behind-a-from-import-alias-passes", "given": {"document": {"check": "mutation_alias", "range": "from-import-alias"}}, "expect": {"ok": true, "na": false}, "source": "row 526"}
+{"id": "alias-imported-but-never-used-stays-not-applicable", "given": {"document": {"check": "mutation_alias", "range": "alias-never-used"}}, "expect": {"ok": true, "na": true}, "source": "row 526"}

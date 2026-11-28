@@ -1,0 +1,1 @@
+{"type": "result", "subtype": "error", "is_error": true, "session_id": "00000000-0000-0000-0000-000000000000", "num_turns": 1, "duration_api_ms": 500, "total_cost_usd": 0.0, "result": "API Error: 529 overloaded", "usage": {"input_tokens": 1, "cache_creation_input_tokens": 0, "cache_read_input_tokens": 0, "output_tokens": 0}}

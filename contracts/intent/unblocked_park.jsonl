@@ -1,0 +1,4 @@
+{"id": "fresh-unclassified-branch-is-not-flagged-or-unowned", "given": {"document": {"kind": "branch", "state": "unclassified", "age_days": 5}}, "expect": {"stale": false, "unowned": false}, "source": "row 470"}
+{"id": "unclassified-branch-past-30-days-is-flagged-park-or-delete", "given": {"document": {"kind": "branch", "state": "unclassified", "age_days": 31}}, "expect": {"stale": true, "unowned": false}, "source": "row 470"}
+{"id": "unclassified-branch-just-under-30-days-is-not-flagged", "given": {"document": {"kind": "branch", "state": "unclassified", "age_days": 29.99}}, "expect": {"stale": false, "unowned": false}, "source": "row 470"}
+{"id": "unclassified-branch-with-unknown-age-is-never-flagged", "given": {"document": {"kind": "branch", "state": "unclassified", "age_days": "<empty>"}}, "expect": {"stale": false, "unowned": false}, "source": "row 581, 2026-10-08"}

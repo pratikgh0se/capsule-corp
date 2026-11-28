@@ -1,0 +1,9 @@
+{
+  "name": "capsule-chat",
+  "displayName": "Capsule Chat",
+  "version": "0.1.0",
+  "description": "See the Capsule factory from inside Claude Code: a live status line plus read-only status and needs-you commands.",
+  "author": { "name": "Capsule Corp" },
+  "license": "MIT",
+  "keywords": ["capsule", "factory", "status"]
+}

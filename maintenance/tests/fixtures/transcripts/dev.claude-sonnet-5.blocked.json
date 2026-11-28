@@ -1,0 +1,34 @@
+{
+  "v": 1,
+  "role": "dev",
+  "model": "claude-sonnet-5",
+  "path": "blocked",
+  "source": "fake-e2e",
+  "note": "dev blocks two-thirds through implementation; BLOCKER/TRIED/NEED all present.",
+  "card": {
+    "id": "t_1a2b3c4d",
+    "title": "Wire the retry wrapper into merge_gate.py",
+    "body": "<!-- sprint-meta risk=R2 spec=2026-09-10-roles-and-souls spec_sha256=deadbeef area=maintenance slug=t_1a2b3c4d -->"
+  },
+  "calls": [
+    {
+      "tool": "kanban_show",
+      "args": {
+        "task_id": "t_1a2b3c4d"
+      }
+    },
+    {
+      "tool": "kanban_comment",
+      "args": {
+        "text": "assumptions: merge_gate's sh= injection point takes the same wrapper as board_bridge"
+      }
+    },
+    {
+      "tool": "kanban_block",
+      "args": {
+        "kind": "capability",
+        "reason": "BLOCKER: merge_gate.py's sh= callable has no timeout parameter to wrap\nTRIED: reading the FakeSh contract in fakes.py; grepping merge_gate.py for an existing retry\nNEED: confirmation the timeout parameter is safe to add to the sh= signature"
+      }
+    }
+  ]
+}

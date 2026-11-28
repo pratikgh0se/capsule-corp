@@ -1,0 +1,2 @@
+{"id": "an-added-rule-names-what-it-removes", "given": {"document": {"schema": "advisor_report.v1", "proposals": {"<some>": {"kind": "add_rule", "removes": "none"}}}}, "expect": {"proposals": {"<each>": {"removes": {"<not>": "none"}}}}, "source": "row 393"}
+{"id": "contradictions-in-the-packet-need-a-ranking", "given": {"document": {"schema": "advisor_report.v1", "summary": "<non-empty>", "contradiction_ranking": "<empty>"}, "inputs": {"packet": {"contradictions_total": {"<not>": 0}}}}, "expect": {"contradiction_ranking": "<non-empty>"}, "source": "row 454"}

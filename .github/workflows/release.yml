@@ -1,0 +1,72 @@
+name: Release checksums
+# M232 / D222: a checksum-only release. Builds the public portable edition tarball, writes
+# SHA256SUMS beside it, and uploads both as workflow artifacts. It creates no GitHub Release
+# (publishing is a human step). The attestation step runs only once the repo is public (M228).
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      # SBOM (docs/RELEASE.md "Taken now"): the dependency-graph SPDX report, no new tool. The
+      # single-call endpoint is retired, so request a report, then poll its fetch URL (302 = ready).
+      # Public repos only, like the attest job; a private repo ships no SBOM.
+      - name: sbom
+        if: ${{ !github.event.repository.private }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p dist
+          url=$(gh api "/repos/$GITHUB_REPOSITORY/dependency-graph/sbom/generate-report" --jq .sbom_url)
+          for i in $(seq 1 30); do
+            code=$(curl -sS -L -o dist/sbom.spdx.json -w '%{http_code}' -H "Authorization: Bearer $GH_TOKEN" "$url")
+            [ "$code" = 200 ] && break
+            [ "$code" = 202 ] || { echo "sbom fetch failed: HTTP $code" >&2; exit 1; }
+            sleep 10
+          done
+          [ "$code" = 200 ] || { echo "sbom report not ready after 30 tries" >&2; exit 1; }
+          jq -e '.sbom.spdxVersion // .spdxVersion' dist/sbom.spdx.json
+      # Private repo: public_export.py builds the allowlisted tree (release/public-paths.txt), scans
+      # it and fails closed on any hit. Public repo: that line is trimmed from the exported copy
+      # (private-only marker) and the checkout already is the public tree, so git archive packs it.
+      - env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          mkdir -p dist
+          if [ -d "$RUNNER_TEMP/tree" ]; then
+            tar -C "$RUNNER_TEMP/tree" --sort=name --owner=0 --group=0 --numeric-owner \
+              --mtime="@$(git log -1 --format=%ct)" -cf dist/tmp.tar .
+          else
+            git archive --format=tar -o dist/tmp.tar HEAD
+          fi
+          name="capsule-public-${REF_NAME//\//-}.tar.gz"
+          gzip -n -c dist/tmp.tar > "dist/$name"
+          rm dist/tmp.tar
+          (cd dist && sha256sum "$name" $([ -f sbom.spdx.json ] && echo sbom.spdx.json) | tee SHA256SUMS && sha256sum -c SHA256SUMS)
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: release-dist
+          path: dist/
+          if-no-files-found: error
+  attest:
+    needs: build
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          name: release-dist
+          path: dist/
+      # Free only on public repos; the whole job is skipped while the repo is private.
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8  # v4.2.2
+        with:
+          subject-path: dist/*.tar.gz

@@ -1,0 +1,5 @@
+[image]
+stacks = ["web"]
+apt = ["fonts-liberation"]
+lockfiles = ["package-lock.json"]
+smoke = ["node -e \"require('is-number')\""]

@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+# ui-check - the one way an agent may look at a web UI. Headless Chromium via a
+# Playwright venv (/opt/playwright in the web stack image; CHROMIUM_PATH picks the browser).
+# Localhost only unless
+# UI_CHECK_ALLOW_HOST is set; nothing is ever typed into a page except through
+# --fill; no downloads; 20 s cap per action.
+#
+#   ui-check dump   URL                 title, visible text (trimmed), console errors, failed requests
+#   ui-check expect URL "text"          exit 0 if the visible text contains it, 1 otherwise
+#   ui-check shot   URL out.png         full-page screenshot (PNG) - read it back with the file tool
+#   ui-check click  URL "css selector"  click, wait 1 s, then dump
+#   ui-check fill   URL "css selector" "value"   fill an input, then dump
+#
+# A page that logs a console error (or an uncaught page error) or that gets any
+# HTTP >= 400 / failed request is a FAILURE: exit 4, whatever the subcommand.
+# Pass --allow-errors to report them and still exit on the subcommand's own
+# result (C0 item 3, decision row 120 - before this, a 404 tick.wav printed
+# "FAILED REQUESTS: 0" because only Playwright's requestfailed was watched, and
+# Playwright completes a 4xx/5xx through requestfinished).
+#
+# UI_CHECK_PYTHON overrides the interpreter (the tests use a host playwright).
+UI_CHECK_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export UI_CHECK_HOME
+exec "${UI_CHECK_PYTHON:-/opt/playwright/bin/python}" - "$@" <<'PY'
+import sys, json, os, urllib.parse
+GUARD_RC = 4
+args = [a for a in sys.argv[1:] if a != "--allow-errors"]
+allow_errors = "--allow-errors" in sys.argv[1:]
+if not args or args[0] in ("-h", "--help"):
+    print("usage: ui-check [--allow-errors] dump|expect|shot|click|fill URL [args]"); sys.exit(2)
+cmd, url = args[0], args[1] if len(args) > 1 else ""
+host = urllib.parse.urlparse(url).hostname or ""
+allowed = {"localhost", "127.0.0.1", "::1"} | set(filter(None, os.environ.get("UI_CHECK_ALLOW_HOST", "").split(",")))
+if host not in allowed:
+    print(f"ui-check: refusing non-local host {host!r} (set UI_CHECK_ALLOW_HOST to allow)"); sys.exit(3)
+# ui_guard.py sits next to this script (and in the worker image's site-packages
+# for tests/ui), so the recording rules here and in every UI test are one file.
+sys.path.insert(0, os.environ.get("UI_CHECK_HOME") or ".")
+import ui_guard
+from playwright.sync_api import sync_playwright
+with sync_playwright() as p:
+    # The web stack has no Playwright-downloaded browser: CHROMIUM_PATH (Debian's chromium) is it.
+    chromium = os.environ.get("CHROMIUM_PATH")
+    b = p.chromium.launch(headless=True, executable_path=chromium or None,
+                          args=["--no-sandbox"] if chromium else [])
+    ctx = b.new_context(accept_downloads=False, viewport={"width": 1280, "height": 900})
+    page = ctx.new_page(); page.set_default_timeout(20000)
+    guard = ui_guard.attach(page)
+    errors, failed = guard.console_errors, guard.failed_requests
+    page.goto(url, wait_until="networkidle")
+    def problems():
+        print("CONSOLE ERRORS:", len(errors)); [print("  ", e[:200]) for e in errors[:20]]
+        print("FAILED REQUESTS:", len(failed)); [print("  ", f[:200]) for f in failed[:20]]
+    def dump():
+        text = page.inner_text("body")
+        text = "\n".join(l.strip() for l in text.splitlines() if l.strip())[:6000]
+        print("TITLE:", page.title()); print("URL:", page.url); print("TEXT:"); print(text)
+        problems()
+    rc = 0
+    if cmd == "dump": dump()
+    elif cmd == "expect":
+        needle = args[2]; body = page.inner_text("body")
+        ok = needle in body; print("FOUND" if ok else "NOT FOUND", repr(needle)); rc = 0 if ok else 1
+        if not ok: dump()
+    elif cmd == "shot":
+        out = args[2]; page.screenshot(path=out, full_page=True); print("saved", out, os.path.getsize(out), "bytes")
+    elif cmd == "click":
+        page.click(args[2]); page.wait_for_timeout(1000); dump()
+    elif cmd == "fill":
+        page.fill(args[2], args[3]); page.wait_for_timeout(500); dump()
+    else:
+        print("ui-check: unknown command", cmd); rc = 2
+    if rc in (0, 1) and (errors or failed):
+        # dump() already printed the two counted lines; the other subcommands
+        # would otherwise exit non-zero with nothing said about why.
+        if cmd not in ("dump", "click", "fill") and not (cmd == "expect" and rc == 1):
+            problems()
+        if allow_errors:
+            print("ui-check: --allow-errors set, not failing on the above")
+        else:
+            print(f"ui-check: FAILED - {len(errors)} console error(s), {len(failed)} failed request(s) "
+                  f"(pass --allow-errors to ignore)")
+            rc = GUARD_RC
+    b.close()
+sys.exit(rc)
+PY

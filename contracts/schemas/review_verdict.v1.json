@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/schemas/review_verdict.v1.json",
+  "title": "Review verdict, reviewer and security (rows 362, 363, 365, 416)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "run_id", "task_id", "claim_lock", "role", "verdict", "findings", "not_reviewed"],
+  "properties": {
+    "schema": {"const": "review_verdict.v1"},
+    "run_id": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+    "task_id": {"type": "string", "pattern": "^t_[0-9a-f]{8}$"},
+    "claim_lock": {"type": "string", "minLength": 1, "maxLength": 200},
+    "role": {"enum": ["reviewer", "security"]},
+    "verdict": {"enum": ["pass", "fail"]},
+    "findings": {"type": "array", "maxItems": 50, "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["file", "line", "class", "text"],
+      "properties": {
+        "file": {"type": "string", "minLength": 1, "maxLength": 300},
+        "line": {"type": "integer", "minimum": 0, "maximum": 100000},
+        "class": {"enum": ["slop", "design_fidelity", "least_code", "more_than_needed", "out_of_set", "security"]},
+        "text": {"type": "string", "minLength": 1, "maxLength": 1000},
+        "safety": {"type": "boolean"}}}},
+    "not_reviewed": {"type": "array", "items": {"type": "string"}},
+    "notes": {"type": "array", "maxItems": 50,
+              "items": {"type": "string", "minLength": 1, "maxLength": 1000}},
+    "contract_audit": {"type": "array", "maxItems": 50, "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["row", "met", "evidence"],
+      "properties": {
+        "row": {"type": "integer", "minimum": 1, "maximum": 1000},
+        "met": {"enum": ["yes", "no", "unproven"]},
+        "evidence": {"type": "string", "minLength": 1, "maxLength": 300}}}},
+    "could_delete": {"type": "string", "minLength": 1, "maxLength": 500},
+    "simplicity": {"type": "array", "minItems": 5, "maxItems": 5,
+                   "items": {"type": "string", "minLength": 1, "maxLength": 500}},
+    "out_of_set": {"type": "array", "maxItems": 50, "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["file", "line", "class", "text"],
+      "properties": {
+        "file": {"type": "string", "minLength": 1, "maxLength": 300},
+        "line": {"type": "integer", "minimum": 0, "maximum": 100000},
+        "class": {"enum": ["slop", "design_fidelity", "least_code", "more_than_needed", "out_of_set", "security"]},
+        "text": {"type": "string", "minLength": 1, "maxLength": 1000}}}}
+  }
+}

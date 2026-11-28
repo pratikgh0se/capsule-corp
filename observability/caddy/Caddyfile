@@ -1,0 +1,20 @@
+# Front door (W333): every local web UI gets cc.<name>.localhost. Chrome resolves *.localhost to
+# 127.0.0.1, so no hosts-file edit. Plain http, no TLS. New UI: add a block here and a row in
+# docs/RUNBOOK.md "Local addresses".
+{
+	auto_https off
+	admin off
+}
+
+http://cc.grafana.localhost {
+	reverse_proxy grafana:3000
+}
+
+# cc.secrets.localhost exists only with the infisical secrets backend (compose profile
+# "secrets"): CC_CADDY_SECRETS names the route file to import, none.caddy otherwise.
+import {$CC_CADDY_SECRETS:/etc/caddy/routes/none.caddy}
+
+# Any other host name: a clear 404, not an empty 200.
+http:// {
+	respond "no such local address" 404
+}

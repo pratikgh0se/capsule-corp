@@ -1,0 +1,2 @@
+# Imported when the secrets profile is off: no cc.secrets.localhost route, so that name
+# gets the catch-all 404 in the Caddyfile.

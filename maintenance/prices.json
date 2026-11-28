@@ -1,0 +1,14 @@
+{
+  "fallback": "claude-sonnet-5",
+  "source": "https://platform.claude.com/docs/en/about-claude/pricing (fetched 2026-10-24: the three 5-5 rows; the rest as of 2026-09)",
+  "note": "USD per million tokens, Anthropic list prices as of 2026-09; verify quarterly. claude-haiku-5-5 is the up-to-100k-token-prompt tier (over 100k: in 0.5, out 2.5, cache_read 0.05). A subscription proxy for weight, never a bill. cache_write is the 5-minute write price.",
+  "models": {
+    "claude-fable-5-1":          {"valid_from": "2026-09-01", "in": 10, "out": 50, "cache_read": 0.25, "cache_write": 12.5},
+    "claude-opus-5":             {"valid_from": "2026-09-01", "in": 5,  "out": 25, "cache_read": 0.5, "cache_write": 6.25},
+    "claude-sonnet-5":           {"valid_from": "2026-09-01", "in": 2,  "out": 10, "cache_read": 0.2, "cache_write": 2.5},
+    "claude-haiku-4-5-20251001": {"valid_from": "2026-09-01", "in": 1,  "out": 5,  "cache_read": 0.1, "cache_write": 1.25},
+    "claude-opus-5-5":           {"valid_from": "2026-09-01", "in": 4,  "out": 20, "cache_read": 0.2, "cache_write": 5},
+    "claude-sonnet-5-5":         {"valid_from": "2026-09-01", "in": 2,  "out": 10, "cache_read": 0.1, "cache_write": 2.5},
+    "claude-haiku-5-5":          {"valid_from": "2026-09-01", "in": 0.1, "out": 0.5, "cache_read": 0.01, "cache_write": 0.125}
+  }
+}

@@ -1,0 +1,3 @@
+{"id": "append-only", "given": {"document": {"check": "step_journal", "case": "append-only", "steps_done": ["start", "model", "report"], "open_mode": "w"}}, "expect": {"refused": true, "lines": 3, "seqs": [1, 2, 3]}, "source": "owner"}
+{"id": "resume-at-next", "given": {"document": {"check": "step_journal", "case": "resume-at-next", "killed_after_step": 1, "steps_done": ["start"]}}, "expect": {"lines": 1, "next_seq": 2}, "source": "owner"}
+{"id": "lost-starts-clean", "given": {"document": {"check": "step_journal", "case": "lost-starts-clean", "lost_run": "lost", "lost_lines": 2, "replacement_run": "fresh"}}, "expect": {"replacement_lines": 0, "next_seq": 1, "lost_lines": 2}, "source": "owner"}

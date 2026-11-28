@@ -1,0 +1,9 @@
+# Vendored dependency cache allowlist (A5, decision row 217).
+# One line per package: pip:<name>==<version> or npm:<name>@<version>.
+# No ranges (>=, ~=, ^), no bare names, no URLs, no -e lines.
+# This file is the owner's, not a worker's: the merge gate refuses any branch
+# whose diff touches it. `maintenance/run.sh deps-sync` reads it and every
+# other repo's own deps-allowlist.txt (via maintenance/repos.json) to
+# populate the host cache at ~/.local/share/capsule-corp/deps.
+#
+# capsule-corp itself is stdlib-only today - nothing to list yet.

@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/schemas/auditor_report.v1.json",
+  "title": "The weekly factory auditor's report (EVAL-06; rows 456, 584, 617; Zenkai Z2, Z5)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "run_id", "task_id", "claim_lock", "trigger", "window", "summary", "worse", "repeats",
+               "cost_per_card", "review_rounds", "flaky_tests", "stuck_cards", "proposals", "not_audited"],
+  "properties": {
+    "schema": {"const": "auditor_report.v1"},
+    "run_id": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+    "task_id": {"type": "string", "pattern": "^t_[0-9a-f]{8}$"},
+    "claim_lock": {"type": "string", "minLength": 1, "maxLength": 200},
+    "trigger": {"enum": ["weekly", "rounds"]},
+    "window": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number", "minimum": 0}},
+    "summary": {"type": "string", "minLength": 10, "maxLength": 800},
+    "worse": {"type": "array", "maxItems": 40, "items": {
+      "type": "object", "additionalProperties": false, "required": ["metric", "before", "after", "evidence"],
+      "properties": {"metric": {"type": "string", "minLength": 1, "maxLength": 80},
+                     "before": {"type": "number"},
+                     "after": {"type": "number"},
+                     "evidence": {"type": "string", "minLength": 3, "maxLength": 400}}}},
+    "repeats": {"type": "array", "maxItems": 40, "items": {
+      "type": "object", "additionalProperties": false, "required": ["incident", "repeat_of", "kind"],
+      "properties": {"incident": {"type": "string", "pattern": "^inc_[0-9a-f]{8}$"},
+                     "repeat_of": {"type": "string", "pattern": "^inc_[0-9a-f]{8}$"},
+                     "kind": {"type": "string", "minLength": 1, "maxLength": 40}}}},
+    "cost_per_card": {"type": "object", "additionalProperties": false,
+                      "required": ["tokens", "landed", "oracle_agree"],
+                      "properties": {"tokens": {"type": "integer", "minimum": 0},
+                                     "landed": {"type": "integer", "minimum": 0},
+                                     "oracle_agree": {"type": "boolean"}}},
+    "review_rounds": {"type": "object", "additionalProperties": false,
+                      "required": ["median", "max", "at_limit"],
+                      "properties": {"median": {"type": "number", "minimum": 0},
+                                     "max": {"type": "integer", "minimum": 0},
+                                     "at_limit": {"type": "array", "maxItems": 40, "items": {
+                                       "type": "string", "pattern": "^t_[0-9a-f]{8}$"}}}},
+    "flaky_tests": {"type": "array", "maxItems": 40, "items": {
+      "type": "object", "additionalProperties": false, "required": ["test", "count", "source"],
+      "properties": {"test": {"type": "string", "minLength": 1, "maxLength": 300},
+                     "count": {"type": "integer", "minimum": 0},
+                     "source": {"enum": ["landing", "nightly"]}}}},
+    "stuck_cards": {"type": "array", "maxItems": 40, "items": {
+      "type": "object", "additionalProperties": false, "required": ["task_id", "status", "idle_h"],
+      "properties": {"task_id": {"type": "string", "pattern": "^t_[0-9a-f]{8}$"},
+                     "status": {"type": "string", "minLength": 1, "maxLength": 40},
+                     "idle_h": {"type": "number", "minimum": 0}}}},
+    "proposals": {"type": "array", "maxItems": 3, "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["title", "problem", "evidence", "fix", "removes", "verify"],
+      "properties": {"title": {"type": "string", "minLength": 5, "maxLength": 120},
+                     "problem": {"type": "string", "minLength": 10, "maxLength": 1000},
+                     "evidence": {"type": "array", "minItems": 1, "maxItems": 10, "items": {
+                       "type": "string", "minLength": 1, "maxLength": 120}},
+                     "fix": {"type": "string", "minLength": 10, "maxLength": 1500},
+                     "removes": {"type": "string", "minLength": 3, "maxLength": 600},
+                     "verify": {"type": "string", "minLength": 3, "maxLength": 400}}}},
+    "not_audited": {"type": "array", "maxItems": 40, "items": {
+      "type": "object", "additionalProperties": false, "required": ["input", "why"],
+      "properties": {"input": {"type": "string", "minLength": 1, "maxLength": 120},
+                     "why": {"type": "string", "minLength": 3, "maxLength": 400}}}}
+  }
+}

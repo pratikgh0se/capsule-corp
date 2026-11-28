@@ -1,0 +1,3 @@
+{"id": "marked-board-refuses-a-write-loudly", "given": {"document": {"check": "board_fence", "board_marked": true, "action": "comment"}}, "expect": {"refused": "BoardFrozen", "error_names": ".capsule-owned", "legacy_argv_run": false}, "source": "row 599"}
+{"id": "unmarked-board-still-writes", "given": {"document": {"check": "board_fence", "board_marked": false, "action": "comment"}}, "expect": {"refused": null, "legacy_argv_run": true}, "source": "row 600"}
+{"id": "marker-under-legacy-kanban-home-refuses", "given": {"document": {"check": "board_fence", "board_marked": true, "legacy_kanban_home_set": true, "action": "comment"}}, "expect": {"refused": "BoardFrozen", "error_names": ".capsule-owned", "legacy_argv_run": false}, "source": "owner"}

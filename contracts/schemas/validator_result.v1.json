@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/schemas/validator_result.v1.json",
+  "title": "Validator result, code-blind and user-testing (rows 356, 363, 365, 416)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "run_id", "task_id", "claim_lock", "verdict", "assertions", "not_run"],
+  "properties": {
+    "schema": {"const": "validator_result.v1"},
+    "run_id": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+    "task_id": {"type": "string", "pattern": "^t_[0-9a-f]{8}$"},
+    "claim_lock": {"type": "string", "minLength": 1, "maxLength": 200},
+    "verdict": {"enum": ["pass", "fail"]},
+    "assertions": {"type": "array", "minItems": 1, "maxItems": 100, "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["cmd", "exit", "result"],
+      "properties": {
+        "cmd": {"type": "string", "minLength": 1, "maxLength": 1000},
+        "expected": {"type": "string", "minLength": 0, "maxLength": 500},
+        "exit": {"type": "integer", "minimum": 0, "maximum": 255},
+        "result": {"enum": ["pass", "fail", "not_run"]},
+        "excerpt": {"type": "string", "minLength": 0, "maxLength": 2000},
+        "gap": {"type": "string", "minLength": 0, "maxLength": 500}}}},
+    "not_run": {"type": "array", "items": {"type": "string"}}
+  }
+}

@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# capsule-compose-recreate <service> - force-recreate one observability service
+# through compose_recreate (maintenance/lib_compose.sh), under the compose
+# identity. Sets COMPOSE_FILE and runs under bash, so it works verbatim from an
+# interactive zsh. Prints nothing on success; on failure prints the first
+# stderr line and exits 1.
+set -u
+[ $# -eq 1 ] && [ -n "$1" ] || { echo "usage: capsule-compose-recreate <service>" >&2; exit 2; }
+REPO="$(cd -P "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
+export COMPOSE_FILE="$REPO/observability/docker-compose.yml"
+. "$REPO/maintenance/lib_compose.sh"
+compose_recreate "$1"

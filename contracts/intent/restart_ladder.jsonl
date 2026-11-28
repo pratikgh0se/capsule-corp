@@ -1,0 +1,3 @@
+{"id": "three-sonnet-fails-hand-off-to-restart", "given": {"document": {"check": "restart_ladder", "escalation": true, "failed_rounds": 3}}, "expect": {"route": "implementer_restart", "status": "ready", "restart_notes": 3, "prior_runs": 0}, "source": "owner"}
+{"id": "sixth-failed-round-goes-to-triage", "given": {"document": {"check": "restart_ladder", "escalation": true, "failed_rounds": 5, "failing_route": "implementer_restart"}}, "expect": {"status": "triage", "block_kind": "restart_failed", "next_runs": 0}, "source": "owner"}
+{"id": "switch-off-changes-nothing", "given": {"document": {"check": "restart_ladder", "escalation": false, "failed_rounds": 3}}, "expect": {"route": "implementer", "restart_notes": 0, "failure_limit": 3, "max_rounds": 4}, "source": "owner"}

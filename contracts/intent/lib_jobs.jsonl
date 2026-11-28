@@ -1,0 +1,3 @@
+{"id": "trailing-space-label-is-still-unloaded", "given": {"document": {"check": "lib_jobs", "line": "trailing-space-and-tab"}}, "expect": {"level": "dropped"}, "source": "row 526"}
+{"id": "crlf-label-is-still-unloaded", "given": {"document": {"check": "lib_jobs", "line": "crlf"}}, "expect": {"level": "dropped"}, "source": "row 526"}
+{"id": "indented-comment-names-no-label", "given": {"document": {"check": "lib_jobs", "line": "indented-comment"}}, "expect": {"level": "ignored"}, "source": "row 526"}

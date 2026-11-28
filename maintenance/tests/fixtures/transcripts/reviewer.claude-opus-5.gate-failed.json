@@ -1,0 +1,36 @@
+{
+  "v": 1,
+  "role": "reviewer",
+  "model": "claude-opus-5",
+  "path": "gate-failed",
+  "source": "fake-e2e",
+  "note": "the merge gate failed after an earlier PASS; reviewer reopens the round with kanban_request_changes rather than letting a stale PASS stand.",
+  "card": {
+    "id": "t_9q0r1s2t",
+    "title": "Review: fix the flaky CI job blocking merge",
+    "body": "<!-- sprint-meta risk=R2 spec=2026-09-10-roles-and-souls spec_sha256=deadbeef area=maintenance slug=t_9q0r1s2t -->"
+  },
+  "calls": [
+    {
+      "tool": "kanban_show",
+      "args": {
+        "task_id": "t_9q0r1s2t"
+      }
+    },
+    {
+      "tool": "kanban_comment",
+      "args": {
+        "text": "assumptions: PASS was given last round before the gate ran; CI is now red on the same commit"
+      }
+    },
+    {
+      "tool": "kanban_request_changes",
+      "args": {
+        "reason": "gate: human asked for changes: CI is failing on maintenance/tests/test_merge_gate.py; a PASS cannot stand once the gate reports red",
+        "metadata": {
+          "round": 2
+        }
+      }
+    }
+  ]
+}

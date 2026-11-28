@@ -1,0 +1,5 @@
+{"schema": "validator_result.v1", "run_id": "0123456789abcdef0123456789abcdef", "task_id": "t_0000aaaa",
+ "claim_lock": "host:0123456789abcdef0123456789abcdef", "verdict": "pass",
+ "assertions": [{"cmd": "python3 -m unittest capsule.tests.test_spool", "expected": "OK", "exit": 0,
+                 "result": "pass", "excerpt": "Ran 12 tests\n\nOK"}],
+ "not_run": []}

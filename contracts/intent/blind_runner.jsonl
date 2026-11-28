@@ -1,0 +1,4 @@
+{"id": "worktree-stays-clean", "given": {"document": {"check": "blind_runner", "fixture": "card", "worktree_mount": "ro"}}, "expect": {"git_status_porcelain": "", "worktree_mount_flag": "ro"}, "source": "row 601"}
+{"id": "count-mismatch-is-inconclusive", "given": {"document": {"check": "blind_runner", "results_jsonl_pass": 3, "summary_line_pass": 2}}, "expect": {"red": "inconclusive", "incident_opened": true}, "source": "row 601"}
+{"id": "missing-repo-holds-card", "given": {"document": {"check": "blind_runner", "blind_repo_path": "absent"}}, "expect": {"card_state": "hold", "blind": "unavailable", "validator_verdict": "none"}, "source": "row 601"}
+{"id": "stale-run-line-in-a-commit-never-runs", "given": {"document": {"check": "blind_runner", "committed_run_line": "hostile"}}, "expect": {"executed_run_line": "adapter_own", "hostile_line_runs": false}, "source": "row 601"}

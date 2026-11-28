@@ -1,0 +1,3 @@
+{"id": "small-python-diff-runs-only-its-tests", "given": {"document": {"changed": ["capsule/bar.py"]}}, "expect": {"selected": ["capsule.tests.test_importer"]}, "source": "owner"}
+{"id": "sql-change-runs-the-full-suite", "given": {"document": {"changed": ["maintenance/data.sql"]}}, "expect": {"selected": "FULL"}, "source": "owner"}
+{"id": "doc-a-test-mentions-runs-the-full-suite", "given": {"document": {"changed": ["docs/READ.md"]}}, "expect": {"selected": "FULL"}, "source": "owner"}

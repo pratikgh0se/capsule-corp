@@ -1,0 +1,11 @@
+import unittest
+
+from totals import total
+
+
+class TotalTests(unittest.TestCase):
+    def test_total_includes_tax(self):
+        self.assertEqual(total([5.0, 5.0]), 12.0)
+
+    def test_empty_order_is_zero(self):
+        self.assertEqual(total([]), 0.0)

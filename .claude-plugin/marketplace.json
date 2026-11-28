@@ -1,0 +1,12 @@
+{
+  "name": "capsule-corp",
+  "owner": { "name": "Capsule Corp" },
+  "description": "Claude Code plugins for the Capsule factory.",
+  "plugins": [
+    {
+      "name": "capsule-chat",
+      "source": "./claude/capsule-chat",
+      "description": "Live factory status line plus read-only status and needs-you commands."
+    }
+  ]
+}

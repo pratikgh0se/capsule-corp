@@ -1,0 +1,370 @@
+-- Fresh installs only: docker-compose runs this on an empty data dir, so it can
+-- never migrate a table that already holds rows - that is db_migrate.py's job.
+-- NOTE (review Minor 6): `v` and `event_id` sit here right after `id`, whereas
+-- migration 001 APPENDS them, so a fresh install and a migrated install differ
+-- in column ORDER. Nothing breaks - every read in events.py names its columns
+-- (COPY_COLS) - but `SELECT *` and `\d events` are not identical between the two.
+-- When adding a column, append it at the end here as well as in the migration,
+-- so the two converge from now on.
+CREATE TABLE IF NOT EXISTS events (
+  id        bigserial PRIMARY KEY,
+  v         smallint NOT NULL DEFAULT 1,
+  event_id  text,
+  ts        timestamptz NOT NULL,
+  kind      text NOT NULL,
+  source    text NOT NULL,
+  board     text,
+  task_id   text,
+  slug      text,
+  title     text,
+  text      text,
+  link      text,
+  severity  text NOT NULL DEFAULT 'info',
+  payload   jsonb NOT NULL DEFAULT '{}'::jsonb,
+  event_name text,
+  run_id    text,
+  trace_id  text,
+  span_id   text
+);
+CREATE INDEX IF NOT EXISTS events_ts ON events (ts);
+CREATE INDEX IF NOT EXISTS events_task ON events (task_id);
+CREATE INDEX IF NOT EXISTS events_kind_ts ON events (kind, ts);
+CREATE UNIQUE INDEX IF NOT EXISTS events_event_id ON events (event_id) WHERE event_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS events_trace ON events (trace_id) WHERE trace_id IS NOT NULL;
+
+-- The Lookout (003-lookout.sql, kept identical by maintenance/tests/test_lookout_migration.py)
+create table if not exists cap_cards (
+  board text not null, task_id text not null,
+  snap_ts timestamptz not null, pass_id text not null,
+  title text, status text not null,
+  product text not null, epic text, repo text,
+  phase text not null,
+  role_now text, model_now text, run_id_now text,
+  block_kind text, block_reason text,
+  waiting_on text, waiting_words text, waiting_since timestamptz,
+  failure_count int not null default 0, consecutive_failures int not null default 0,
+  risk_class text, tier text,
+  created_at timestamptz, started_at timestamptz, completed_at timestamptz,
+  commits int not null default 0, review_rounds int not null default 0,
+  primary key (board, task_id));
+
+create table if not exists cap_runs (
+  board text not null, run_id text not null,
+  snap_ts timestamptz not null, pass_id text not null,
+  task_id text not null, role text,
+  model text, provider text, account text, runner text,
+  status text, outcome text, error_class text, attempts int,
+  started_at timestamptz, ended_at timestamptz, last_heartbeat_at timestamptz,
+  tokens_in bigint, tokens_out bigint, tokens_cache_read bigint,
+  tokens_cache_write bigint,
+  era text not null check (era in ('capsule','hermes')),
+  primary key (board, run_id));
+create index if not exists cap_runs_task on cap_runs (board, task_id);
+
+create table if not exists cap_blocks (
+  board text not null, task_id text not null, opened_at timestamptz not null,
+  snap_ts timestamptz not null, pass_id text not null,
+  kind text not null, reason text, waiting_on text not null, opened_event_id text,
+  closed_at timestamptz,
+  closed_by text check (closed_by in ('unblocked','completed','reset','archived','promoted','screen_answered')),
+  primary key (board, task_id, opened_at));
+
+create table if not exists cap_epics (
+  board text not null, epic text not null,
+  snap_ts timestamptz not null, pass_id text not null,
+  product text not null, repo text, spec text, decision_rows text[],
+  cards_total int, cards_done int, cards_blocked int,
+  head_sha text, ahead_of_main int,
+  pr_number int, pr_url text,
+  publish_state text check (publish_state in ('none','pending','ok','refused')),
+  publish_reason text, publish_state_since timestamptz,
+  primary key (board, epic));
+
+create table if not exists cap_prs (
+  repo text not null, pr_number int not null,
+  snap_ts timestamptz not null, pass_id text not null,
+  board text not null, epic text not null, url text not null,
+  state text not null check (state in ('draft','open','merged','closed')),
+  checks text check (checks in ('pass','fail','pending','none')),
+  review_decision text, head_sha text, cards_in_pr int,
+  opened_at timestamptz, ready_at timestamptz, merged_at timestamptz,
+  merge_sha text, closed_at timestamptz, updated_at timestamptz,
+  primary key (repo, pr_number));
+
+create table if not exists cap_commits (
+  repo text not null, sha text not null,
+  snap_ts timestamptz not null, pass_id text not null,
+  board text not null, epic text, task_id text not null, run_id text,
+  committed_at timestamptz not null,
+  validator text, reviewer text, guide text,
+  review_rounds int, overrides text[],
+  pushed_at timestamptz, pr_number int, pr_comment_url text,
+  primary key (repo, sha));
+
+create table if not exists cap_incidents (
+  board text not null, id text not null,
+  snap_ts timestamptz not null, pass_id text not null,
+  task_id text, run_id text, kind text, status text, role text,
+  opened_at timestamptz, closed_at timestamptz,
+  root_cause text,
+  fix_card text, repeat_of text,
+  primary key (board, id));
+
+create table if not exists cap_tick (
+  board text primary key,
+  snap_ts timestamptz not null, pass_id text not null,
+  host text, pid int, harness_sha text,
+  last_pass_at timestamptz not null, pass_ms int, lookout_ms int,
+  counts jsonb,
+  running int, ready int, blocked int, paused_accounts text[],
+  spool_bytes_unshipped bigint,
+  last_ship_ok_at timestamptz);
+
+create table if not exists prices (
+  model text not null, valid_from date not null,
+  usd_in_per_mtok numeric not null, usd_out_per_mtok numeric not null,
+  usd_cache_read_per_mtok numeric not null, usd_cache_write_per_mtok numeric,
+  primary key (model, valid_from));
+
+create table if not exists cap_event_words (
+  kind text primary key, words text not null,
+  actor text not null check (actor in ('agent','tick','pratik','guide','korin','publisher')));
+
+insert into cap_event_words (kind, words, actor) values
+('created', 'card created', 'tick'), ('claimed', 'agent picked it up', 'agent'),
+('claim_rejected', 'pickup refused', 'tick'), ('claim_extended', 'lease extended', 'agent'),
+('reclaim_deferred', 'reclaim deferred', 'tick'), ('reclaimed', 'taken back from a stalled agent', 'tick'),
+('promoted', 'moved to ready', 'tick'), ('request_review', 'sent for review', 'agent'),
+('review_started', 'review started', 'agent'), ('review_retry', 'review retried', 'tick'),
+('completed', 'committed', 'tick'), ('blocked', 'blocked', 'tick'), ('unblocked', 'unblocked', 'pratik'),
+('decision_requested', 'needs your answer', 'agent'), ('first_screen_hold', 'screen to approve', 'tick'),
+('failure_reset', 'failures reset', 'pratik'), ('artefact', 'agent produced a file', 'agent'),
+('invalid_document', 'agent report was malformed', 'tick'), ('crashed', 'agent crashed', 'tick'),
+('timed_out', 'agent ran out of time', 'tick'), ('spawn_failed', 'agent could not start', 'tick'),
+('stale_run', 'run went stale', 'tick'), ('rate_limited', 'paused by rate limit', 'tick'),
+('tick_error', 'factory error on this card', 'tick'), ('contradiction', 'rules disagree', 'guide'),
+('contradiction_loop', 'rules keep disagreeing', 'guide'), ('ruling_started', 'guide started a ruling', 'guide'),
+('guide_ruling', 'guide ruled', 'guide'), ('ruling_failed', 'guide ruling failed', 'guide'),
+('aligned_uncited', 'aligned without a citation', 'guide'), ('checks_overridden', 'checks overridden', 'pratik'),
+('intervention', 'you stepped in', 'pratik'), ('accept_refused', 'acceptance refused', 'tick'),
+('screen_refused', 'screen refused', 'pratik'), ('override', 'override applied', 'pratik'),
+('override_refused', 'override refused', 'tick'), ('override_expired', 'override expired', 'tick'),
+('contract_amended', 'contract amended', 'pratik'), ('checkpoint', 'checkpoint saved', 'agent'),
+('checkpoint_restart', 'restarted from a checkpoint', 'tick'),
+('incident_opened', 'Korin opened an incident', 'korin'), ('incident_closed', 'Korin closed an incident', 'korin'),
+('fix_card_routed', 'fix card created', 'korin'), ('korin_started', 'Korin started', 'korin'),
+('korin_applied', 'Korin applied a fix', 'korin'), ('korin_failed', 'Korin''s fix failed', 'korin'),
+('korin_gave_up', 'Korin gave up', 'korin'),
+('parked', 'failed too often, parked', 'tick'), ('failed', 'run failed', 'tick'),
+('dependency_wait', 'waiting for another card', 'tick'),
+('block_loop_detected', 'block keeps coming back', 'tick'),
+('first_screen_ok', 'screen approved', 'pratik'), ('first_screen_fix', 'screen sent back', 'pratik'),
+('pushed', 'pushed to GitHub', 'publisher'), ('pr_opened', 'PR opened', 'publisher'),
+('pr_comment', 'card posted to the PR', 'publisher'), ('pr_review_posted', 'branch review posted', 'publisher'),
+('pr_ready', 'PR ready for your merge', 'publisher'), ('pr_checks', 'PR checks changed', 'publisher'),
+('pr_merged', 'PR merged', 'publisher'), ('pr_closed', 'PR closed', 'publisher'),
+('publish_refused', 'PR could not be published', 'publisher'),
+('publish_ok', 'PR publishing recovered', 'publisher'),
+('archived', 'archived', 'tick'), ('closed_stale', 'closed as stale (Hermes era)', 'tick')
+on conflict (kind) do update set words = excluded.words, actor = excluded.actor;
+
+create or replace view v_floor as
+select c.board as product, c.epic, c.repo, c.task_id, c.title, c.phase,
+       case c.phase
+         when 'implementing' then 'building'
+         when 'validating' then 'running the checks'
+         when 'reviewing' then 'in code review'
+         when 'guide_ruling' then 'guide is ruling'
+         when 'korin' then 'Korin is investigating'
+         when 'waiting' then coalesce(c.waiting_words, 'waiting')
+         else coalesce(c.waiting_words, 'queued') end as phase_words,
+       coalesce(r.role, c.role_now) as role, coalesce(r.model, c.model_now) as model, r.runner,
+       c.run_id_now as run_id,
+       extract(epoch from now() - coalesce(r.started_at, c.waiting_since, c.started_at, c.created_at))::bigint
+         as elapsed_s,
+       c.waiting_on, c.waiting_words
+from cap_cards c
+left join cap_runs r on r.board = c.board and r.run_id = c.run_id_now
+where c.phase not in ('done', 'archived');
+
+create or replace view v_waiting_on_pratik as
+select c.board as product, c.epic, c.task_id || ': ' || coalesce(c.title, '') as item,
+       c.waiting_words as why, c.block_reason as excerpt, c.waiting_since as since,
+       'python3 -m capsule human ' || c.board || ' ' || c.task_id || ' ' ||
+       case
+         when c.block_kind = 'first_screen_hold' then 'screen-ok "<note>"  or  screen-fix "<what to change>"'
+         when c.block_kind = 'contradiction_loop' then 'amend "<reason>" --body-file <file>  or  override "<reason>" --check <id> --ttl <t>'
+         when c.block_kind = 'parked' then 'reset "<note>"'
+         when c.block_kind = 'review_infra' then 'accept "<note>"  or  reset "<note>"'
+         when c.status = 'triage' then 'reset "<note>"  or  accept "<note>"'
+         when c.block_kind = 'capability' then 'unblock "<what was granted>"'
+         else 'unblock "<answer>"' end as how_to_answer,
+       '/d/lookout-trace?var-product=' || c.board || '&var-task_id=' || c.task_id as link
+from cap_cards c where c.waiting_on = 'pratik' and c.phase <> 'archived'
+union all
+select e.board, e.epic, 'epic ' || e.epic, 'PR could not be published: ' || coalesce(e.publish_reason, '?'),
+       null, e.publish_state_since,
+       case e.publish_reason
+         when 'gh_auth' then 'run: gh auth login   (the publisher retries within 5 min)'
+         when 'repo_unknown' then 'fix repo_url in $CAPSULE_HOME/config.json'
+         when 'secret_found' then 'remove the secret from the epic branch; the publisher retries within 5 min'
+         when 'diverged' then 'reconcile the GitHub branch with the epic clone by hand (never force-push)'
+         else 'read $CAPSULE_HOME/lookout/publish.log' end,
+       e.pr_url
+from cap_epics e where e.publish_state = 'refused'
+union all
+select p.board, p.epic, 'PR #' || p.pr_number || ' ' || p.epic, 'PR ready for your merge', null, p.ready_at,
+       'review and merge it on GitHub', p.url
+from cap_prs p where p.state = 'open' and p.ready_at is not null;
+
+create or replace view v_run_cost as
+select r.*,
+       (coalesce(r.tokens_in, 0) * p.usd_in_per_mtok + coalesce(r.tokens_out, 0) * p.usd_out_per_mtok
+        + coalesce(r.tokens_cache_read, 0) * p.usd_cache_read_per_mtok
+        + coalesce(r.tokens_cache_write, 0) * coalesce(p.usd_cache_write_per_mtok, 0)) / 1e6 as usd_est
+from cap_runs r
+left join lateral (select * from prices p where p.model = r.model and p.valid_from <= r.started_at::date
+                   order by p.valid_from desc limit 1) p on true;
+
+create or replace view v_card_story as
+select e.ts, e.board, e.task_id, e.source, coalesce(w.words, e.payload->>'event') as what,
+       coalesce(w.actor, 'tick') as actor, e.payload->>'run_id' as run_id, e.link
+from events e left join cap_event_words w on w.kind = e.payload->>'event'
+where e.kind = 'card' and e.source in ('capsule', 'lookout-publisher');
+
+create or replace view v_since as
+select coalesce(m.ts, now() - interval '24 hours') as since_ts,
+       case when m.ts is null then 'fallback_24h' else 'morning' end as source
+from (select max(ts) as ts from events
+      where kind = 'job' and payload->>'job' = 'morning' and payload->>'phase' = 'end'
+        and ts > now() - interval '36 hours') m;
+
+create or replace view v_factory as
+select board, extract(epoch from now() - last_pass_at)::bigint as age_s,
+       case when now() - last_pass_at > interval '5 minutes' then 'stopped'
+            when coalesce(array_length(paused_accounts, 1), 0) > 0 then 'paused (budget)'
+            when now() - last_pass_at < interval '90 seconds' then 'running'
+            else 'late' end as state_words
+from cap_tick;
+
+-- 004-park-labels.sql (t_853ff9d7): labels for the two park events 003 did not seed.
+insert into cap_event_words (kind, words, actor) values
+('parked_by_human', 'parked by you', 'pratik'),
+('failure_limit', 'failed too often, needs a reset', 'tick')
+on conflict (kind) do update set words = excluded.words, actor = excluded.actor;
+-- 005-deadman-indexes.sql (t_c671377a): partial indexes behind the dead-man alert queries.
+CREATE INDEX IF NOT EXISTS events_health_ts ON events (ts DESC)
+  WHERE kind = 'health' AND source <> 'capsule';
+CREATE INDEX IF NOT EXISTS events_backup_job_ts ON events (ts DESC)
+  WHERE kind = 'job' AND payload->>'job' = 'backup';
+
+-- 007-live-snapshot.sql (W347): live machine state for the System Now dashboard.
+create table if not exists live_containers (
+  name text primary key, kind text not null check (kind in ('service', 'worker')),
+  image text, status text, up_for text, created_at timestamptz,
+  board text, run_id text, snap_ts timestamptz not null);
+create table if not exists live_health (
+  check_name text primary key, label text not null, ok boolean, value double precision,
+  detail text, snap_ts timestamptz not null);
+create table if not exists live_seats (
+  seat text primary key, used int not null, cap int, holder text, snap_ts timestamptz not null);
+
+-- 008-waiting-view.sql (W361): v_waiting_on_pratik lists only live decisions (see the migration).
+create or replace view v_waiting_on_pratik as
+select c.board as product, c.epic, c.task_id || ': ' || coalesce(c.title, '') as item,
+       c.waiting_words as why, c.block_reason as excerpt, c.waiting_since as since,
+       'python3 -m capsule human ' || c.board || ' ' || c.task_id || ' ' ||
+       case
+         when c.block_kind = 'first_screen_hold' then 'screen-ok "<note>"  or  screen-fix "<what to change>"'
+         when c.block_kind = 'contradiction_loop' then 'amend "<reason>" --body-file <file>  or  override "<reason>" --check <id> --ttl <t>'
+         when c.block_kind = 'parked' then 'reset "<note>"'
+         when c.block_kind = 'review_infra' then 'accept "<note>"  or  reset "<note>"'
+         when c.status = 'triage' then 'reset "<note>"  or  accept "<note>"'
+         when c.block_kind = 'capability' then 'unblock "<what was granted>"'
+         else 'unblock "<answer>"' end as how_to_answer,
+       '/d/lookout-trace?var-product=' || c.board || '&var-task_id=' || c.task_id as link
+from cap_cards c
+where c.waiting_on = 'pratik' and c.phase <> 'archived'
+  and c.status not in ('archived', 'parked')
+  and (c.status <> 'done' or c.block_kind = 'first_screen_hold')
+  and coalesce(c.block_kind, '') <> 'parked'
+  and (c.status = 'triage' or c.block_kind in ('needs_input', 'decision_requested', 'capability',
+       'first_screen_hold', 'contradiction_loop', 'review_infra'))
+union all
+select e.board, e.epic, 'epic ' || e.epic, 'PR could not be published: ' || coalesce(e.publish_reason, '?'),
+       null, e.publish_state_since,
+       case e.publish_reason
+         when 'gh_auth' then 'run: gh auth login   (the publisher retries within 5 min)'
+         when 'repo_unknown' then 'fix repo_url in $CAPSULE_HOME/config.json'
+         when 'secret_found' then 'remove the secret from the epic branch; the publisher retries within 5 min'
+         when 'diverged' then 'reconcile the GitHub branch with the epic clone by hand (never force-push)'
+         else 'read $CAPSULE_HOME/lookout/publish.log' end,
+       e.pr_url
+from cap_epics e where e.publish_state = 'refused'
+union all
+select p.board, p.epic, 'PR #' || p.pr_number || ' ' || p.epic, 'PR ready for your merge', null, p.ready_at,
+       'review and merge it on GitHub', p.url
+from cap_prs p where p.state = 'open' and p.ready_at is not null;
+
+-- 009-samples-rollup.sql (D255): hourly rollup of samples for the weekly dashboard (see the migration).
+create table if not exists samples_hourly (
+  bucket    timestamptz      not null,
+  service   text             not null,
+  name      text             not null,
+  avg_value double precision not null,
+  min_value double precision not null,
+  max_value double precision not null,
+  n         bigint           not null,
+  total_avg double precision not null,
+  ticks     bigint           not null,
+  primary key (service, name, bucket)
+);
+
+-- 010 waiting on owner (D251, D269, D270): the view that lists what waits on the owner gets a neutral
+-- name and reads waiting_on = 'owner' (the shipper now writes that value). Rows stored with the old value
+-- refresh on the next full resync (hourly, or a collector restart); no data migration (D270). The retired app's board filter goes (D190).
+-- The old view name is dropped; the Grafana dashboards read the new one.
+create or replace view v_waiting_on_owner as
+select c.board as product, c.epic, c.task_id || ': ' || coalesce(c.title, '') as item,
+       c.waiting_words as why, c.block_reason as excerpt, c.waiting_since as since,
+       'python3 -m capsule human ' || c.board || ' ' || c.task_id || ' ' ||
+       case
+         when c.block_kind = 'first_screen_hold' then 'screen-ok "<note>"  or  screen-fix "<what to change>"'
+         when c.block_kind = 'contradiction_loop' then 'amend "<reason>" --body-file <file>  or  override "<reason>" --check <id> --ttl <t>'
+         when c.block_kind = 'parked' then 'reset "<note>"'
+         when c.block_kind = 'review_infra' then 'accept "<note>"  or  reset "<note>"'
+         when c.status = 'triage' then 'reset "<note>"  or  accept "<note>"'
+         when c.block_kind = 'capability' then 'unblock "<what was granted>"'
+         else 'unblock "<answer>"' end as how_to_answer,
+       '/d/lookout-trace?var-product=' || c.board || '&var-task_id=' || c.task_id as link
+from cap_cards c
+where c.waiting_on = 'owner' and c.phase <> 'archived'
+  and c.status not in ('archived', 'parked')
+  and (c.status <> 'done' or c.block_kind = 'first_screen_hold')
+  and coalesce(c.block_kind, '') <> 'parked'
+  and (c.status = 'triage' or c.block_kind in ('needs_input', 'decision_requested', 'capability',
+       'first_screen_hold', 'contradiction_loop', 'review_infra'))
+union all
+select e.board, e.epic, 'epic ' || e.epic, 'PR could not be published: ' || coalesce(e.publish_reason, '?'),
+       null, e.publish_state_since,
+       case e.publish_reason
+         when 'gh_auth' then 'run: gh auth login   (the publisher retries within 5 min)'
+         when 'repo_unknown' then 'fix repo_url in $CAPSULE_HOME/config.json'
+         when 'secret_found' then 'remove the secret from the epic branch; the publisher retries within 5 min'
+         when 'diverged' then 'reconcile the GitHub branch with the epic clone by hand (never force-push)'
+         else 'read $CAPSULE_HOME/lookout/publish.log' end,
+       e.pr_url
+from cap_epics e where e.publish_state = 'refused'
+union all
+select p.board, p.epic, 'PR #' || p.pr_number || ' ' || p.epic, 'PR ready for your merge', null, p.ready_at,
+       'review and merge it on GitHub', p.url
+from cap_prs p where p.state = 'open' and p.ready_at is not null;
+
+drop view if exists v_waiting_on_pratik;
+
+-- 011-actor-owner.sql (b114): the person's actor label is 'owner'; the legacy value stays accepted (see the migration).
+set local lock_timeout = '5s';
+alter table cap_event_words drop constraint if exists cap_event_words_actor_check;
+alter table cap_event_words add constraint cap_event_words_actor_check
+  check (actor in ('agent','tick','pratik','owner','guide','korin','publisher'));
+update cap_event_words set actor = 'owner' where actor = 'pratik';

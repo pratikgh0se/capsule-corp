@@ -1,0 +1,3 @@
+{"id": "a-row-with-an-unknown-kind-is-refused", "given": {"document": {"row": {"id": "a", "kind": "ugly", "given": "g", "expect": "e", "why": "w", "source": "row 604"}}}, "expect": {"refused": true}, "source": "row 604"}
+{"id": "a-row-with-an-unverifiable-source-is-refused", "given": {"document": {"row": {"id": "a", "kind": "good", "given": "g", "expect": "e", "why": "w", "source": "someone said so"}}}, "expect": {"refused": true}, "source": "row 604"}
+{"id": "a-complete-sourced-good-row-is-accepted", "given": {"document": {"row": {"id": "a", "kind": "good", "given": "g", "expect": "e", "why": "w", "source": "row 604"}}}, "expect": {"refused": false}, "source": "row 604"}

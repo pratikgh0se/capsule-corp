@@ -26,6 +26,9 @@ Writes `lookout/spool.jsonl`, its offset and rejected files; ops-pg; Loki. Never
 - Alert rules and contact points are provisioned from `observability/grafana/provisioning/alerting/`. The status screen flags the feed as blind when bytes wait unshipped for over 15 minutes.
 - Images are pinned (tags or digests) in `observability/docker-compose.yml`.
 
+## Alert rules
+Every rule in `observability/grafana/provisioning/alerting/rules.yaml` links here. Each line gives what fires it and what to check. Page rules: job failed (a vault job exited non-zero in 15 min: read ops-events), bridge sync stopped (no sync tick for 30 min: check the launchd job), Capsule tick stopped (no tick heartbeat for 5 min: check the `capsule tick` process), Loki ingest stopped (no log lines for 30 min: read the fluent-bit and loki container logs, see [observability-compose-stack](observability-compose-stack.md)), backup missing (no good backup for 26 h: run `maintenance/run.sh backup`, see [maintenance-jobs](maintenance-jobs.md)). Notice rules: backup partial (a dump is missing: look for the `*.sql.MISSING` marker in the newest tarball), vault eval failed (read the newest `result-<date>.json`), disk over 85 percent (run the cleanup job), 5-hour window at 85 percent and weekly window at 80 percent (usage meter; hold heavy work, see [dispatch-and-caps](dispatch-and-caps.md)), daily ceiling reached (12 worker runs used; dispatch resumes at midnight), card stuck over an hour (a card waits for the owner), unowned-work count missing (the detector shipped no count for 25 min while the tick is alive; a second firing in 24 h opens a Korin incident), Lookout quarantined spool rows (read `spool.rejected`).
+
 ## Failure modes and what happens
 Ops-pg or the shipper down: the spool grows, status says the feed is not shipping, alerts are blind until it recovers. A rejected row is quarantined (this page).
 

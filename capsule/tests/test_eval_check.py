@@ -125,7 +125,7 @@ class Disagreement(Case):
         self.assertIn("eval:owner_acts", found[0]["root_key"])
         md = report.render_md(touches.evaluate(b.home, b.board, vault=vault))
         self.assertTrue(md.splitlines()[0].startswith(f"EVAL INCIDENT {found[0]['id']}: "))
-        self.assertIn("RUNBOOK \"Korin (incidents)\"", md.splitlines()[0])
+        self.assertIn("docs/architecture/components/evals-and-report.md", md.splitlines()[0])
         self.assertTrue(md.splitlines()[1].startswith("# Interventions report"))
         # idempotence: the same window again writes nothing and opens nothing
         self.assertEqual(self.run_check(b, vault, ledger, conn), [])

@@ -264,8 +264,8 @@ class Tick(TickRuns, TickReview, TickRulings):
 
     def _heartbeat(self, conn, cfg, start_wall):
         """One `tick_health` event per pass: the only signal to Grafana that THIS tick is alive
-        (`capsule-tick-deadman`, docs/RUNBOOK.md "Alerting"), shipped via `events.log()` then
-        `events.ship()`. Never raises: a failed read, write or ship is a stderr line at most."""
+        (`capsule-tick-deadman`, docs/architecture/components/observability.md), shipped via
+        `events.log()`, `events.ship()`. Never raises: a failed step is a stderr line at most."""
         try:
             row = conn.execute("SELECT SUM(status='running'), SUM(status='blocked') FROM tasks").fetchone()
             running, blocked = row[0] or 0, row[1] or 0

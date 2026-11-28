@@ -31,7 +31,7 @@ Spec: docs/superpowers/specs/2026-09-09-retention-egress-design.md section
 
 | Door | Code path | Audit row | May carry | May never carry | Enforced by |
 |---|---|---|---|---|---|
-| 1. Git push (repos + vault) | `maintenance/vault_git.py` `push()` (`maintenance/merge_gate.py` keeps only read-side git/gh calls for its check helpers since D238); the fork-sync section of `maintenance/run.sh`; deploy.sh/`backup.sh`/`restore.sh` (bundle/deploy git operations) | `events.log("job", "vault_git", ...)` (vault push failures/successes); the lander and keeper logs | Repo source, docs, specs/plans, decision notes, kanban-derived markdown | Secrets, `.env` contents, session transcripts, anything under `state/` | `test_egress.py` (git/gh file-scope check against `GIT_GH_ALLOWED_FILES`); `PUSH_ALLOW`/`PUSH_DENY` path allowlist in `vault_git.py`; `.gitignore` + gitleaks in CI |
+| 1. Git push (repos + vault) | `maintenance/vault_git.py` `push()` (`maintenance/merge_gate.py` keeps only read-side git/gh calls for its check helpers since D238); the fork-sync section of `maintenance/run.sh`; deploy.sh/`backup.sh`/`restore.sh` (bundle/deploy git operations) | `events.log("job", "vault_git", ...)` (vault push failures/successes); the lander and keeper logs | Repo source, docs, specs/plans, decision notes, kanban-derived markdown | Secrets, `.env` contents, session transcripts, anything under `state/` | `test_egress.py` (git/gh file-scope check against `GIT_GH_ALLOWED_FILES`); `PUSH_DENY` path denylist in `vault_git.py`, plus the allowlist `vault.push_allow` from host.json; `.gitignore` + gitleaks in CI |
 | 2. Slack | the Capsule outbox sender (`capsule/slack.py`, `python3 -m capsule outbox-send`); the legacy gateway send command invoked from `run.sh`/`report.sh`/`heal.sh`/`board_bridge` through the gateway profile | `events.log(...)` rows written by the callers before/after send; the gateway's own send log | Status lines, digests, alerts, decision/approval prompts | Secrets, `.env` contents, session transcripts, anything under `state/` | `test_egress.py` (`api.telegram.org` is not on `ALLOWED_HOSTS`; a planted one fails) and `capsule/tests/test_telegram_retired.py`; `AGENT_OPS_NO_SEND=1` short-circuits sends in tests |
 | 3. Encrypted off-machine backup | `maintenance/backup_key.sh`'s `backup_enc()` encrypts the tarball on the laptop, behind `OPS_BACKUP_ENCRYPT`, before anything could carry it off-machine; the off-machine copy itself is the owner's manual weekly whole-laptop backup to an external hard disk | the `backup` job's own `kind=job` event (the encryption step, on-machine); the off-machine copy is manual and outside any code path, so it has no event of its own | only ciphertext leaves - the AES-256-encrypted `backup.sh` tarball, nothing else | Secrets, `.env` contents, session transcripts, anything under `state/` (same exclusions `backup.sh` already applies today); the plaintext tarball itself, which is retained 0 days | there is nothing to enforce and no host to allowlist today - a manual, offline, network-touching-nothing copy is not a code path. Trigger that turns this into a real door needing a code path, an audit row, a host on `ALLOWED_HOSTS` and its own contract test: blob storage available, ~2026-11, with the planned cloud deployment (row 137, M211/M212) |
 | 4. Healthchecks.io dead-man ping | `maintenance/run.sh` (`hc_ping`, called from `write_stamp`) | the `kind=job` event the same function has just written | the job name and its exit code, in a URL path and a one-line body | Log text, file paths, card or spec content, secrets, `.env` contents, anything under `state/` | `test_egress.py` (`hc-ping.com` on `ALLOWED_HOSTS`, and `test_hc_ping_lives_in_exactly_one_file` pins the single caller) |
@@ -78,7 +78,7 @@ invocations, and checks each hit against:
 - **The host allowlist** (`ALLOWED_HOSTS`): `127.0.0.1`, `localhost`,
   `host.docker.internal`,
   `github.com`, `api.github.com`, `raw.githubusercontent.com`,
-  `hc-ping.com` (restricted to `run.sh`). Any other literal host fails the
+  `hc-ping.com` (restricted to `run.sh`), and the local UI names `cc.grafana.localhost` and `cc.secrets.localhost`. Any other literal host fails the
   test with the file:line that carries it.
 
   Every other watchdog in Capsule Corp - Grafana's rules, `heal.sh`'s own
@@ -98,7 +98,7 @@ invocations, and checks each hit against:
   variable would be invisible to the same scan.
 - **The git/gh door-file allowlist** (`GIT_GH_ALLOWED_FILES`):
   `merge_gate.py`, `vault_git.py`, `run.sh`, deploy.sh, `backup.sh`,
-  `restore.sh`, plus bin/capsule-corp.zsh and bootstrap.sh. A
+  `restore.sh`, plus `bin/new-repo.sh`, bin/capsule-corp.zsh and bootstrap.sh. A
   `git push`/`fetch`/`pull` or `gh` call anywhere else fails.
   bin/capsule-corp.zsh is a member of that set, not a separate exemption, on
   the controller's ruling that it is a set of interactive shell aliases
@@ -205,21 +205,16 @@ this section is what backs it.
 
 **What is proved, today, by static config plus a live sample:**
 
-- Seven of the eight code-role sandbox profiles carry `docker_network: none`
-  in the earlier prototype's profile configs (removed in D198/D202; historical) - `dev`, `dev-backend`,
-  `dev-frontend`, `qa`, `infra`, `lead`, `reviewer`
-  (`maintenance/tests/test_contracts.py:635`,
-  `Sandbox.test_sandbox_roles_have_no_docker_network`, spec
-  2026-09-09-retention-egress-design.md section 5, decision row 108). Docker
-  itself enforces `network: none` - no interface but loopback exists inside
-  the container, so there is nothing for an escaped process to dial out on.
-- `researcher` is the one role that is `docker_network: bridge`
-  (the removed researcher profile of the earlier prototype) - it is the only sandbox
-  profile permitted a network interface at all, by design (research needs
-  to fetch pages).
+- Today the strong-tier worker container runs with `--network=none`
+  (`capsule/runners/docker.py`), and Docker enforces it: no interface but
+  loopback exists inside the container, so there is nothing for an escaped
+  process to dial out on. `capsule/tests/test_runners.py` (`Args.test_legacy_security_args_and_network_none`) pins the flag in `docker.run_args`. The
+  earlier prototype's sandbox profiles (`docker_network: none` for seven roles,
+  `bridge` for `researcher`) were removed in D198/D202 and have no test today.
+  The runtime check is the sample below.
 - A live sample: `capsule.sandbox.containers` (how many running containers
   are the worker image, `maintenance/obs_probe.py`'s `collect_sandbox`,
-  matched by `board_bridge.BRIDGE_IMAGE`'s repository since worker
+  matched by the runner's `capsule-run-id` label, whatever image it runs, since worker
   containers are ephemeral and carry generated names) and
   `capsule.sandbox.network.attached` {container} (1/0 from `docker
   inspect`'s `HostConfig.NetworkMode`, per running container) should read

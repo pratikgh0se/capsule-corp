@@ -2,7 +2,6 @@
 
 The policy used to live only as config values. This pins both example configs and
 `maintenance/run.sh` by model FAMILY (substring), so version bumps do not break it.
-The RUNBOOK "Model routing by role" table documents the same shape.
 """
 import copy
 import re

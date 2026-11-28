@@ -9,8 +9,9 @@ conditional on an owner decision, and deferred until a consumer asks.
 - The SBOM one-liner: `syft` host-side, or
   `gh api /repos/{owner}/{repo}/dependency-graph/sbom` when `syft` is not on
   PATH - SPDX, works on private repos, zero install.
-- CHANGELOG-as-release-notes - already enforced per card, and every line is
-  traceable to `Ledger/<repo>/<task_id>.jsonl`.
+- CHANGELOG-as-release-notes - checked at release time only
+  (`check_changelog` in `maintenance/release_gate.py`: the tag's section must be
+  promoted). A per-card changelog check and a line-to-ledger trace are not built.
 - `SHA256SUMS` beside every artefact: `.github/workflows/release.yml` (M232,
   D222) builds the public portable edition tarball on a `v*` tag or by hand,
   writes `SHA256SUMS`, and uploads both as workflow artifacts. It creates no

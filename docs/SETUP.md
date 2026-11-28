@@ -16,7 +16,7 @@ Every change is reversible: `./install.sh --dry-run` lists what it would write, 
 ## Limits for first testers
 
 - **Cards cannot install pip or npm packages yet.** The implementer container has no network, and the dependency folder it mounts read-only (`~/.local/share/capsule-corp/deps`) is empty after install: nothing in this release fills it. A repo you point a board at should use only the standard library for now, or a card that needs a package will fail.
-- Landing is a dry run until you set `lander.mode` to `land` (section 8).
+- Nothing lands until you set `lander.mode`: unset means the lander is off, `dry-run` checks and pushes nothing, `land` pushes (section 8).
 
 **Verified so far.** In CI: the install dry run on a macOS runner (section 3) and both unit test suites (section 12). On the author's machines: the same, plus `capsule doctor`.
 **Not verified yet.** On a fresh macOS account: the full `./install.sh --yes`, the first OrbStack start, the worker image build (section 7), `capsule board new`, and a first card landing. See [KNOWN-ISSUES.md](KNOWN-ISSUES.md).
@@ -129,6 +129,7 @@ If your `CAPSULE_HOME` is not the default `~/.local/share/capsule`, run `export 
 - Verify: `~/.local/bin/capsule doctor` prints `ok worker image present (recorded in ...)`; after step 8, `~/.local/bin/capsule check --board <board>` prints `ok worker_image <digest>`. Before the build, `check` prints `FAIL worker_image no worker image recorded: build it with docker/build-base.sh base && docker/build-base.sh python (needs 40 GB free and takes hours)`, and `doctor` prints `ok worker image not built yet, buildable here: ...` and asks for 40 GB free (25 GB once the image is there).
 - The web stack image also carries the python stack's tools (`ruff`, `pytest`, `hypothesis`, `mutmut`, `coverage`, `diff-cover`, `perl`, `ui_guard`), so a Python app with browser tests needs only `stacks = ["web"]`.
 - Browser tests in the web stack image: the image has no Playwright-downloaded browser, only Debian's chromium and chromium-headless-shell, but `PLAYWRIGHT_BROWSERS_PATH=/opt/ms-playwright` holds the folders stock Playwright looks for as symlinks to them (headless launches use the headless shell, as stock Playwright does; `headless=False` and `channel='chromium'` use the full chromium), so a plain `chromium.launch()` (node or python, no `executablePath`) works offline with no project change. Passing `executablePath: process.env.CHROMIUM_PATH` and `args: ['--no-sandbox']` still works (the image sets `CHROMIUM_PATH`; `ui-check` does this).
+- `ui-check` on the host: `bin/ui-check` wraps the one `ui-check` (`docker/base/ui-check`) with a host Playwright venv. It runs the python in `$CAPSULE_PLAYWRIGHT_PYTHON`, default `~/.local/share/capsule/playwright/bin/python`, and exits 5 if that file is missing. To make it, create a venv at that path, run `pip install playwright` in it, then `playwright install chromium`; or point `CAPSULE_PLAYWRIGHT_PYTHON` at any python that has Playwright and a browser.
 - Maintainers only: `IMAGES_LOCK=docker/IMAGES.lock docker/build-base.sh ...` writes the tracked lock instead of the record.
 
 ## 8. Create a board and start its tick
@@ -151,7 +152,7 @@ The harness keeps one board per directory under `$CAPSULE_HOME/boards/<board>/` 
 
 The tick job writes its log to `$CAPSULE_HOME/logs/tick-<board>.log` and its event trail to `~/.local/state/capsule-corp/maint/events.jsonl` (the default the tick and `capsule status` share).
 
-Landing is a dry run by default; it pushes only when the board config sets `lander.mode` to `land`.
+A new board has no `lander.mode`, so the lander is off. `dry-run` runs the checks and pushes nothing; the lander pushes only when the board config sets `lander.mode` to `land`.
 
 When you set `lander.mode` to `land`, also set `lander.deploy_check` to your own check. The public edition has no deploy.sh script; if you have no deploy step, use `"deploy_check": "true"`. Without the key, the first landing is pushed and the lander then holds and asks you to set it.
 

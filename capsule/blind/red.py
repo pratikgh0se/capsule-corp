@@ -1,7 +1,7 @@
 """Red check and landing for blind tests (blind spec 3.4; R31). Blind tests only count if they stay
 in their folder and fail on the code from before the work; those that do land on the blind repo's
-`main`, which only this host code moves. The full description is docs/RUNBOOK.md "Red check and
-landing (R31)".
+`main`, which only this host code moves. The full description is
+docs/architecture/components/blind-path.md (red check and landing).
 
 When a `blind-tester` run has ended with a valid report, `step` (called once a pass by
 `dispatch.step`; `redesign.blind_tests` `off` changes nothing) stops the tester's container, then

@@ -107,8 +107,7 @@ def changelog_promoted(text, tag):
         if in_tag:
             tag_lines.append(line)
     if not seen_tag:
-        return False, (f"changelog: no ## {tag} section - promote ## Unreleased under it "
-                       f"(docs/RUNBOOK.md ## Releases, step 2)")
+        return False, (f"changelog: no ## {tag} section - promote ## Unreleased under it")
     if not any(TASK_LINE_RE.match(l) for l in tag_lines):
         return False, (f"changelog: ## {tag} has no `- ... (t_xxxxxxxx)` line - every release "
                        f"note line must name its card")

@@ -1,7 +1,5 @@
-# mutation-check: targets-predate-range ff625e94 -- fixture rename only, no behaviour pinned ::
-#   CreateBoard.test_create_board_makes_the_board_status_can_open
-"""M253: in Capsule 2.0 a board is made by `db.create_board(paths.board_db(...))` (the RUNBOOK
-note's claim); the file it makes is one status can open."""
+"""M253: in Capsule 2.0 a board is made by `db.create_board(paths.board_db(...))` (see
+docs/architecture/components/board-store.md); the file it makes is one status can open."""
 import tempfile
 import unittest
 from pathlib import Path

@@ -8,8 +8,8 @@ Status: audited against `main` @ `f1f54a228` plus docs commits, 2026-11-27. Low-
 Capsule is a small, single-machine software factory run by one maintainer. A human or the
 chief-of-staff (CoS) agent files a **card**. One **tick** process per board, the only writer of
 that board's SQLite file, starts model **runs** for ready cards. The tick itself never calls a
-model. The implementer's commands run in a no-network container; reviewers judge on the host; the **lander**
-re-checks the change in a throwaway clone and pushes it to `origin/main`. Every failure becomes an
+model. On the default strong tier the implementer's commands run in a no-network container; reviewers judge on the host; the **lander**
+re-checks the change in a throwaway clone and, in `land` mode, pushes it to `origin/main` (a new board has no `lander.mode`, so the lander is off; `dry-run` runs the checks and pushes nothing). Every failure becomes an
 **incident** that must end in a fix and a test. Reliability rules (Zenkai) bind every agent.
 
 ## Purpose
@@ -61,7 +61,7 @@ flowchart LR
    (`REVIEW_ROLES`, plus `security` when `redesign.security_review` is on and a blind tester when
    `redesign.blind_tests` is on, see [blind-path](components/blind-path.md)), gates the verdicts through the intent examples and in-tick checks, and decides
    pass, fix round, block or triage. See [gate-review-checks](components/gate-review-checks.md).
-5. **Land.** `capsule/landing.py` (behind `lander.mode`, default `dry-run`) calls `capsule/lander.py`:
+5. **Land.** `capsule/landing.py` (behind `lander.mode`: unset means off, `dry-run` checks only, `land` pushes) calls `capsule/lander.py`:
    fetch, sync, protected paths, gates, suites in a sandbox container, the blind re-run (gate mode),
    deploy check; in `land` mode it pushes exactly the commit it checked (a product board lands on a
    day branch, see [product-board-landing](components/product-board-landing.md)). See [lander-and-keeper](components/lander-and-keeper.md).

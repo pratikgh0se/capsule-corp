@@ -82,7 +82,7 @@ def check(policy_dir, *, today=None, env=None):
                                     f"({-left} days ago)")
                 elif left <= WARN_DAYS:
                     lines.append(f"security.txt: expires in {left} days ({exp.isoformat()}) - "
-                                 f"see the refresh checklist item in docs/RUNBOOK.md")
+                                 f"renew its Expires line")
                 else:
                     lines.append(f"security.txt: Expires {exp.isoformat()} ({left} days left)")
 

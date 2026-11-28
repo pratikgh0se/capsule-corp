@@ -89,10 +89,6 @@ def fingerprint(kind, key, *, role=None):
 main_head = incident_blind_run.main_head
 
 
-def _day_start(ts):
-    return int(ts) - int(ts) % DAY
-
-
 # -- the record -----------------------------------------------------------------------------
 
 def get(conn, incident_id):
@@ -129,19 +125,19 @@ def open_incident(conn, *, board, kind, key, evidence=(), task_id=None, run_id=N
     key, evidence = incident_inputs.blind_safe(role, key, evidence)     # D161: no tester text
     fp = fingerprint(kind, key, role=role)
     with txn(conn):
-        same_day = conn.execute(     # per-event: empty day window, only fix_pending non-watch folds
+        live = conn.execute(     # rolling 24 h; per-event: empty window, only fix_pending folds
             "SELECT id, status, fix_card FROM incidents WHERE fingerprint=?"
-            " AND COALESCE(closure,'') != 'watch' AND (status='fix_pending' OR (opened_at>=?"
-            " AND opened_at<? AND status NOT IN ('closed','superseded')))"
+            " AND COALESCE(closure,'') != 'watch' AND (status='fix_pending' OR (opened_at>?"
+            " AND status NOT IN ('closed','superseded')))"
             " ORDER BY status='fix_pending' DESC, opened_at LIMIT 1",
-            (fp, _day_start(now), _day_start(now) + (0 if kind in PER_EVENT else DAY))).fetchone()
-        if same_day is not None:     # fix_pending any day, per-event too: attach, page
-            attach(conn, same_day["id"], list(evidence))
-            if same_day["status"] != "fix_pending":
-                return same_day["id"], "deduped"
-            _opened(conn, same_day["id"], kind, "recurred", task_id, run_id, now)
-            incident_recurrence.recurred(conn, fp, same_day, task_id, now, key, normalize(key))
-            return same_day["id"], "recurred"
+            (fp, float("inf") if kind in PER_EVENT else now - DAY)).fetchone()
+        if live is not None:     # fix_pending any day, per-event too: attach, page
+            attach(conn, live["id"], list(evidence))
+            if live["status"] != "fix_pending":
+                return live["id"], "deduped"
+            _opened(conn, live["id"], kind, "recurred", task_id, run_id, now)
+            incident_recurrence.recurred(conn, fp, live, task_id, now, key, normalize(key))
+            return live["id"], "recurred"
         original = conn.execute(
             "SELECT id FROM incidents WHERE fingerprint=? AND status='closed' AND closed_at>=?"
             " ORDER BY closed_at DESC LIMIT 1", (fp, now - REPEAT_WINDOW)).fetchone()
@@ -285,7 +281,7 @@ def _classify(row, payload, conn=None):
         return "human_intervention", None, f"{payload.get('kind')}: {row['task_id']}"
     if kind == "override":
         return "override", None, f"{payload.get('check')}: {row['task_id']}"
-    if kind == "runaway":    # one per card and trigger; a same-day second trip dedupes
+    if kind == "runaway":    # one per card and trigger; a second trip within 24 h dedupes
         return "runaway", None, f"{payload.get('trigger')}: {row['task_id']}"
     if kind == "tick_error":    # a crash keyed by the message, or the blind-mount incident (R33)
         return incident_blind.classify(row, payload)

@@ -476,9 +476,9 @@ def _normalize_origin(url):
 
 def repo_url_sha256(repo_url):
     """The sha256 hex digest of `repo_url`, normalised: `job.json` carries
-    only this, never the URL itself. A private repo_url can carry embedded credentials (RUNBOOK
-    "A private https:// remote needs..."); `job.json` is evidence a `worktree_mismatch` or crash
-    incident hands to Korin (`incidents.from_events` -> `--add-dir`), so it must not carry the
+    only this, never the URL itself. A private https repo_url may carry a token in the URL;
+    `job.json` is evidence a `worktree_mismatch` or crash incident hands to Korin
+    (`incidents.from_events` -> `--add-dir`), so it must not carry the
     token even though the token already sits, unavoidably, in the clone's own git config.
     Normalising first means a relative `repo_url` in config.json still hashes to what
     `remote.origin.url` reads back as (`clone()` resolved it to absolute at clone time), and a

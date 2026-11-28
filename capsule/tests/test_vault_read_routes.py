@@ -1,7 +1,7 @@
 """M071 (row 128): the optional route key `vault_read` (none | decisions | notes), the retrieval
 contract as config rows beside turn_budget. Nothing reads it at dispatch yet. Oracles: the loader's
 parsed value (config.load) and the raw example JSON on disk, checked against ROW_128 below, a
-hand-copied dict of docs/RUNBOOK.md "Retrieval contract (row 128)" (not read from the RUNBOOK)."""
+hand-copied dict of the row 128 rule: only the reviewer reads, and it reads `decisions`."""
 import json
 import tempfile
 import unittest

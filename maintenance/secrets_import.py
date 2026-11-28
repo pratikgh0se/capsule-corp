@@ -369,7 +369,7 @@ def ensure_bootstrap(cli: Callable, config_dir: Path, base: str, api: Optional[C
             if e.status == 401:
                 raise RuntimeError(
                     "secrets_import: admin token expired and no admin client credentials in "
-                    "admin.env: re-bootstrap (see RUNBOOK ## Secrets -> Recovering the admin identity)"
+                    "admin.env: re-bootstrap the secrets admin"
                 )
             raise
 

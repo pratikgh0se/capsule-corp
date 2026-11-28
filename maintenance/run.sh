@@ -475,8 +475,8 @@ esac
   # at from each repo's deps-allowlist.txt.
   if [ "$JOB" = "deps-sync" ]; then
     # Forward every arg after the job name - `--check` and
-    # `--force` are deps_sync.sh's own flags, and the RUNBOOK documents
-    # `maintenance/run.sh deps-sync --force` as the operator's escape hatch;
+    # `--force` are deps_sync.sh's own flags, and
+    # `maintenance/run.sh deps-sync --force` is the operator's escape hatch;
     # without this they were silently dropped and an ordinary sync ran instead.
     if [ "$DRY" = "1" ]; then echo "=== dry run: would run deps_sync.sh${2:+ }${*:2} ==="; JOB_EXIT=0; exit 0; fi
     bash "$MAINT_DIR/deps_sync.sh" "${@:2}"
@@ -670,7 +670,7 @@ esac
       CONFLICTED="$(with_cap git -C "$FORK_CHECKOUT" diff --name-only --diff-filter=U 2>/dev/null)"
       with_cap git -C "$FORK_CHECKOUT" merge --abort 2>&1 || true
       if [ -n "$CONFLICTED" ]; then
-        echo "=== fork-sync: merge of $UPSTREAM_REMOTE/main conflicted (exit $rc); aborted, checkout left clean - resolve by hand (RUNBOOK 'Fork sync') ==="
+        echo "=== fork-sync: merge of $UPSTREAM_REMOTE/main conflicted (exit $rc); aborted, checkout left clean - resolve by hand ==="
         JOB_EXIT=3; exit 3
       fi
       echo "=== fork-sync: merge of $UPSTREAM_REMOTE/main failed without a conflict (exit $rc); aborted, checkout left clean ==="

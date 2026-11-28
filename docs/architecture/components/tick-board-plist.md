@@ -5,8 +5,8 @@ The generic launchd job that runs one board's tick. A new board gets a tick by r
 template with its board name.
 
 ## Where it lives (files)
-- `launchd/board/__PREFIX__.capsule-tick-__BOARD__.plist`: label `__PREFIX__.capsule-tick-__BOARD__`; runs `python3 -u -m capsule tick --replace --board __BOARD__`.
-- Rendered copies for the live boards: `launchd/templates/__PREFIX__.capsule-tick-capsule-corp.plist` and one more template for the second board. Behaviour of the tick: [tick-scheduler](tick-scheduler.md).
+- `launchd/board/__PREFIX__.capsule-tick-__BOARD__.plist`: label `__PREFIX__.capsule-tick-__BOARD__`; runs `__PYTHON__ -u -m capsule tick --replace --board __BOARD__`.
+- Rendered copies for the live boards: `launchd/templates/__PREFIX__.capsule-tick-capsule-corp.plist` (the second board's template is maintainer only). Behaviour of the tick: [tick-scheduler](tick-scheduler.md).
 
 ## Inputs and outputs
 Placeholders `__PREFIX__`, `__BOARD__`, `__PYTHON__`, `__HOME__`, `__CAPSULE_HOME__` are filled by deploy.sh (maintainer only, not in the public edition). Output: the board's tick log `__CAPSULE_HOME__/logs/tick-__BOARD__.log` (stdout and stderr).

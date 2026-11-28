@@ -3,6 +3,6 @@
 # image ships it as /usr/local/bin/ui-check); this only points it at the host Playwright venv
 # ($CAPSULE_PLAYWRIGHT_PYTHON, default ~/.local/share/capsule/playwright/bin/python).
 PW="${CAPSULE_PLAYWRIGHT_PYTHON:-$HOME/.local/share/capsule/playwright/bin/python}"
-[ -x "$PW" ] || { echo "ui-check: no playwright interpreter at $PW; set CAPSULE_PLAYWRIGHT_PYTHON or run the host install in docs/RUNBOOK.md (ui-check on the host)" >&2; exit 5; }
+[ -x "$PW" ] || { echo "ui-check: no playwright interpreter at $PW; set CAPSULE_PLAYWRIGHT_PYTHON (docs/SETUP.md, ui-check on the host)" >&2; exit 5; }
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 UI_CHECK_PYTHON="$PW" exec "$HERE/../docker/base/ui-check" "$@"

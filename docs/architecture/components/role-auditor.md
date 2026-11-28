@@ -7,7 +7,7 @@ cards.
 
 ## Where it lives (files)
 - Contract: `contracts/auditor.md` (schema `auditor_report.v1`). Intent: `contracts/intent/auditor.jsonl`.
-- `capsule/auditor.py`: `python3 -m capsule auditor packet --board B [--window START END] [--prior FILE] [--out FILE]` builds the deterministic, read-only audit packet (EVAL-06; default window the 7 days ending now; a source the board lacks is listed in `missing`, never counted as 0; `--prior` marks what got `worse`). It reads the board DB read-only (`db.connect_ro_tolerant`: tables `tasks`, `task_runs`, `task_events`, `incidents`) and the human spool (`spool.human_by_task`). Metrics: `landed`, `tokens`, `review_rounds`, `interventions`, `incidents`, `flaky_tests`, `stuck_cards` (no event for 48 h) and `cost_per_card`. `repeats` lists incidents with `repeat_of`. `trigger` is `rounds` when 30 or more review rounds ran since the prior window, else `weekly` (`ROUNDS_TRIGGER`).
+- `capsule/auditor.py`: `python3 -m capsule auditor packet --board B [--window START END] [--prior FILE] [--out FILE]` builds the deterministic, read-only audit packet (EVAL-06; default window the 7 days ending now; a source the board lacks is listed in `missing`, never counted as 0; `--prior` marks what got `worse`). It reads the board DB read-only (`db.connect_ro_tolerant`: tables `tasks`, `task_runs`, `task_events`, `incidents`) and the human spool (`spool.human_by_task`). Metrics: `landed`, `tokens`, `review_rounds`, `interventions`, `incidents`, `flaky_tests`, `stuck_cards` (no event for 48 h) and `cost_per_card`. `flaky_tests_detail` lists up to 40 `{test, count, source}` (count in the window, most first; `test` is each test id parsed from the `FAIL:`/`ERROR:` lines of the `landing_flaky` event text, so one event can add to several rows; an event with no id counts under its first text line cut to 300 chars; `source` is always `landing`, because no nightly flaky record is kept on the board). `stuck_cards_detail` lists up to 40 `{task_id, status, idle_h}` (hours idle rounded to 0.1, longest first). A detail list is absent when its counter is missing (only the counter's name is then in `missing`) or when its read failed (its own name, `flaky_tests_detail` or `stuck_cards_detail`, is then in `missing`). A test id named twice in one event (summary and tail) counts once. `repeats` lists incidents with `repeat_of`. `trigger` is `rounds` when 30 or more review rounds ran since the prior window, else `weekly` (`ROUNDS_TRIGGER`).
 - No runner or schedule launches the model on `main`.
 
 ## Inputs and outputs
@@ -23,7 +23,7 @@ Per contract: a missing input goes in `not_audited`, never read as zero; at most
 Nothing launches the auditor model.
 
 ## Tests that pin it
-`capsule/tests/test_auditor.py`, `test_contracts.py`, `test_intent.py` with `capsule/tests/fixtures/schemas/auditor_report.v1.valid.json`.
+`capsule/tests/test_auditor.py`, `test_auditor_details.py`, `test_contracts.py`, `test_intent.py` with `capsule/tests/fixtures/schemas/auditor_report.v1.valid.json`.
 
 ## Related decisions and specs
 EVAL-06 (2026-10-23); rows 456, 584, 617; Zenkai Z2, Z5. See [../planned.md](../planned.md).

@@ -38,7 +38,8 @@ class LokiIngestDeadman(unittest.TestCase):
 
     def test_matches_the_tick_deadman_routing(self):
         tick = rule_block("capsule-tick-deadman")
-        for line in ("severity: page", "runbook: docs/RUNBOOK.md#failure-alerts"):
+        page = "runbook: docs/architecture/components/observability.md#alert-rules"
+        for line in ("severity: page", page):
             self.assertIn(line, tick)
             self.assertIn(line, self.b)
 

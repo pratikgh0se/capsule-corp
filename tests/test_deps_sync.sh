@@ -184,7 +184,7 @@ check "a bad allowlist line leaves the manifest untouched" \
 # invocation styles are equivalent, so the env-var config the profiles
 # actually ship is provably the same contract a `--offline --cache` call
 # would be. This does not prove real npm's cacache tolerates a read-only
-# mount end-to-end (no real npm is installed here) - see the RUNBOOK caveat.
+# mount end-to-end (no real npm is installed here).
 RO_CACHE="$T/ro-npm-cache"; mkdir -p "$RO_CACHE"
 chmod 555 "$RO_CACHE"
 WORKER_NPM_LOG="$T/worker-npm.log"

@@ -115,7 +115,8 @@ def run_line_problem(line, adapter, where=TOML_NAME):
     if line == safe:
         return None
     return (f"{where}: run line {line!r} {NOT_SAFE}; change it to {safe!r}"
-            " (the `exec` form `capsule blind init` writes; RUNBOOK, Blind tests)")
+            " (the `exec` form `capsule blind init` writes;"
+            " see docs/architecture/components/blind-path.md)")
 
 
 def _head_run_problem(repo):

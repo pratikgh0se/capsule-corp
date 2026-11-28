@@ -230,7 +230,7 @@ To take a card past this point you need a machine where Docker is running. The t
 `TickCase.test_happy_card_reaches_done` (`capsule/tests/test_tick.py`) uses a fake runner for the
 strong tier, and ends with the card `done` and four runs (implementer, reviewer, validator, guide).
 The lander also needs Docker for its suites. Without it the lander holds with `lander_wait_docker`,
-and the board stays in `dry-run` mode by default (`lander.mode`).
+and a board with no `lander.mode` does not land at all (`dry-run` runs the checks and pushes nothing).
 
 ## Clean up
 

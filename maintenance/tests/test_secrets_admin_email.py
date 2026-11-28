@@ -118,5 +118,6 @@ class LegacyAdminEnvUsesSavedEmail(unittest.TestCase):
         msg = str(ctx.exception)
         self.assertIn("admin token expired", msg)
         self.assertIn("admin client credentials in admin.env", msg)
-        self.assertIn("RUNBOOK", msg)
+        self.assertIn("re-bootstrap", msg)
+        self.assertNotIn("RUNBOOK", msg)
         self.assertNotIn("legacy-token-1", msg)

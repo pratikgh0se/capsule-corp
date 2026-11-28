@@ -38,7 +38,7 @@ State root `~/.local/state/capsule-corp/maint` (`AGENT_OPS_STATE_DIR`); `~/Backu
 Docker down: heal records skipped checks and throttled alerts. Backup failure: job event red, alert. A job with nothing to do records a skip, not a failure.
 
 ## Tests that pin it
-Shell: `tests/test_run_sh.sh`, `test_heal.sh`, `test_backup.sh`, `test_backup_capsule.sh`, `test_restore.sh`, `test_cleanup.sh`, `test_deps_sync.sh`, `test_status.sh`, `test_sbom.sh`, `test_tailnet_serve.sh`, `test_state_root_shell.sh`, `test_lib_compose.sh`. Python: `maintenance/tests/` (`test_events.py`, `test_obs_probe.py`, `test_live_snapshot.py`, `test_quality_nightly.py`, `test_usage_guard.py`, ...). Intent: `contracts/intent/heal.jsonl`, `live_snapshot.jsonl`, `obs_probe.jsonl`, `meters.jsonl`, `usage_guard.jsonl`, `lib_jobs.jsonl`.
+Shell: `tests/test_run_sh.sh`, `test_heal.sh`, `test_backup.sh`, `test_backup_capsule.sh`, `test_restore.sh`, `test_cleanup.sh`, `test_cleanup_flags.sh`, `test_deps_sync.sh`, `test_status.sh`, `test_sbom.sh`, `test_tailnet_serve.sh`, `test_state_root_shell.sh`, `test_lib_compose.sh`. Python: `maintenance/tests/` (`test_events.py`, `test_obs_probe.py`, `test_live_snapshot.py`, `test_quality_nightly.py`, `test_usage_guard.py`, ...). Intent: `contracts/intent/heal.jsonl`, `live_snapshot.jsonl`, `obs_probe.jsonl`, `meters.jsonl`, `usage_guard.jsonl`, `lib_jobs.jsonl`.
 
 ## Related decisions and specs
 docs/superpowers/specs/2026-09-07-backups-design.md (maintainer only, not in the public edition), `2026-09-08-secrets-cutover-design.md` (heal), `2026-09-10-continuity-and-data-safety-design.md`, `2026-09-13-dep-cache-design.md`; this page.

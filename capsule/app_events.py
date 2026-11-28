@@ -3,7 +3,7 @@ Spec: docs/superpowers/specs/2026-10-29-app-incidents-design.md.
 
 A shipped app's collector (macOS crash reports, GlitchTip, Gatus) drops one `app_event.v1` JSON
 file into its product board's inbox; each becomes an incident on that board with role
-`app:<name>`, under Korin's own rules (same-day dedupe, 30-day repeat, row 456). The event's
+`app:<name>`, under Korin's own rules (24-hour dedupe, 30-day repeat, row 456). The event's
 token `app_event:<source>:<event_id>` is always in the incident's evidence, so taking the same
 event twice changes nothing ("seen") and collectors need no state of their own.
 

@@ -8,7 +8,7 @@ never blocked on it.
 ## Where it lives (files)
 - `capsule/vault_context.py`: `retrieve` (a card's decision rows and notes), `guard` (withhold the stale and contradicted), `render` and `attach` (into the brief). The tick calls `attach` at dispatch (`capsule/tick.py`, row 626: the reason is that the worker needs the context before it starts); `capsule/worker.py` only passes the section into the brief. `retrieve` also serves `capsule vault-context` and `capsule/brainstorm_run.py`.
 - `capsule/vault_context_cli.py`: `capsule vault-context pending|verdict`, the CoS review queue of flagged retrievals.
-- `capsule/vault_eval.py`, bin/vault-eval, bin/vault-search (maintainer only, not in the public edition): the retrieval eval set and gate (MEM-13), with Capsule's own oracle that shares no code with the vault skill's eval (Z2).
+- `capsule/vault_eval.py` (ships); bin/vault-eval and bin/vault-search (maintainer only, not in the public edition): the retrieval eval set and gate (MEM-13), with Capsule's own oracle that shares no code with the vault skill's eval (Z2).
 - Config: `redesign.vault_context` = `off` | `report` | `live`; route key `vault_read` (`none`, `decisions`, `notes`) per role (`capsule/config.py` `VAULT_READ`).
 
 ## Inputs and outputs

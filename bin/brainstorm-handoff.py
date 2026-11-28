@@ -13,7 +13,7 @@ import shlex
 import sys
 import uuid
 
-MINUTES_PER_QUESTION = 5    # RUNBOOK example: "3 open questions - ~15 min"
+MINUTES_PER_QUESTION = 5    # example: "3 open questions - ~15 min"
 MAX_NAME = 40
 BUTTONS = "[ Open the note ] [ Not now, queue it ]"
 ONE_TERMINAL = "One terminal only: run this in a single terminal, never the same session in two."

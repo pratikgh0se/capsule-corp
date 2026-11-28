@@ -92,7 +92,7 @@ The other sections (7-day job logs, events, spool and log trims, backups, the
 dangling-image prune) run unconditionally and are not gated by this flag.
 
 **Reading the pending count.** While the flag is `0`, `status.sh` shows a
-`== retention` section reading `state/retention.json` directly:
+`== retention` section reading `retention.json` in the maintenance state directory (`~/.local/state/capsule-corp/maint/retention.json` by default) directly:
 `retention: dry-run (N files, M rows pending)`, with the file and row counts
 kept separate. The daily digest instead prints one combined line after
 `## Heal`, `retention: dry-run (N pending)`, where `N` is files plus rows (only

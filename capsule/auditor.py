@@ -6,7 +6,9 @@ board does not have (no table, a writer that never wrote, an unreadable board) p
 name in `missing` and leaves it out of `metrics`; a source that exists and recorded nothing in
 the window is 0. `worse` compares against an earlier packet (`--prior`): higher is worse for
 every metric but `landed`."""
+import collections
 import json
+import re
 import sqlite3
 import sys
 import time
@@ -24,9 +26,16 @@ FRESH = "COALESCE(tokens_in,0) + COALESCE(tokens_out,0) + COALESCE(tokens_cache_
 ROUND_RUNS = ("SELECT COUNT(*) FROM task_runs WHERE profile='implementer' AND started_at>=?"
               " AND started_at<? AND (outcome='completed' OR id IN"
               " (SELECT run_id FROM task_events WHERE kind='request_review'))")
-STUCK = ("SELECT COUNT(*) FROM tasks t WHERE t.status NOT IN ('done','archived')"
-         " AND MAX(t.created_at, COALESCE((SELECT MAX(created_at) FROM task_events ev"
-         " WHERE ev.task_id=t.id AND ev.created_at<=?1), 0)) < ?1 - ?2")
+DETAIL_CAP = 40
+LAST = ("MAX(t.created_at, COALESCE((SELECT MAX(created_at) FROM task_events ev"
+        " WHERE ev.task_id=t.id AND ev.created_at<=?1), 0))")
+STUCK_WHERE = f" FROM tasks t WHERE t.status NOT IN ('done','archived') AND {LAST} < ?1 - ?2"
+STUCK = "SELECT COUNT(*)" + STUCK_WHERE
+STUCK_ROWS = (f"SELECT t.id, t.status, ?1 - {LAST} AS idle" + STUCK_WHERE
+              + " ORDER BY idle DESC, t.id LIMIT ?3")
+FLAKY_ROWS = ("SELECT json_extract(payload,'$.detail') FROM task_events WHERE"
+              " kind='landing_flaky' AND created_at>=? AND created_at<?")
+TEST_ID = re.compile(r"^(?:FAIL|ERROR): \S+ \(([\w.]+)\)", re.M)
 
 
 class _Absent(Exception):
@@ -80,6 +89,25 @@ def _stuck_cards(conn, _start, end, _ctx):
     return _one(conn, STUCK, end, STUCK_AFTER)[0]
 
 
+def _flaky_detail(conn, start, end):
+    """Top flaky tests: the test ids in the `detail` text of each `landing_flaky` event (one
+    event may name several, each counted once per event, so rows can sum to more than the
+    counter); an event with no id
+    counts under its first line, cut to 300. Only source `landing` exists: the board keeps no
+    nightly flaky record."""
+    seen = collections.Counter()
+    for (text,) in conn.execute(FLAKY_ROWS, (start, end)):
+        if isinstance(text, str) and text.strip():
+            seen.update(set(TEST_ID.findall(text)) or [text.strip().splitlines()[0][:300]])
+    top = sorted(seen.items(), key=lambda kv: (-kv[1], kv[0]))[:DETAIL_CAP]
+    return [{"test": t, "count": n, "source": "landing"} for t, n in top]
+
+
+def _stuck_detail(conn, end):
+    rows = conn.execute(STUCK_ROWS, (end, STUCK_AFTER, DETAIL_CAP))
+    return [{"task_id": i, "status": st, "idle_h": round(idle / 3600, 1)} for i, st, idle in rows]
+
+
 COUNTERS = (("landed", _landed), ("tokens", _tokens), ("review_rounds", _review_rounds),
             ("interventions", _interventions), ("incidents", _incidents),
             ("flaky_tests", _flaky_tests), ("stuck_cards", _stuck_cards))
@@ -107,6 +135,14 @@ def _metrics(conn, start, end, ctx):
     else:
         missing.append("cost_per_card")
     return metrics, missing
+
+
+def _detail(details, missing, key, fn, *args):
+    """Store fn's list under `key`; a read that fails leaves the key out and names it missing."""
+    try:
+        details[key] = fn(*args)
+    except sqlite3.Error:
+        missing.append(key)
 
 
 def _repeats(conn, start, end):
@@ -147,6 +183,11 @@ def _packet(board, home, start, end, prior):
     try:
         metrics, missing = _metrics(conn, start, end, ctx)
         repeats = _repeats(conn, start, end)
+        details = {}    # a counter in `missing` leaves its detail out too
+        if "flaky_tests" in metrics:
+            _detail(details, missing, "flaky_tests_detail", _flaky_detail, conn, start, end)
+        if "stuck_cards" in metrics:
+            _detail(details, missing, "stuck_cards_detail", _stuck_detail, conn, end)
         since = prior["window"][1] if prior else start
         rounds = _measure(_review_rounds, conn, since, end, ctx)
     finally:
@@ -157,7 +198,7 @@ def _packet(board, home, start, end, prior):
         missing.append("repeats")
     trigger = "rounds" if rounds is not _Absent and rounds >= ROUNDS_TRIGGER else "weekly"
     return {"schema": SCHEMA, "board": board, "window": [start, end], "trigger": trigger,
-            "metrics": metrics, "repeats": repeats, "missing": sorted(missing),
+            "metrics": metrics, **details, "repeats": repeats, "missing": sorted(missing),
             "prior_window": prior["window"] if prior else None,
             "worse": _worse(metrics, prior["metrics"]) if prior else []}
 

@@ -156,7 +156,7 @@ def validate(cfg_slack):
                              "set `slack.enabled` false to turn Slack off")
     if "owner_ids" in cfg_slack or "owner_id" in cfg_slack:    # D225: the one owner is host-level
         raise ValueError("slack.owner_ids: not allowed in a board config; set `slack_owner_id` in"
-                         " the host config (RUNBOOK, Answering from Slack)")
+                         " the host config (docs/architecture/components/outbox-notifications.md)")
     if cfg_slack.get("routing", ROUTING_V2) != ROUTING_V2:
         raise ValueError(f"slack.routing: must be {ROUTING_V2!r} or absent")
     ident = cfg_slack.get("identity")

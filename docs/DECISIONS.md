@@ -718,6 +718,12 @@ Recurring cleanup and landing chores are tested Python automations that preview 
 Why: improvised cleanup is how things get deleted by mistake.
 Where: `maintenance/branch_sweep.py`, `maintenance/storage_gc.py`, `maintenance/disk_relief.py`.
 
+### Row 646 - Incidents dedupe in a rolling 24 hours
+Status: built.
+An event attaches to a live incident with the same fingerprint when that incident opened less than 24 hours before. The window was the UTC calendar day; now an outage that crosses 00:00 UTC is one incident. An event exactly 24 hours later opens a new incident. Nothing else changes: an incident with a fix pending takes later events on any day, human interventions and overrides never dedupe, a `watch` closure is left out, and a fingerprint closed in the last 30 days opens a `repeat`. The change is reversible: one query, no schema change and no stored state.
+Why: the calendar day was a first-version rate limit, not a decided rule. It split one outage into two incidents at 00:00 UTC, and each twin cost one more Korin run, fix card and gate pass. Attaching to any open incident on any day was rejected: an old incident that nobody works would hide new failures. With 24 hours, an unworked incident holds at most one day of events and then a new one opens.
+Where: `capsule/incidents.py`, `capsule/tests/test_incident_rolling_window.py`, `docs/architecture/components/incidents-korin-flow.md`.
+
 ## Ids that are not published
 
 Every id below is cited in the docs or in public code, and none has an entry above. They are rules about the maintainer's own working routine, internal records of planning sessions, one-off incident notes, product-specific work, or ids that were replaced. They are not written up here.

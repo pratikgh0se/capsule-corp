@@ -57,6 +57,7 @@ jobs:
           bash tests/test_run_sh.sh
           bash tests/test_run_sh_nightly_public.sh
           bash tests/test_cleanup.sh
+          bash tests/test_cleanup_flags.sh
           bash tests/test_docker_image.sh   # RUN_DOCKER_TESTS=1: builds and probes the worker image
           bash tests/test_migration_pg.sh   # RUN_DOCKER_TESTS=1: real postgres
           bash tests/test_alert_rules_pg.sh   # RUN_DOCKER_TESTS=1: every rules.yaml rawSql against real postgres
@@ -80,7 +81,7 @@ jobs:
           bash tests/test_report_coverage.sh
           # test_bootstrap.sh, test_backup.sh, test_restore.sh are macOS-only
           # (bootstrap.sh refuses non-Darwin; backup/restore use `stat -f`) -
-          # excluded here, see RUNBOOK.md ## CI.
+          # excluded here.
   public-tree:
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest   # O260: Python only; checks the public tree on every push and PR
@@ -120,7 +121,7 @@ jobs:
       # (G6, checking the five files under docs/policies/); the SBOM and its
       # vulnerability scan (G3/G4) are the syft-sbom and vulnerabilities steps
       # at the end of the job. Each is continue-on-error until
-      # its flag flips - see docs/RUNBOOK.md "Legal limits and money".
+      # its flag flips - see docs/RELEASE.md.
       - name: licences
         run: python3 maintenance/notice_gen.py --scan && python3 maintenance/notice_gen.py --check
         continue-on-error: true
@@ -190,8 +191,8 @@ jobs:
       # syft/grype/osv-scanner on PATH, so the old sbom.sh wrapper steps here only
       # ever printed skip lines and went green having scanned nothing; this
       # action installs grype itself and errors if the SBOM is missing. Advisory
-      # (continue-on-error) until the flip in docs/RUNBOOK.md "SBOM and
-      # vulnerability scan"; severity-cutoff matches sbom.sh's --fail-on high.
+      # (continue-on-error) until the flip in docs/RELEASE.md (SBOM and
+      # vulnerability scan); severity-cutoff matches sbom.sh's --fail-on high.
       - name: vulnerabilities
         uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439  # v7.4.2
         with:

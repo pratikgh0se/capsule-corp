@@ -1,6 +1,6 @@
 # Front door (W333): every local web UI gets cc.<name>.localhost. Chrome resolves *.localhost to
 # 127.0.0.1, so no hosts-file edit. Plain http, no TLS. New UI: add a block here and a row in
-# docs/RUNBOOK.md "Local addresses".
+# docs/SETUP.md, "Local UIs".
 {
 	auto_https off
 	admin off

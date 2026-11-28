@@ -29,6 +29,8 @@ import sys
 import tempfile
 from pathlib import Path
 
+from capsule import safe_write
+
 MAX_OUTPUT = 10 * 1024 * 1024   # a sandboxed command's output is read up to this, then cut
 SPILL_THRESHOLD = 64 * 1024
 SPILL_EDGE = 8 * 1024
@@ -141,25 +143,50 @@ def _run_sandboxed(cfg, cmd, timeout_s):
     return {"exit_code": code, "text": text if code != -1 else f"{text}[killed after {timeout_s}s]"}
 
 
-def _next_spill_name(spill_dir):
-    high = 0
-    if spill_dir.is_dir():
-        for p in spill_dir.iterdir():
-            if p.stem.isdigit():
-                high = max(high, int(p.stem))
-    return f"{high + 1}.txt"
+def _next_spill_name(names):
+    nums = [int(s) for s in (Path(n).stem for n in names) if s.isascii() and s.isdigit()]
+    return f"{max(nums, default=0) + 1}.txt"
+
+
+def _spill_into(dfd, text):
+    """Creates the next free <n>.txt in folder `dfd` (exclusive, no follow); its name or None."""
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW
+    for _ in range(5):
+        os.lseek(dfd, 0, os.SEEK_SET)    # Linux tmpfs lists a reused dir fd stale until a new seek
+        name = _next_spill_name(os.listdir(dfd))
+        try:
+            fd = os.open(name, flags, 0o600, dir_fd=dfd)
+        except FileExistsError:
+            continue
+        with os.fdopen(fd, "wb") as f:
+            f.write(text.encode("utf-8", "surrogatepass"))
+        return name
+    return None
+
+
+def _spill_file(spool, text):
+    """Writes text to a new <spool>/spill/<n>.txt; None if it cannot be done safely (a symlinked
+    spill dir, an error). The sandbox shares the spool: never follow or overwrite its entries."""
+    spill_dir = Path(spool) / "spill"
+    try:
+        dfd = safe_write.open_dir(spool, spill_dir, create_dirs=True)
+    except OSError:
+        return None
+    try:
+        name = _spill_into(dfd, text)
+    except OSError:
+        return None
+    finally:
+        os.close(dfd)
+    return spill_dir / name if name else None
 
 
 def _maybe_spill(text, spool):
     if len(text.encode("utf-8", "surrogatepass")) <= SPILL_THRESHOLD:
         return text
-    spill_dir = Path(spool) / "spill"
-    spill_dir.mkdir(parents=True, exist_ok=True)
-    path = spill_dir / _next_spill_name(spill_dir)
-    path.write_text(text)
-    head = text[:SPILL_EDGE]
-    tail = text[-SPILL_EDGE:]
-    return f"{head}\n...[{len(text)} chars total, spilled to {path}]...\n{tail}"
+    path = _spill_file(spool, text)
+    where = f"spilled to {path}" if path else "NOT spilled: the spill folder is unsafe"
+    return f"{text[:SPILL_EDGE]}\n...[{len(text)} chars total, {where}]...\n{text[-SPILL_EDGE:]}"
 
 
 def _validate_timeout(timeout_s):

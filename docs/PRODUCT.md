@@ -54,7 +54,7 @@ Stated by the owner on 2026-10-18 and refined on 2026-10-20 after market researc
 ## Single pane
 
 The rule (row 73, decision D11, 2026-09-06; study D11 at
-docs/superpowers/specs/2026-09-07-capsule-corp-system-design-study.md lines 856-883):
+docs/superpowers/specs/2026-09-07-capsule-corp-system-design-study.md lines 856-883, maintainer tree only; not in the public edition):
 
 - If it needs the owner now, it is a **message** (Slack; phone-answerable).
 - If it is state he might inspect, it is a **dashboard** (Grafana, row 73; since 2026-10-21 `capsule status` / `capsule board`).
@@ -62,7 +62,7 @@ docs/superpowers/specs/2026-09-07-capsule-corp-system-design-study.md lines 856-
 
 One place per kind of thing. A message that carries state he keeps asking for is the signal to
 revisit a dedicated Capsule web UI, reassessed after a month on Slack (row 73). The visibility spec
-docs/superpowers/specs/2026-10-21-visibility-status-board-slack-design.md section 2 (A, C, D, approved
+docs/superpowers/specs/2026-10-21-visibility-status-board-slack-design.md (maintainer tree only) section 2 (A, C, D, approved
 2026-10-21) makes `capsule status` plus the `capsule board` terminal UI the place to inspect state;
 Slack is for needs-you, broken things and the 09:00 summary (Slack is live, rows 452, 621). The board
 terminal UI is the step taken now instead of a web UI. Do not build a web UI

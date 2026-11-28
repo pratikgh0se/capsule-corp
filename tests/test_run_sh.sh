@@ -210,8 +210,8 @@ check "deps_sync.sh is invoked" 'grep -qF "bash \"\$MAINT_DIR/deps_sync.sh\"" "$
 check "status.sh CADENCE lists deps-sync" 'grep -qF "\"deps-sync\": 86400" "$REPO/maintenance/status.sh"'
 
 # Round 2 NEW-3: run.sh forwards deps-sync's own flags (--check, --force) -
-# the RUNBOOK documents `maintenance/run.sh deps-sync --force` as the
-# operator's escape hatch; before this fix the args were silently dropped.
+# the operator's escape hatch is `maintenance/run.sh deps-sync --force`; before this fix the
+# args were silently dropped.
 DS_T="$(mktemp -d "${TMPDIR:-/tmp}/run-sh.XXXXXX")"
 cat >"$DS_T/deps_sync.sh" <<'EOF'
 #!/usr/bin/env bash

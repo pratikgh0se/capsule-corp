@@ -58,6 +58,7 @@ Slack down or auth error: rows stay queued, backoff holds the channel, the file 
 Rows 398, 424, 425; docs/superpowers/specs/2026-09-10-communication-and-rhythm-design.md (maintainer only, not in the public edition); visibility spec (2026-10-21); this page (see Status).
 
 - Slack listener (D225): `capsule/slack_listen.py` is the host-side Socket Mode intake only (acks at once, hands clicks and replies to the `capsule.slack_answer` subprocess); `capsule/slack_secret.py` holds the token reader, redirect refusal and log masking so its import closure stays small.
+- Slack owner (D225): `slack_owner_id` in the host config (`$CAPSULE_HOME/config.json`, not a board config) is the one Slack user id (`U...`) whose button clicks and replies `capsule.slack_answer` accepts. While it is unset, Slack answers are refused and the `slack_owner_id` preflight row warns. A board config may not set `slack.owner_ids`.
 
 ## Status
 current. Drift: the older operating notes said done and running messages go to Slack; the code does not post them (see `LOG_ONLY_CLASSES`). The scheduled-class emitter and the needs-you cap are not built; of the `interrupts.json` events only `factory_down_or_stuck` has real Slack emitters.

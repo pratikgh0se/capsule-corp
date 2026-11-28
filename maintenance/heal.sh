@@ -160,7 +160,7 @@ st_keep=$RC
 case "$st_rc" in
   0) record slack-token ok "readable from the keychain" ;;
   4) record slack-token skipped "no keychain here" ;;
-  *) record slack-token fail "SLACK_BOT_TOKEN not in the keychain (RUNBOOK: Slack token in the Keychain)" ;;
+  *) record slack-token fail "SLACK_BOT_TOKEN not in the keychain (docs/architecture/components/secrets.md)" ;;
 esac
 RC=$st_keep
 

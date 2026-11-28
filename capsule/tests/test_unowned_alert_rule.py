@@ -1,5 +1,3 @@
-# mutation-check: targets-predate-range b957739c9 -- denylist-driven check replaces a literal ::
-#   test_the_golden_routes_page_severity_to_slack_alerts_and_has_no_telegram_d133
 """Row 470's Grafana side: `observability/grafana/provisioning/alerting/rules.yaml`'s
 `unowned-work-idle` rule, and proof that `render_alert_policy.py` - the renderer that decides
 which Slack channel a `severity: page` alert reaches (rows 398, 425, R28) - still routes it there
@@ -150,16 +148,16 @@ class RuleShape(unittest.TestCase):
         self.assertIn("for: 1m", self.block)
         self.assertIn("title: Unowned-work count missing", self.block)
 
-    @private_only
-    def test_runbook_points_at_the_dedicated_section(self):
-        # row 472 (I5): derive the expected anchor from the real heading text instead of
-        # asserting a separately-typed string that could drift away from what the heading
-        # actually slugs to.
-        runbook = (paths.REPO / "docs" / "RUNBOOK.md").read_text()
-        headings = re.findall(r"^### (.+)$", runbook, re.MULTILINE)
-        matches = [h for h in headings if _heading_slug(h) == "unowned-work-count-missing"]
-        self.assertEqual(len(matches), 1, headings)
-        self.assertIn(f"runbook: docs/RUNBOOK.md#{_heading_slug(matches[0])}", self.block)
+    def test_runbook_points_at_a_shipped_page_heading(self):
+        # row 472 (I5): derive the anchor from the real heading text, on a page that ships.
+        path, anchor = re.search(r"runbook: (\S+\.md)#(\S+)", self.block).groups()
+        self.assertNotIn("RUNBOOK", path)
+        text = (paths.REPO / path).read_text()
+        headings = re.findall(r"^#{2,4} (.+)$", text, re.MULTILINE)
+        self.assertIn(anchor, [_heading_slug(h) for h in headings])
+        section = text.split("## Alert rules", 1)[1].split("\n## ", 1)[0].lower()
+        for title in re.findall(r"(?m)^        title: (.+)$", RULES.read_text()):
+            self.assertIn(title.lower().replace(" %", " percent"), section, title)
 
     def test_condition_reads_the_capsule_unblocked_event_row(self):
         sql = _raw_sql_texts(self.block)[0]

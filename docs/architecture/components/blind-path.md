@@ -32,6 +32,7 @@ In: the card, its acceptance statements, an interface snapshot, the harness API.
 The blind repo (a sibling of the project, written only by the tester run and by host git in `red.py`), `tasks.blind_commit`, `blind-work` and `blind-out` folders under the board and spool, board events. The implementer container never mounts any of it.
 
 ## Key rules and invariants
+- The blind run line is one exact form, written by `capsule blind init` and checked by `capsule blind preflight`: `cd /blind && exec python3 -m harness.unittest_runner --card {card} /blind/cards/{card}` (the `--list` variant is also accepted). A wrapper, `;`, `&&`, `|`, extra words or other spacing fail preflight, which prints the safe line.
 - Mode is `redesign.blind_tests`: `off` (default, nothing changes), `report` (rows marked `mode: report only` never fail or block a card), `gate` (rows count; a card lands only on green blind tests).
 - Two oracles per run: the harness's `results.jsonl` and the runner's own stdout summary plus exit code must agree; `git status --porcelain` of the worktree before and after must match. Any disagreement is `inconclusive` and opens a `review_infra` incident.
 - A board with no usable blind repo gets a `blind:unavailable` row, never a silent pass. A reason that holds for the whole board opens one incident and one alert.

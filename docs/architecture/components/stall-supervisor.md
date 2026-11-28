@@ -49,7 +49,7 @@ The record is deleted when the stall clears. Events about the board itself use t
   Two or more: one `file` row each, one `local` row and (if any is due for Slack) one Slack row, text
   `<board>: N stalls. <class "card title" clock>; ... ; +K more` (first 3 named, titles cut to 40).
 - Quiet under any pause (`dispatch.any_pause`): `find` returns nothing, `step` keeps the records and pages nothing.
-- A detector that raises does not stop the others. `step` opens one `crash` incident per UTC day (key
+- A detector that raises does not stop the others. `step` opens one `crash` incident per 24 hours (key
   `stall supervisor: <ExceptionType>`) and clears no record in that pass.
 
 ## Unit 2: the L1 stall ruling
@@ -85,7 +85,7 @@ process and file facts). `stall.find(conn, cfg, now, probes)` and `stall.step(..
 `alive(pid)`, `quiet_s(run_id)`, `cpu_s(pid)`, `kill(pid)`, `docker_up` (bool or callable), `sleep`,
 `spool_root`. A tester injects them and needs no real process. `disk_free` belongs to unit 4b (G6).
 - `run_silent` (C1): an open run with a live pid, no spool file or workspace file newer than `silent_s`
-  (review roles: half of it) and under 1 s of CPU growth over a 2 s window (two `cpu_s` samples). CPU
+  (review roles: half of it) and under 1 s of CPU growth (`CPU_GROWTH_S`) over a window as long as that quiet limit, read from stored CPU samples taken at least 300 s apart (`SAMPLE_GAP_S`; `capsule/stall_silence.py`). CPU
   unreadable is observe-only: the item shows, nothing is killed. A container run (runner `strong`: its
   commands run in the container, so their CPU is not in the host tree) is never killed and never
   sampled: it shows at watch and pages at L2 only. Killable: host runs (reviewer, validator, guide,

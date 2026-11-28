@@ -1,8 +1,7 @@
-# mutation-check: targets-predate-range b957739c9 -- fixture rename only, no behaviour pinned ::
-#   FromEvents.test_cos_routine_nudges_open_no_incident_but_owner_and_cos_override_do,
-#   FromEvents.test_cos_unblock_of_a_korin_fix_card_hold_opens_no_incident,
-#   FromEvents.test_cos_unblock_of_a_lander_wait_opens_no_incident_but_a_faked_or_stale_one_does,
-#   FromEvents.test_cos_unblock_of_a_routed_korin_fix_card_opens_no_incident
+# mutation-check: targets-predate-range 6ec7d088d -- the alert test's timing moved past 24 h so it
+#   still pins the still-open check, which predates the range; the other is docstring-only ::
+#   AlertFiring.test_second_firing_crossing_utc_midnight_still_dedupes_to_one_incident,
+#   FromEvents.test_a_deferred_pending_contradiction_opens_nothing_only_the_routed_one_does
 """Korin's record and closure gate (row 456): capsule/incidents.py. Temp boards and a temp vault only."""
 import json
 import shutil
@@ -287,7 +286,7 @@ class FromEvents(Base):
         review run is still live is recorded once as `routed: "pending"` and again, once routed,
         as `routed: "guide"`. Only the routed event may open an incident - else one contradiction
         opens two (the pending one and its later twin), possibly straddling midnight so the
-        same-day dedupe never catches it."""
+        24-hour dedupe never catches it."""
         incidents.from_events(self.conn, board="b", now=T0)
         self.ev("contradiction", {"role": "reviewer", "examples": [{"id": "pass-with-findings"}],
                                   "routed": "pending"})
@@ -690,7 +689,7 @@ class AlertFiring(Base):
     incident; a lone firing, or a repeat more than 24h later, only remembers it. Row 472 follow-up
     (I3): `record_alert_firing` returns `open_incident`'s own action ("opened"/"deduped"/"repeat"),
     never a fixed "incident_opened" - a repeat that lands on an incident already open (whether via
-    open_incident's own same-day rule or this function's own any-still-open check below) is
+    open_incident's own 24-hour rule or this function's own any-still-open check below) is
     "deduped", not a second opening."""
 
     def test_first_firing_only_records_no_incident(self):
@@ -737,10 +736,10 @@ class AlertFiring(Base):
         self.assertEqual(json.loads(rows[0]["evidence"]), ["first:evidence", "second:evidence"])
 
     def test_second_firing_crossing_utc_midnight_still_dedupes_to_one_incident(self):
-        """Row 472 (I3): `open_incident`'s own dedupe is same-UTC-day only; a still-open incident
-        must not become two just because the third firing lands on the NEXT UTC calendar day
-        (mirrors the reviewer's 22:00/23:30/01:00 example)."""
-        t1, t2, t3 = T0 - 10800, T0 - 5400, T0     # 22:00, 23:30 (day D-1), then 01:00 (day D)
+        """Row 472 (I3): `open_incident`'s own dedupe is a rolling 24 hours, so the third firing
+        comes 25 h after the first: only the still-open check keeps an alert incident that is still
+        open from becoming two on a later day."""
+        t1, t2, t3 = T0, T0 + 3600, T0 + 3600 + 86400     # first, +1 h, then a day later
         incidents.record_alert_firing(self.conn, {"korin": {"enabled": True}}, alert="UnownedWorkIdle",
                                       key="unowned_work_idle", board="b", now=t1)
         action2 = incidents.record_alert_firing(self.conn, {"korin": {"enabled": True}}, alert="UnownedWorkIdle",

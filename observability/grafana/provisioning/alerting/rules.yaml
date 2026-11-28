@@ -21,7 +21,7 @@ groups:
           severity: page
         annotations:
           summary: "a vault job exited non-zero in the last 15 min - ops-events"
-          runbook: docs/RUNBOOK.md#failure-alerts
+          runbook: docs/architecture/components/observability.md#alert-rules
         data:
           - refId: A
             queryType: ""
@@ -70,7 +70,7 @@ groups:
           severity: page
         annotations:
           summary: "no sync tick for 30 min - launchctl list | grep sprint-sync"
-          runbook: docs/RUNBOOK.md#failure-alerts
+          runbook: docs/architecture/components/observability.md#alert-rules
         data:
           - refId: A
             queryType: ""
@@ -125,7 +125,7 @@ groups:
           severity: page
         annotations:
           summary: "no Capsule tick heartbeat for 5 min - ps -ef | grep 'capsule tick'"
-          runbook: docs/RUNBOOK.md#failure-alerts
+          runbook: docs/architecture/components/observability.md#alert-rules
         data:
           - refId: A
             queryType: ""
@@ -167,7 +167,7 @@ groups:
           severity: page
         annotations:
           summary: "Loki has received no log lines for 30 min - docker logs the fluent-bit and loki containers"
-          runbook: docs/RUNBOOK.md#failure-alerts
+          runbook: docs/architecture/components/observability.md#alert-rules
         data:
           - refId: A
             queryType: instant
@@ -213,7 +213,7 @@ groups:
           severity: page
         annotations:
           summary: "no successful backup for 26 h - bash maintenance/run.sh backup"
-          runbook: docs/RUNBOOK.md#backups
+          runbook: docs/architecture/components/observability.md#alert-rules
         data:
           - refId: A
             queryType: ""
@@ -256,7 +256,7 @@ groups:
           severity: notice
         annotations:
           summary: "a backup ran with a dump missing - look for the *.sql.MISSING marker in the newest tarball"
-          runbook: docs/RUNBOOK.md#backups
+          runbook: docs/architecture/components/observability.md#alert-rules
         data:
           - refId: A
             queryType: ""
@@ -293,7 +293,7 @@ groups:
           severity: notice
         annotations:
           summary: "the nightly vault eval failed or timed out - read the newest result-<date>.json and the nightly log"
-          runbook: docs/RUNBOOK.md#vault-context
+          runbook: docs/architecture/components/observability.md#alert-rules
         data:
           - refId: A
             queryType: ""
@@ -328,7 +328,7 @@ groups:
           severity: notice
         annotations:
           summary: "laptop disk over 85 % - run ops-cleanup"
-          runbook: docs/RUNBOOK.md#observability
+          runbook: docs/architecture/components/observability.md#alert-rules
         data:
           - refId: A
             queryType: ""
@@ -363,7 +363,7 @@ groups:
           severity: notice
         annotations:
           summary: "5-hour window at {{ $values.A }} % - nothing pauses automatically; hold heavy work"
-          runbook: docs/RUNBOOK.md#pause-the-pipeline
+          runbook: docs/architecture/components/observability.md#alert-rules
         data:
           - refId: A
             queryType: ""
@@ -401,7 +401,7 @@ groups:
           severity: notice
         annotations:
           summary: "weekly window at {{ $values.A }} % - plan the rest of the week"
-          runbook: docs/RUNBOOK.md#cost-knobs-the-owners-settings-2026-09-05
+          runbook: docs/architecture/components/observability.md#alert-rules
         data:
           - refId: A
             queryType: ""
@@ -438,7 +438,7 @@ groups:
           severity: notice
         annotations:
           summary: "12 worker runs used today - nothing more dispatches until midnight"
-          runbook: docs/RUNBOOK.md#cost-knobs-the-owners-settings-2026-09-05
+          runbook: docs/architecture/components/observability.md#alert-rules
         data:
           - refId: A
             queryType: ""
@@ -481,7 +481,7 @@ groups:
           summary: "a card has been waiting for you for over an hour - list it with sqlite3
             \"file:$CAPSULE_HOME/boards/<board>/kanban.db?mode=ro\"
             \"select id,title from tasks where status='blocked'\""
-          runbook: docs/RUNBOOK.md#observability
+          runbook: docs/architecture/components/observability.md#alert-rules
         data:
           - refId: A
             queryType: ""
@@ -534,7 +534,7 @@ groups:
           severity: notice
         annotations:
           summary: "the unowned-work detector has shipped no count for 25 min while the tick is alive - a second firing in 24h opens a Korin incident"
-          runbook: docs/RUNBOOK.md#unowned-work-count-missing
+          runbook: docs/architecture/components/observability.md#alert-rules
         data:
           - refId: A
             queryType: ""
@@ -573,7 +573,7 @@ groups:
           severity: notice
         annotations:
           summary: "the Lookout shipper quarantined spool rows in the last 24h - read spool.rejected"
-          runbook: docs/RUNBOOK.md#lookout-quarantined-rows
+          runbook: docs/architecture/components/observability.md#alert-rules
         data:
           - refId: A
             queryType: ""

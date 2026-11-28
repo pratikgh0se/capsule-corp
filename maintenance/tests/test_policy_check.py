@@ -100,7 +100,8 @@ class WithFiles(unittest.TestCase):
         (self.d / "security.txt").write_text(_sec_txt("2026-09-25T00:00:00.000Z"))
         ok, lines = pc.check(self.d, today=TODAY)
         self.assertTrue(ok)
-        self.assertTrue(any("expires in 15 days" in l and "RUNBOOK" in l for l in lines), lines)
+        self.assertTrue(any("expires in 15 days" in x and "renew" in x and "RUNBOOK" not in x
+                            for x in lines), lines)
 
     def test_a_missing_or_unparseable_expires_is_a_finding(self):
         # Padded past STUB_FLOOR (no "## Body" heading here - this is a .txt,

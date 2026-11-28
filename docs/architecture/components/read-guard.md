@@ -7,7 +7,7 @@ Limit what the file-reading tools (Read, Glob, Grep) of a card worker can open. 
 - `capsule/read_guard.py`: the guard. A stdlib-only `PreToolUse` hook script. It never imports from `capsule`.
 - `capsule/models/claude.py`: `build_argv` passes `--restricted` and, for every role, `--settings` with the hook entry (matcher `Read|Glob|Grep`). The hook command is `sys.executable -I <install>/capsule/read_guard.py <workspace> <add_dirs...>`, with the absolute install path.
 - `capsule/runners/docker.py` `limits()` (strong tier) and `capsule/runners/host.py` `LightRunner.limits`: `allowed` holds only `mcp__capsule__exec`. No bare `Read`, `Glob` or `Grep` allow rule.
-- Planned intent rows (`contracts/intent/read_guard.jsonl`, not yet in the repo); this page.
+- Intent rows: `contracts/intent/read_guard.jsonl`; this page.
 
 ## Inputs and outputs
 In: the hook JSON on stdin (`tool_name`, `tool_input`) and the roots on argv. The first root is the session working directory. Out: exit 0 (no objection, empty stdout) or exit 2 with one stderr line that starts with `read guard: `. Any failure (bad JSON, missing field, exception) exits 2. The guard only denies. It never grants.
@@ -42,7 +42,7 @@ None. It has no mode file and no log. A denial reaches the run record through th
 - Residual: a symlink swapped between the check and the read is not detected.
 - All three layers need the vendor CLI to keep its behaviour. Only a kernel sandbox removes that need. This is a possible later card.
 - False denies are possible (case-insensitive file systems, Unicode normal form, a tab in a file name, the `/System/Volumes/Data` prefix, leading or trailing spaces, `..` in a glob). All fail closed and show in `permission_denials`.
-- Known gap: `exec_mcp` spills output over 64 KiB to `<spool>/spill/<n>.txt` (`capsule/runners/exec_mcp.py`). No role can read that folder. A fix needs a safe file create first. It is a separate card.
+- `exec_mcp` spills output over 64 KiB to `<spool>/spill/<n>.txt` (`capsule/runners/exec_mcp.py`). The host creates each file new, mode 0600, through a no-follow folder handle; it never follows or overwrites an entry. No role can read that folder yet.
 - Sessions that do not use `build_argv` (patrol, ask panel, brainstorm, maintenance) are controller jobs and are out of scope.
 
 ## Live smoke (second oracle)
@@ -52,7 +52,7 @@ The guard's blind tests are the first oracle. The second oracle is the real CLI'
 3. Expect denials for every path outside, both symlinks, `..`, `spool/mcp.txt`, and absolute Glob patterns. Expect the clone and `spool/requests` reads to pass. Only the hard link may show content.
 
 ## Tests that pin it
-The hidden blind suite (kept in the private blind repo; it runs the script as a subprocess), `capsule/tests/test_models.py` (`--settings` shape, quoting), `test_worker_mcp_fence.py`, `test_light_runner.py`; the planned intent rows.
+The hidden blind suite (kept in the private blind repo; it runs the script as a subprocess), `capsule/tests/test_models.py` (`--settings` shape, quoting), `test_worker_mcp_fence.py`, `test_light_runner.py`; `contracts/intent/read_guard.jsonl`.
 
 ## Related decisions and specs
 Zenkai Z1 and Z2 in `docs/ZENKAI.md`; [KNOWN-ISSUES](../../KNOWN-ISSUES.md) item 8; [worker-runner-and-images](worker-runner-and-images.md); [secret-read-guard](secret-read-guard.md).

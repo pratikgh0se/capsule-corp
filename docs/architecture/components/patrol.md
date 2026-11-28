@@ -105,4 +105,4 @@ Written by the blind tester from the behaviour contract (separate repo).
 Section 9.4 of the unattended-mode design (not in this repository); [stall-supervisor](stall-supervisor.md); [maintenance-jobs](maintenance-jobs.md); Zenkai Z1, Z2, Z6, Z8.
 
 ## Status
-built (unit 7). `contracts/patrol.md` exists and the patrol label is not in launchd/unloaded (maintainer only, not in the public edition), so deploy.sh loads it.
+built (unit 7). `contracts/patrol.md` exists. The patrol label is still listed in launchd/unloaded (maintainer only, not in the public edition) as install-only, so deploy.sh installs the plist and does not load it until the architect removes that line.

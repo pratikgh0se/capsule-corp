@@ -3,7 +3,8 @@
 # the state root (AGENT_OPS_STATE_DIR, default ~/.local/state/capsule-corp/maint) with ONE atomic
 # `mv`, then leave a symlink at the old path so every old reader and the pinned EVENTS_SPOOL still
 # resolve to the same files. No copy mode, no --force, nothing is deleted. Run it only in a
-# tick-stopped gap (RUNBOOK "State root"); tests use temp dirs, never the real state.
+# tick-stopped gap (see docs/architecture/components/deploy-and-drift.md); tests use temp dirs,
+# never the real state.
 #   capsule-state-migrate [--dry-run]   checks, prints the plan, writes nothing
 #   capsule-state-migrate --verify      re-check the live root against the manifest saved at migration
 # Exit: 0 migrated / already migrated / dry-run / verified; 1 refused or oracle failed; 2 straggler.

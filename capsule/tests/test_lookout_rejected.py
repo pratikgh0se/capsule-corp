@@ -19,7 +19,6 @@ from capsule.tests.public_tree import private_only
 from capsule.tests.test_lookout_ship import INTENT, ShipCase, ev
 
 RULES = paths.REPO / "observability" / "grafana" / "provisioning" / "alerting" / "rules.yaml"
-RUNBOOK = paths.REPO / "docs" / "RUNBOOK.md"
 JOB = "lookout-quarantine"
 
 
@@ -113,16 +112,19 @@ class Rejected(ShipCase):
     @private_only
     def test_intent_quarantined_rule_is_a_notice_with_a_runbook_section(self):
         """Oracle 1: the rule exists as a `notice` on ops-pg that sums the event's count over 24 h.
-        Oracle 2: its runbook anchor is a real RUNBOOK heading, and alerts.jsonl pins a fires and a
-        quiet case with a current SHA256SUMS line."""
+        Oracle 2: its runbook anchor is a heading on a shipped page, and alerts.jsonl pins a
+        fires and a quiet case with a current SHA256SUMS line."""
         b = rule_block("lookout-quarantined")
         self.assertIn("severity: notice", b)
         self.assertIn("datasourceUid: ops-pg", b)
         self.assertIn("interval '24 hours'", b)
-        anchor = re.search(r"runbook: docs/RUNBOOK.md#(\S+)", b).group(1)
+        path, anchor = re.search(r"runbook: (\S+\.md)#(\S+)", b).groups()
+        self.assertNotIn("RUNBOOK", path)
         slugs = {re.sub(r"[^\w-]", "", h.strip().lower().replace(" ", "-"))
-                 for h in re.findall(r"(?m)^#{2,4} (.+)$", RUNBOOK.read_text())}
+                 for h in re.findall(r"(?m)^#{2,4} (.+)$", (paths.REPO / path).read_text())}
         self.assertIn(anchor, slugs)
+        page = (paths.REPO / path).read_text().split("## Alert rules", 1)[1].lower()
+        self.assertIn("lookout quarantined spool rows", page)
         text = (INTENT / "alerts.jsonl").read_text()
         cases = [json.loads(l) for l in text.splitlines() if json.loads(l)["rule"] == "lookout-quarantined"]
         self.assertEqual({c["expect"] for c in cases}, {"fires", "quiet"})

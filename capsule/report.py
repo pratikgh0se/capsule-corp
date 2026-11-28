@@ -440,7 +440,8 @@ def _eval_lines(report):
     """E2 (row 617): the `EVAL INCIDENT` lines that open the document, then `## Eval checks`."""
     head = [f"EVAL INCIDENT {i['id']}: {i['root_key']} (open since "
             f"{datetime.date.fromtimestamp(i['opened_at'])}) - an eval oracle disagrees; "
-            'RUNBOOK "Korin (incidents)"' for i in report.get("eval_incidents") or []]
+            'see docs/architecture/components/evals-and-report.md'
+            for i in report.get("eval_incidents") or []]
     head += [f"LEDGER ROW DUE {datetime.date.fromtimestamp(s)} to {datetime.date.fromtimestamp(u)}:"
              f" write it in {ledger_name()}"
              for s, u in report.get("eval_ledger_due") or []]

@@ -1,4 +1,5 @@
-"""bin/brainstorm-handoff.py (M203, RUNBOOK "Handoff format (M203)"). Z2: the render function is
+"""bin/brainstorm-handoff.py (M203; docs/architecture/components/intake.md).
+Z2: the render function is
 tested with a caller-supplied id (the id exists before any note text), and the CLI is run as a
 real subprocess for the second oracle."""
 import importlib.util

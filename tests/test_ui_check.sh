@@ -19,7 +19,7 @@ if [ -z "$PY" ]; then
   . "$REPO/tests/lib_playwright_python.sh"
   PY="$(playwright_python)" || PY=""
 fi
-[ -z "$PY" ] && { printf 'SKIP test_ui_check: no interpreter with playwright + chromium: export CAPSULE_PLAYWRIGHT_PYTHON (RUNBOOK "ui-check on the host")\n'; exit 77; }
+[ -z "$PY" ] && { printf 'SKIP test_ui_check: no interpreter with playwright + chromium: export CAPSULE_PLAYWRIGHT_PYTHON (docs/SETUP.md, ui-check on the host)\n'; exit 77; }
 
 T="$(mktemp -d)"; SRV=""
 cleanup() { [ -n "$SRV" ] && kill "$SRV" 2>/dev/null; wait "$SRV" 2>/dev/null; rm -rf "$T"; }

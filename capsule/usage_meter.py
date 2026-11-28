@@ -7,7 +7,8 @@ pause) with one warning per process.
 
 Weight of a message = model_weight * (input + 5 * output + 1.25 * cache_write + 0.1 * cache_read).
 The token ratios follow the public price ratios; the model weights are guesses. Every weight is
-a guess that the one-off limit calibration absorbs (RUNBOOK, "Weekly usage meter").
+a guess that the one-off limit calibration absorbs. The weekly pause that reads the meter:
+docs/architecture/components/dispatch-and-caps.md.
 
 State `<state_dir>/usage-meter.json` holds per-file read offsets, running sums per model and a
 bounded table `recent` of messages whose record time is within RECENT_S of the scan. One message

@@ -1,6 +1,6 @@
 # Capsule Corp
 
-Self-hosted AI software factory for one developer on macOS: Claude Code agents build, review and land work from a kanban board, and nothing reaches `main` without an independent review, blind tests and landing gates.
+Self-hosted AI software factory for one developer on macOS: Claude Code agents build, review and land work from a kanban board, and nothing reaches `main` without an independent review and the board's landing gates. Blind tests and landing are opt-in per board: a new board pushes nothing until you set `lander.mode` to `land`.
 
 [![License: MIT](https://img.shields.io/github/license/pratikgh0se/capsule-corp)](LICENSE)
 
@@ -32,7 +32,7 @@ cd capsule-corp && ./install.sh --yes
 
 Then build the worker image once (about 40 GB of disk, and it takes hours); see [Requirements](#requirements).
 
-Capsule Corp is a lightweight software factory for a solo maintainer. One chief-of-staff (CoS) agent files work as cards on a board. A background tick then runs each card through an implementer that runs every command in a no-network Docker container, and host-run read-only reviewers (reviewer, validator, guide), so you only step in for short unblocking bursts. Nothing lands on `main` until an independent reviewer and a validator have checked it, and the system records every time a human had to intervene.
+Capsule Corp is a lightweight software factory for a solo maintainer. One chief-of-staff (CoS) agent files work as cards on a board. A background tick then runs each card through an implementer whose shell commands run in a no-network Docker container (the default strong tier; the optional light tier runs on the host under a macOS seatbelt profile), and host-run read-only reviewers (reviewer, validator, guide), so you only step in for short unblocking bursts. Nothing lands on `main` until an independent reviewer and a validator have checked it (and, with `redesign.blind_tests` set to `gate`, a hidden-test gate), and the system records every time a human had to intervene.
 
 It is built around three goals: **lightweight** (one maintainer, small machines), **model-robust** (thin machinery around the models, so a new model does not break it) and, later, **provider-agnostic** (each role picks its own runner, model and key). Today every role runs on Claude Code. See [docs/PRODUCT.md](docs/PRODUCT.md) for the principles.
 
@@ -53,9 +53,9 @@ flowchart LR
 
 - **Boards and cards.** Work is a card on a board. Every status change goes through one transition table in `capsule/db.py`.
 - **Tick.** One tick per board is the only writer of that board. It routes cards, enforces limits and spawns runs. It never calls a model itself.
-- **No-network implementer commands.** The tick starts a Docker container for the implementer (`docker/base`, `--network=none`). The model session (`claude -p`, started by `capsule/worker.py`) runs on the host in the implementer's own git clone and edits files there. Its edits are limited to that clone; Capsule does not confine its file reads. Every shell command it runs goes into the container through the `mcp__capsule__exec` tool. The reviewer, validator and guide start in parallel after it and run on the host with read-only tools (`HostRunner`), not in containers.
+- **No-network implementer commands (strong tier, the default).** The tick starts a Docker container for the implementer (`docker/base`, `--network=none`). The model session (`claude -p`, started by `capsule/worker.py`) runs on the host in the implementer's own git clone and edits files there. Its edits are limited to that clone; Capsule does not confine its file reads. Every shell command it runs goes into the container through the `mcp__capsule__exec` tool. The reviewer, validator and guide start in parallel after it and run on the host with read-only tools (`HostRunner`), not in containers.
 - **Roles.** Implementer, reviewer, validator, guide, Korin (incident post-mortems), security reviewer, lookout, advisor (a packet of rework, incidents and overrides in; ranked contract proposals out), auditor (an audit of board metrics; at most 3 proposals; both are run by hand, no scheduled job runs them yet) and blind tester (writes acceptance tests from a card's acceptance text, without seeing the code). Each has a contract in `contracts/`.
-- **Landing.** The lander runs the board's `lander.gates` first, in a throwaway clone, and then re-runs the test suites (the example config lists mutation, size, simplicity, ruff and Linux-portability checks from `tests/`). In `land` mode it pushes the exact commit it checked. The default is a dry run. An optional second check asks GitHub for the Verify workflow's result on the pushed commit (`lander.ci_watch`, off unless you set it).
+- **Landing.** The lander runs the board's `lander.gates` first, in a throwaway clone, and then re-runs the test suites (the example config lists mutation, size, simplicity, ruff and Linux-portability checks from `tests/`). In `land` mode it pushes the exact commit it checked. With no `lander.mode` the lander is off (no check, no push); `dry-run` runs the checks and pushes nothing. An optional second check asks GitHub for the Verify workflow's result on the pushed commit (`lander.ci_watch`, off unless you set it).
 - **Humans.** `capsule human` records each intervention. Every crash, hang or override opens an incident, and an incident closes only through a gate.
 - **Rules.** The reliability rules in [docs/ZENKAI.md](docs/ZENKAI.md) bind every agent.
 
@@ -168,7 +168,7 @@ Secrets never live in git. Callers use one thin wrapper, `bin/capsule-secret` (`
 
 Honest summary:
 
-- **Live:** the tick-based factory has run the maintainer's own boards. Auto-landing is on for the `capsule-corp` board (`lander.mode: land`); the shipped example configs, and any board without that setting, are a dry run. Cards have landed on `main` through capsule runs on the maintainer's machine. Check what runs now with `capsule status`.
+- **Live:** the tick-based factory has run the maintainer's own boards. Auto-landing is on for the `capsule-corp` board (`lander.mode: land`); `config.capsule-corp.example.json` is a dry run, and a board with no `lander.mode` does not land at all. Cards have landed on `main` through capsule runs on the maintainer's machine. Check what runs now with `capsule status`.
 - **Pre-alpha preview.** Interfaces change without notice. Open problems are listed in [docs/KNOWN-ISSUES.md](docs/KNOWN-ISSUES.md).
 - **Sandbox for read-only roles is partial.** `capsule/runners/seatbelt.py` renders a macOS `sandbox-exec` profile for the light runner tier. The tier is built and tested but off by default (`redesign.light_runner`, `false` in `capsule/config.example.json`); with it off, reviewers run on the host with read-only tools.
 - **Single machine, single maintainer.** It is built for one macOS host. There is no multi-user mode and no hosted version.

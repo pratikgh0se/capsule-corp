@@ -1,3 +1,5 @@
+# mutation-check: targets-predate-range ff625e94 -- comment-only edit, no behaviour changed ::
+#   CloneFailureRedaction.test_a_failing_clone_with_a_token_in_the_url_never_leaks_it
 """The implementer pre-edit worktree check (row 465, t_685fd87b; review I2): `workspace.is_worktree`."""
 import hashlib
 import json
@@ -400,8 +402,8 @@ class CloneFailureRedaction(unittest.TestCase):
     a failing clone - `tick.py`'s `_ruling_of`/launch call sites fold it straight into
     `error=f"{type(exc).__name__}: {exc}"[:2000]`, which `lease.end_run` writes to the task_run
     row and `event(...)` writes to the typed event, both of which reach tick.log and Korin's
-    evidence. A `repo_url` with an embedded token (private https remote, RUNBOOK "A private
-    https:// remote needs...") must never round-trip through that string. Uses `file://` (no
+    evidence. A `repo_url` with an embedded token (a private https remote) must never
+    round-trip through that string. Uses `file://` (no
     network) so the failure is a genuine, reproducible non-existent-repository error - the string
     handling this exercises is transport-agnostic, so it covers the https/token-in-URL shape too."""
 
@@ -420,7 +422,7 @@ class CloneFailureRedaction(unittest.TestCase):
         # Oracle 1: the token substring itself is gone from the raised message.
         self.assertNotIn(self.token, message)
         # Oracle 2 (independent check, not just "no token"): the exact repo_url is gone too, and
-        # the one non-secret correlation id RUNBOOK/job.json use in its place - repo_url_sha256 -
+        # the one non-secret correlation id job.json uses in its place - repo_url_sha256 -
         # is present, so the failure stays traceable without ever carrying the secret.
         self.assertNotIn(bad, message)
         self.assertIn(workspace.repo_url_sha256(bad), message)
